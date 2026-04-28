@@ -183,7 +183,7 @@ export default function ConvertLeadForm({ lead, onClose, onDone }) {
         </div>{/* end form column */}
 
         {/* ── RIGHT: Client Discovery Panel ── */}
-        <div style={{
+        <div className="form-discovery-panel" style={{
           width: 480, flexShrink: 0,
           borderLeft: '1px solid var(--border-color)',
           background: 'linear-gradient(180deg, rgba(71,150,227,0.04) 0%, rgba(145,119,199,0.04) 100%)',

@@ -26,7 +26,7 @@ const StarLogo = () => (
   </svg>
 )
 
-export default function Sidebar({ page, onNav, onLogout }) {
+export default function Sidebar({ page, onNav, onLogout, isMobile, isOpen, onClose }) {
   const { state } = useCRM()
   const { leads, opportunities, activities } = state
 
@@ -35,13 +35,24 @@ export default function Sidebar({ page, onNav, onLogout }) {
   const overdueFollowUps = activities.filter(a => a.nextFollowUpDate && isOverdue(a.nextFollowUpDate)).length
   const badges = { leads: newLeads || null, opps: activeOpps || null }
 
+  const sidebarStyle = isMobile ? {
+    position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 201,
+    width: 260, flexShrink: 0,
+    background: 'var(--bg-secondary)',
+    borderRight: '0.5px solid var(--border-color)',
+    display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden',
+    transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
+    transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
+    boxShadow: isOpen ? '8px 0 32px rgba(0,0,0,0.15)' : 'none',
+  } : {
+    width: 'var(--sidebar-w)', flexShrink: 0,
+    background: 'var(--bg-secondary)',
+    borderRight: '0.5px solid var(--border-color)',
+    display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden'
+  }
+
   return (
-    <aside style={{
-      width: 'var(--sidebar-w)', flexShrink: 0,
-      background: 'var(--bg-secondary)',
-      borderRight: '0.5px solid var(--border-color)',
-      display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden'
-    }}>
+    <aside style={sidebarStyle}>
       {/* Logo */}
       <div style={{ padding: '16px', borderBottom: '0.5px solid var(--border-color)', flexShrink: 0 }}>
         <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'default' }}>

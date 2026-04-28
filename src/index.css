@@ -846,3 +846,171 @@ nav button { transition: background 180ms ease, color 180ms ease, border-color 1
 
 /* Smooth scroll */
 * { scroll-behavior: smooth; }
+
+/* ════════════════════════════════════════
+   RESPONSIVE — MOBILE · TABLET · LAPTOP
+   ════════════════════════════════════════ */
+
+/* ── Laptop (1024–1279px) ── */
+@media (max-width: 1279px) {
+  :root { --sidebar-w: 220px; }
+  .grid-4 { grid-template-columns: 1fr 1fr; gap: 12px; }
+}
+
+/* ── Tablet / iPad (768–1023px) ── */
+@media (max-width: 1023px) {
+  :root { --sidebar-w: 200px; --header-h: 52px; }
+
+  .grid-4 { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid-3 { grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Page header wraps on tablet */
+  .page-header { flex-wrap: wrap; gap: 10px; padding: 12px 16px; }
+  .filters-bar { padding: 8px 16px; gap: 8px; }
+  .page-body    { padding: 16px; }
+
+  /* Kanban: scroll horizontally */
+  .kanban-board { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Modals narrower */
+  .modal-xl { max-width: 96vw; }
+  .modal-lg { max-width: 96vw; }
+
+  /* Drawer narrower */
+  .drawer { width: min(600px, 90vw); }
+
+  /* Discovery panel in forms */
+  .form-discovery-panel { display: none !important; }
+}
+
+/* ── Mobile (≤ 767px) ── */
+@media (max-width: 767px) {
+  :root {
+    --header-h: 52px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+  }
+
+  /* Body font slightly smaller */
+  body { font-size: 12px; }
+
+  /* ── Grids → 1 column ── */
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr !important; gap: 10px; }
+  .form-grid-2, .form-grid-3 { grid-template-columns: 1fr !important; }
+
+  /* ── Page layout ── */
+  .page-header {
+    flex-direction: column; align-items: flex-start;
+    gap: 10px; padding: 12px 14px;
+  }
+  .page-header > div:last-child { width: 100%; display: flex; gap: 6px; flex-wrap: wrap; }
+  .page-body    { padding: 12px 14px; }
+  .filters-bar  { padding: 8px 14px; overflow-x: auto; flex-wrap: nowrap; gap: 6px; }
+  .filters-bar select, .filters-bar input { min-width: 110px; font-size: 11px; }
+
+  /* ── Stage summary pills — horizontal scroll ── */
+  .filters-bar + div { overflow-x: auto; }
+
+  /* ── Tables — horizontal scroll ── */
+  .data-table-wrap, [style*="overflowX: auto"] { -webkit-overflow-scrolling: touch; }
+  .data-table th, .data-table td { padding: 6px 8px; font-size: 11px; white-space: nowrap; }
+  .data-table th { font-size: 9px; }
+
+  /* ── Buttons smaller ── */
+  .btn     { padding: 6px 14px; font-size: 12px; }
+  .btn-sm  { padding: 4px 10px; font-size: 11px; }
+  .btn-lg  { padding: 9px 20px; font-size: 13px; }
+
+  /* ── Tabs ── */
+  .tabs { overflow-x: auto; flex-wrap: nowrap; }
+  .tab  { padding: 5px 10px; font-size: 11px; white-space: nowrap; }
+
+  /* ── Modals — full screen bottom sheet ── */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+    background: rgba(0,0,0,0.6);
+  }
+  .modal {
+    border-radius: 18px 18px 0 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 92dvh !important;
+    overflow-y: auto;
+    animation: slideUp 0.28s cubic-bezier(0.4,0,0.2,1) both !important;
+  }
+  .modal-header  { padding: 14px 16px; }
+  .modal-body    { padding: 14px 16px; }
+  .modal-footer  { padding: 12px 16px; border-radius: 0 !important; }
+
+  /* Pull handle on modals */
+  .modal::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    background: var(--border-strong-color);
+    border-radius: 2px;
+    margin: 10px auto 0;
+  }
+
+  /* ── Drawers — full width ── */
+  .drawer { width: 100% !important; }
+  .drawer-header { padding: 12px 14px; }
+  .drawer-body   { padding: 14px; }
+
+  /* ── Form discovery panel — hidden on mobile ── */
+  .form-discovery-panel { display: none !important; }
+
+  /* ── KPI Section — stack ── */
+  .kpi-two-col { grid-template-columns: 1fr !important; }
+
+  /* ── Kanban ── */
+  .kanban-col    { width: 85vw; }
+  .kanban-board  { padding-bottom: 12px; }
+
+  /* ── Pipeline stage sections ── */
+  .pipeline-stage-header { padding: 8px 12px; }
+  .pipeline-stage-section table { font-size: 11px; }
+
+  /* ── Dashboard KPI cards ── */
+  .so-stagger { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── Stat card smaller ── */
+  .stat-value { font-size: 20px !important; }
+  .stat-card  { padding: 12px 14px; }
+  .card       { padding: 14px; }
+
+  /* ── Search ── */
+  .search-wrap input { font-size: 12px; }
+
+  /* ── Empty state ── */
+  .empty-state { padding: 40px 16px; }
+
+  /* ── Auth page card ── */
+  .auth-card {
+    padding: 28px 20px !important;
+    border-radius: 16px !important;
+    max-width: 100% !important;
+  }
+
+  /* ── Charts — allow scrolling ── */
+  .recharts-wrapper { overflow: visible; }
+
+  /* ── Page footer bar ── */
+  [style*="Showing"] { font-size: 10px; padding: 8px 14px; }
+
+  /* ── Lead form 3-col → 1-col ── */
+  [style*="gridTemplateColumns: '1fr 1fr 1fr'"] { grid-template-columns: 1fr !important; }
+  [style*="gridTemplateColumns: '1fr 2fr'"]      { grid-template-columns: 1fr !important; }
+  [style*="gridTemplateColumns: '1fr 1fr'"]       { grid-template-columns: 1fr !important; }
+
+  /* ── Reports sections ── */
+  .recharts-cartesian-axis-tick-value { font-size: 9px !important; }
+}
+
+/* ── Very small phones (< 380px) ── */
+@media (max-width: 379px) {
+  body { font-size: 11px; }
+  .so-stagger { grid-template-columns: 1fr !important; }
+  .stat-value { font-size: 18px !important; }
+}

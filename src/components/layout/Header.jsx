@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useCRM } from '../../store/CRMContext'
 import { searchFilter } from '../../utils/helpers'
 
-export default function Header({ page, onNav, theme, toggleTheme }) {
+export default function Header({ page, onNav, theme, toggleTheme, isMobile, onMenuToggle }) {
   const { state } = useCRM()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
@@ -29,12 +29,25 @@ export default function Header({ page, onNav, theme, toggleTheme }) {
       height: 'var(--header-h)', background: 'var(--bg-secondary)',
       borderBottom: '0.5px solid var(--border-color)',
       display: 'flex', alignItems: 'center', gap: 16,
-      padding: '0 24px', flexShrink: 0
+      padding: isMobile ? '0 12px' : '0 24px', flexShrink: 0
     }}>
+      {/* Hamburger — mobile only */}
+      {isMobile && (
+        <button
+          onClick={onMenuToggle}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: 'var(--text-secondary)', fontSize: 20, padding: '4px 8px 4px 0',
+            display: 'flex', alignItems: 'center', flexShrink: 0
+          }}
+          aria-label="Open menu"
+        >☰</button>
+      )}
+
       <div style={{ flex: 1 }} />
 
       {/* Global search */}
-      <div ref={ref} style={{ position: 'relative', width: 300 }}>
+      <div ref={ref} style={{ position: 'relative', width: isMobile ? '100%' : 300, maxWidth: isMobile ? 220 : 300 }}>
         <div className="search-wrap">
           <span className="search-icon" style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>⌕</span>
           <input

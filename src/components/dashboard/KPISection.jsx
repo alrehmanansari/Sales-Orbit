@@ -194,7 +194,7 @@ export default function KPISection() {
         </div>
 
         <div style={{ padding: 20 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+          <div className="kpi-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
 
             {/* ── LEFT: Input table ── */}
             <div>
