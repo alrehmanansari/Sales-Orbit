@@ -176,9 +176,9 @@ export default function ConvertLeadForm({ lead, onClose, onDone }) {
           </div>
 
           <div style={{ marginTop: 14 }}>
-            <F label="Deal Notes" name="dealNotes">
+            <FF label="Deal Notes">
               <textarea value={form.dealNotes} onChange={e => set('dealNotes', e.target.value)} placeholder="Context, requirements, deal specifics…" style={{ minHeight: 80 }} />
-            </F>
+            </FF>
           </div>
         </div>{/* end form column */}
 
