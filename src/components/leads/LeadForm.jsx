@@ -4,6 +4,16 @@ import { LEAD_SOURCES, VERTICALS, NATURE_OF_BUSINESS, PRIORITIES, TEAM_MEMBERS, 
 import { Modal } from '../common/Modal'
 import SalesCallScript from '../common/SalesCallScript'
 
+function FF({ label, required, error, span2, children }) {
+  return (
+    <div className="form-group" style={span2 ? { gridColumn: 'span 2' } : {}}>
+      <label>{label}{required && <span style={{ color: 'var(--red)', marginLeft: 2 }}>*</span>}</label>
+      {children}
+      {error && <div className="form-error">{error}</div>}
+    </div>
+  )
+}
+
 const EMPTY = {
   contactPerson: '', companyName: '', website: '', email: '', phone: '',
   city: '', leadSource: '', leadSourceOther: '', vertical: '',
@@ -59,14 +69,6 @@ export default function LeadForm({ onClose, editLead }) {
     }
     onClose()
   }
-
-  const F = ({ label, name, required, children, span2 }) => (
-    <div className="form-group" style={span2 ? { gridColumn: 'span 2' } : {}}>
-      <label>{label}{required && <span style={{ color: 'var(--red)', marginLeft: 2 }}>*</span>}</label>
-      {children}
-      {errors[name] && <div className="form-error">{errors[name]}</div>}
-    </div>
-  )
 
   const DISCOVERY_POINTS = [
     {
@@ -131,32 +133,32 @@ export default function LeadForm({ onClose, editLead }) {
 
         {/* Row 1: Company | Contact | Email */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 12 }}>
-          <F label="Company Name" name="companyName" required>
+          <FF label="Company Name" error={errors.companyName} required>
             <input value={form.companyName} onChange={e => set('companyName', e.target.value)} placeholder="Legal or trading name" />
-          </F>
-          <F label="Contact Person" name="contactPerson" required>
+          </FF>
+          <FF label="Contact Person" error={errors.contactPerson} required>
             <input value={form.contactPerson} onChange={e => set('contactPerson', e.target.value)} placeholder="Full name" />
-          </F>
-          <F label="Email ID" name="email" required>
+          </FF>
+          <FF label="Email ID" error={errors.email} required>
             <input type="email" value={form.email}
               onChange={e => set('email', e.target.value)}
               onBlur={e => checkDuplicate('email', e.target.value)}
               placeholder="contact@company.com" />
-          </F>
+          </FF>
         </div>
 
         {/* Row 2: Phone | Website | City */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 12 }}>
-          <F label="Phone Number" name="phone">
+          <FF label="Phone Number">
             <input type="tel" value={form.phone}
               onChange={e => set('phone', e.target.value)}
               onBlur={e => checkDuplicate('phone', e.target.value)}
               placeholder="+923001234567" />
-          </F>
-          <F label="Website" name="website">
+          </FF>
+          <FF label="Website">
             <input value={form.website} onChange={e => set('website', e.target.value)} placeholder="company.com" />
-          </F>
-          <F label="City" name="city">
+          </FF>
+          <FF label="City">
             <div className="autocomplete-wrap" ref={cityRef}>
               <input
                 value={cityQuery}
@@ -173,49 +175,50 @@ export default function LeadForm({ onClose, editLead }) {
                 </div>
               )}
             </div>
-          </F>
+          </FF>
         </div>
 
         {/* Row 3: Lead Source | Vertical | Nature of Business */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 12 }}>
           <div>
-            <F label="Lead Source" name="leadSource" required>
+            <FF label="Lead Source" error={errors.leadSource} required>
               <select value={form.leadSource} onChange={e => set('leadSource', e.target.value)}>
                 <option value="">Select source…</option>
                 {LEAD_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
-            </F>
+            </FF>
             {form.leadSource === 'Others' && (
               <div style={{ marginTop: 6 }}>
-                <F label="Specify Source" name="leadSourceOther" required>
+                <FF label="Specify Source" error={errors.leadSourceOther} required>
                   <input value={form.leadSourceOther} onChange={e => set('leadSourceOther', e.target.value)} placeholder="Describe source" />
-                </F>
+                </FF>
               </div>
             )}
           </div>
-          <F label="Vertical" name="vertical" required>
+          <FF label="Vertical" error={errors.vertical} required>
             <select value={form.vertical} onChange={e => set('vertical', e.target.value)}>
               <option value="">Select vertical…</option>
               {VERTICALS.map(v => <option key={v} value={v}>{v}</option>)}
             </select>
-          </F>
-          <F label="Nature of Business" name="natureOfBusiness" required>
+          </FF>
+          <FF label="Nature of Business" error={errors.natureOfBusiness} required>
             <select value={form.natureOfBusiness} onChange={e => set('natureOfBusiness', e.target.value)}>
               <option value="">Select type…</option>
               {NATURE_OF_BUSINESS.map(n => <option key={n} value={n}>{n}</option>)}
             </select>
-          </F>
+          </FF>
         </div>
 
         {/* Row 4: Lead Owner | Priority */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12, marginBottom: 12 }}>
-          <F label="Lead Owner" name="leadOwner" required>
+          <FF label="Lead Owner" error={errors.leadOwner} required>
             <select value={form.leadOwner} onChange={e => set('leadOwner', e.target.value)}>
               <option value="">Assign to…</option>
               {TEAM_MEMBERS.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
-          </F>
-          <F label="Priority" name="priority" required>
+          </FF>
+          <div className="form-group">
+            <label>Priority <span style={{ color: 'var(--red)', marginLeft: 2 }}>*</span></label>
             <div className="radio-group" style={{ paddingTop: 2 }}>
               {PRIORITIES.map(p => (
                 <label key={p} className={`radio-option ${form.priority === p ? 'selected' : ''}`}>
@@ -225,7 +228,7 @@ export default function LeadForm({ onClose, editLead }) {
               ))}
             </div>
             {errors.priority && <div className="form-error">{errors.priority}</div>}
-          </F>
+          </div>
         </div>
 
         {/* Row 5: Notes */}

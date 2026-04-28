@@ -3,6 +3,16 @@ import { useCRM } from '../../store/CRMContext'
 import { COMPETITORS, OPPORTUNITY_STAGES, STAGE_COLORS } from '../../data/constants'
 import SalesCallScript from '../common/SalesCallScript'
 
+function FF({ label, required, error, children }) {
+  return (
+    <div className="form-group">
+      <label>{label}{required && <span style={{ color: 'var(--red)', marginLeft: 2 }}>*</span>}</label>
+      {children}
+      {error && <div className="form-error">{error}</div>}
+    </div>
+  )
+}
+
 export default function ConvertLeadForm({ lead, onClose, onDone }) {
   const { state, dispatch } = useCRM()
   const [form, setForm] = useState({
@@ -72,14 +82,6 @@ export default function ConvertLeadForm({ lead, onClose, onDone }) {
     onClose()
   }
 
-  const F = ({ label, name, required, children }) => (
-    <div className="form-group">
-      <label>{label}{required && <span style={{ color: 'var(--red)', marginLeft: 2 }}>*</span>}</label>
-      {children}
-      {errors[name] && <div className="form-error">{errors[name]}</div>}
-    </div>
-  )
-
   const DISCOVERY_POINTS = [
     { n: '1', title: 'Business Model',          body: 'Understand core offerings — products or services — and identify primary revenue sources.' },
     { n: '2', title: 'Funds Collection',         body: 'How does the client collect payments? E-commerce, DTC, B2B, bank transfers, online platforms, ACH, or wire?' },
@@ -129,9 +131,9 @@ export default function ConvertLeadForm({ lead, onClose, onDone }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div style={{ gridColumn: '1/-1' }}>
-              <F label="Opportunity Name" name="opportunityName" required>
+              <FF label="Opportunity Name" error={errors.opportunityName} required>
                 <input value={form.opportunityName} onChange={e => set('opportunityName', e.target.value)} />
-              </F>
+              </FF>
             </div>
 
             <div style={{ gridColumn: '1/-1' }}>
@@ -147,18 +149,18 @@ export default function ConvertLeadForm({ lead, onClose, onDone }) {
               </div>
             </div>
 
-            <F label="Expected Monthly Volume (USD)" name="expectedMonthlyVolume">
+            <FF label="Expected Monthly Volume (USD)">
               <input type="number" value={form.expectedMonthlyVolume} onChange={e => set('expectedMonthlyVolume', e.target.value)} placeholder="e.g. 100000" />
-            </F>
-            <F label="Expected Monthly Revenue (USD)" name="expectedMonthlyRevenue">
+            </FF>
+            <FF label="Expected Monthly Revenue (USD)">
               <input type="number" value={form.expectedMonthlyRevenue} onChange={e => set('expectedMonthlyRevenue', e.target.value)} placeholder="e.g. 5000" />
-            </F>
-            <F label="Expected Close Date" name="expectedCloseDate" required>
+            </FF>
+            <FF label="Expected Close Date" error={errors.expectedCloseDate} required>
               <input type="date" value={form.expectedCloseDate} onChange={e => set('expectedCloseDate', e.target.value)} />
-            </F>
-            <F label="Decision Maker" name="decisionMaker">
+            </FF>
+            <FF label="Decision Maker">
               <input value={form.decisionMaker} onChange={e => set('decisionMaker', e.target.value)} placeholder="Key decision maker name" />
-            </F>
+            </FF>
           </div>
 
           <div style={{ marginTop: 14 }}>

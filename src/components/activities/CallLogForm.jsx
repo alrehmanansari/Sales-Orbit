@@ -2,6 +2,16 @@ import React, { useState } from 'react'
 import { useCRM } from '../../store/CRMContext'
 import { CALL_TYPES, CALL_OUTCOME_PRIMARY, CALL_OUTCOME_CONNECTED, ACTIVITY_TYPES } from '../../data/constants'
 
+function FF({ label, required, error, children }) {
+  return (
+    <div className="form-group">
+      <label>{label}{required && <span style={{ color: 'var(--red)', marginLeft: 2 }}>*</span>}</label>
+      {children}
+      {error && <div className="form-error">{error}</div>}
+    </div>
+  )
+}
+
 export default function CallLogForm({ entityType, entityId, onClose }) {
   const { state, dispatch } = useCRM()
   const [type, setType] = useState('Call')
@@ -51,15 +61,7 @@ export default function CallLogForm({ entityType, entityId, onClose }) {
     onClose()
   }
 
-  const F = ({ label, name, required, children }) => (
-    <div className="form-group">
-      <label>{label}{required && <span style={{ color: 'var(--red)', marginLeft: 2 }}>*</span>}</label>
-      {children}
-      {errors[name] && <div className="form-error">{errors[name]}</div>}
-    </div>
-  )
-
-  const ICONS = { Call: '📞', Email: '✉️', Meeting: '🤝', WhatsApp: '💬', Note: '📝' }
+  const ICONS ={ Call: '📞', Email: '✉️', Meeting: '🤝', WhatsApp: '💬', Note: '📝' }
 
   // Rendered as a drawer-level modal (z-index 1100 from CSS) so it always appears on top of the Drawer
   return (
@@ -88,7 +90,7 @@ export default function CallLogForm({ entityType, entityId, onClose }) {
             <>
               {/* Call Type */}
               <div style={{ marginBottom: 14 }}>
-                <F label="Call Type" name="callType" required>
+                <FF label="Call Type" error={errors.callType} required>
                   <div className="radio-group" style={{ flexWrap: 'wrap' }}>
                     {CALL_TYPES.map(t => (
                       <label key={t} className={`radio-option ${form.callType === t ? 'selected' : ''}`}>
@@ -97,41 +99,41 @@ export default function CallLogForm({ entityType, entityId, onClose }) {
                       </label>
                     ))}
                   </div>
-                </F>
+                </FF>
               </div>
 
               {/* Call Outcome — two-tier */}
               <div style={{ display: 'grid', gridTemplateColumns: form.outcomeGroup === 'Connected' ? '1fr 1fr' : '1fr', gap: 12, marginBottom: 14 }}>
-                <F label="Call Outcome" name="outcomeGroup" required>
+                <FF label="Call Outcome" error={errors.outcomeGroup} required>
                   <select value={form.outcomeGroup} onChange={e => { set('outcomeGroup', e.target.value); set('outcomeDetail', '') }}>
                     <option value="">Select outcome…</option>
                     {CALL_OUTCOME_PRIMARY.map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
-                </F>
+                </FF>
                 {form.outcomeGroup === 'Connected' && (
-                  <F label="Connected — How?" name="outcomeDetail" required>
+                  <FF label="Connected — How?" error={errors.outcomeDetail} required>
                     <select value={form.outcomeDetail} onChange={e => set('outcomeDetail', e.target.value)}>
                       <option value="">Select…</option>
                       {CALL_OUTCOME_CONNECTED.map(o => <option key={o} value={o}>{o}</option>)}
                     </select>
-                  </F>
+                  </FF>
                 )}
               </div>
             </>
           )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-            <F label="Date & Time">
+            <FF label="Date & Time">
               <input type="datetime-local" value={form.dateTime} onChange={e => set('dateTime', e.target.value)} />
-            </F>
-            <F label="Next Follow-Up Date">
+            </FF>
+            <FF label="Next Follow-Up Date">
               <input type="date" value={form.nextFollowUpDate} onChange={e => set('nextFollowUpDate', e.target.value)} />
-            </F>
+            </FF>
           </div>
 
-          <F label="Notes" name="notes" required>
+          <FF label="Notes" error={errors.notes} required>
             <textarea value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Key discussion points, objections, next steps…" style={{ minHeight: 80 }} />
-          </F>
+          </FF>
 
           <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-tertiary)', display: 'flex', gap: 6, alignItems: 'center' }}>
             <span>👤</span> Logged by <strong style={{ color: 'var(--text-secondary)' }}>{state.currentUser.name}</strong>
