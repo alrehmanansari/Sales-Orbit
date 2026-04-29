@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useAuth, generateOTP } from '../store/AuthContext'
+import { useAuth } from '../store/AuthContext'
 import { DESIGNATIONS } from '../data/constants'
 
 const StarLogo = () => (
@@ -50,50 +50,58 @@ function GradientBtn({ onClick, disabled, children, style }) {
 }
 
 export default function AuthPage() {
-  const { signup, login, confirmLogin } = useAuth()
+  const { signup, login, verifyOtp } = useAuth()
   const [mode, setMode] = useState('login') // login | signup | otp
-  const [pendingUser, setPendingUser] = useState(null)
-  const [otp, setOtp] = useState('')
-  const [generatedOtp, setGeneratedOtp] = useState('')
+  const [pendingEmail, setPendingEmail] = useState('')
+  const [otpFromApi, setOtpFromApi] = useState('') // shown in dev mode
   const [otpInput, setOtpInput] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({ firstName: '', lastName: '', designation: '', email: '', loginEmail: '' })
 
   function setF(k, v) { setForm(p => ({ ...p, [k]: v })); setError('') }
 
-  function handleSignup() {
+  async function handleSignup() {
     const { firstName, lastName, designation, email } = form
     if (!firstName.trim()) return setError('First name is required.')
     if (!lastName.trim())  return setError('Last name is required.')
     if (!designation)       return setError('Please select a designation.')
     if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email)) return setError('Enter a valid email.')
-    const result = signup({ firstName, lastName, designation, email })
+    setLoading(true)
+    const result = await signup({ firstName, lastName, designation, email })
+    setLoading(false)
     if (result.error) return setError(result.error)
-    const code = generateOTP()
-    setGeneratedOtp(code)
-    setPendingUser(result.user)
+    setOtpFromApi(result.otp || '')
+    setPendingEmail(email)
     setMode('otp')
   }
 
-  function handleLogin() {
+  async function handleLogin() {
     const email = form.loginEmail.trim()
     if (!email || !/^\S+@\S+\.\S+$/.test(email)) return setError('Enter a valid email.')
-    const result = login(email)
+    setLoading(true)
+    const result = await login(email)
+    setLoading(false)
     if (result.error) return setError(result.error)
-    const code = generateOTP()
-    setGeneratedOtp(code)
-    setPendingUser(result.user)
+    setOtpFromApi(result.otp || '')
+    setPendingEmail(email)
     setMode('otp')
   }
 
-  function handleOTP() {
-    if (otpInput.trim() !== generatedOtp) return setError('Incorrect OTP. Please try again.')
-    confirmLogin(pendingUser)
+  async function handleOTP() {
+    setLoading(true)
+    const result = await verifyOtp(pendingEmail, otpInput)
+    setLoading(false)
+    if (result.error) return setError(result.error)
+    // On success AuthContext sets currentUser → AppGate re-renders → AuthPage unmounts
   }
 
-  function resendOTP() {
-    const code = generateOTP()
-    setGeneratedOtp(code)
+  async function resendOTP() {
+    setLoading(true)
+    const result = await login(pendingEmail)
+    setLoading(false)
+    if (result.error) return setError(result.error)
+    setOtpFromApi(result.otp || '')
     setOtpInput('')
     setError('')
   }
@@ -112,15 +120,11 @@ export default function AuthPage() {
       backgroundImage: 'radial-gradient(ellipse at 20% 20%, rgba(71,150,227,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(202,102,115,0.06) 0%, transparent 60%)'
     }}>
 
-
-
       <div style={{ ...cardStyle, position: 'relative', zIndex: 1 }}>
-        {/* Logo — icon + wordmark horizontally aligned, perfectly centered in card */}
+        {/* Logo */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24 }}>
-          {/* Logo row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <StarLogo />
-            {/* Wordmark + tagline stacked */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               <div style={{ fontWeight: 800, fontSize: 28, letterSpacing: '-0.5px', lineHeight: 1, whiteSpace: 'nowrap' }}>
                 <span style={{ background: 'linear-gradient(90deg,#4796E3,#9177C7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Sales </span>
@@ -135,8 +139,6 @@ export default function AuthPage() {
               </div>
             </div>
           </div>
-
-          {/* Thin full-width divider */}
           <div style={{
             marginTop: 22, width: '100%',
             height: '0.5px',
@@ -154,12 +156,18 @@ export default function AuthPage() {
         {mode === 'otp' && (
           <>
             <div style={{ background: 'var(--so-blue-soft)', border: '1px solid rgba(71,150,227,0.2)', borderRadius: 10, padding: '12px 14px', marginBottom: 20, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              📧 OTP sent to <strong>{pendingUser?.email}</strong>
-              <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-tertiary)' }}>Demo mode — no email service configured</div>
-              <div style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 8, padding: '6px 12px' }}>
-                <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Your OTP:</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 800, color: 'var(--so-blue)', letterSpacing: 4 }}>{generatedOtp}</span>
-              </div>
+              📧 OTP sent to <strong>{pendingEmail}</strong>
+              {otpFromApi ? (
+                <>
+                  <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-tertiary)' }}>Dev mode — OTP returned in API response</div>
+                  <div style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 8, padding: '6px 12px' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Your OTP:</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 800, color: 'var(--so-blue)', letterSpacing: 4 }}>{otpFromApi}</span>
+                  </div>
+                </>
+              ) : (
+                <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-tertiary)' }}>Check your inbox for the 6-digit code</div>
+              )}
             </div>
 
             <InputField label="6-Digit OTP">
@@ -169,17 +177,18 @@ export default function AuthPage() {
                 placeholder="000000" maxLength={6}
                 onFocus={e => { e.target.style.borderColor = 'var(--so-blue)'; e.target.style.boxShadow = '0 0 0 3px var(--so-blue-soft)' }}
                 onBlur={e => { e.target.style.borderColor = ''; e.target.style.boxShadow = '' }}
+                onKeyDown={e => e.key === 'Enter' && otpInput.length === 6 && handleOTP()}
               />
             </InputField>
 
-            <GradientBtn onClick={handleOTP} disabled={otpInput.length !== 6}>
-              Verify & Continue →
+            <GradientBtn onClick={handleOTP} disabled={otpInput.length !== 6 || loading}>
+              {loading ? 'Verifying…' : 'Verify & Continue →'}
             </GradientBtn>
 
             <div style={{ marginTop: 16, textAlign: 'center', display: 'flex', gap: 16, justifyContent: 'center', fontSize: 13 }}>
-              <button onClick={resendOTP} style={{ background: 'none', border: 'none', color: 'var(--so-blue)', cursor: 'pointer', fontFamily: 'var(--font)', fontWeight: 500 }}>Resend OTP</button>
+              <button onClick={resendOTP} disabled={loading} style={{ background: 'none', border: 'none', color: 'var(--so-blue)', cursor: 'pointer', fontFamily: 'var(--font)', fontWeight: 500 }}>Resend OTP</button>
               <span style={{ color: 'var(--border-color)' }}>|</span>
-              <button onClick={() => { setMode(mode === 'otp' && !pendingUser?.createdAt ? 'login' : 'login'); setError('') }} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', fontFamily: 'var(--font)' }}>← Back</button>
+              <button onClick={() => { setMode('login'); setError('') }} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', fontFamily: 'var(--font)' }}>← Back</button>
             </div>
           </>
         )}
@@ -197,7 +206,9 @@ export default function AuthPage() {
                 onBlur={e => { e.target.style.borderColor = ''; e.target.style.boxShadow = '' }}
               />
             </InputField>
-            <GradientBtn onClick={handleLogin}>Send OTP →</GradientBtn>
+            <GradientBtn onClick={handleLogin} disabled={loading}>
+              {loading ? 'Sending OTP…' : 'Send OTP →'}
+            </GradientBtn>
             <div style={{ marginTop: 20, textAlign: 'center', fontSize: 13, color: 'var(--text-tertiary)' }}>
               Don't have an account?{' '}
               <button onClick={() => { setMode('signup'); setError('') }} style={{ background: 'none', border: 'none', color: 'var(--so-blue)', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font)', fontSize: 13 }}>Sign Up</button>
@@ -237,7 +248,9 @@ export default function AuthPage() {
               />
             </InputField>
 
-            <GradientBtn onClick={handleSignup}>Create Account →</GradientBtn>
+            <GradientBtn onClick={handleSignup} disabled={loading}>
+              {loading ? 'Creating Account…' : 'Create Account →'}
+            </GradientBtn>
             <div style={{ marginTop: 20, textAlign: 'center', fontSize: 13, color: 'var(--text-tertiary)' }}>
               Already have an account?{' '}
               <button onClick={() => { setMode('login'); setError('') }} style={{ background: 'none', border: 'none', color: 'var(--so-blue)', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font)', fontSize: 13 }}>Log In</button>

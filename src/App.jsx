@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { CRMProvider } from './store/CRMContext'
 import { AuthProvider, useAuth } from './store/AuthContext'
+import { CRMProvider, useCRM } from './store/CRMContext'
+import { KPIProvider } from './store/KPIContext'
 import Sidebar from './components/layout/Sidebar'
 import Header from './components/layout/Header'
 import Dashboard from './pages/Dashboard'
@@ -12,7 +13,6 @@ import CustomReportsPage from './pages/CustomReportsPage'
 import SalesScriptPage from './pages/SalesScriptPage'
 import AuthPage from './pages/AuthPage'
 import { useTheme } from './hooks/useTheme'
-import { KPIProvider } from './store/KPIContext'
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -24,14 +24,33 @@ function useIsMobile() {
   return isMobile
 }
 
+function LoadingScreen() {
+  return (
+    <div style={{
+      display: 'flex', height: '100dvh', alignItems: 'center', justifyContent: 'center',
+      background: 'var(--bg-base)', flexDirection: 'column', gap: 16
+    }}>
+      <div style={{
+        width: 36, height: 36, borderRadius: '50%',
+        border: '3px solid var(--border-color)',
+        borderTopColor: 'var(--so-blue)',
+        animation: 'spin 0.7s linear infinite'
+      }} />
+      <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Loading SalesOrbit…</div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  )
+}
+
 function AppContent() {
   const [page, setPage] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
-  const { currentUser, logout } = useAuth()
+  const { logout } = useAuth()
+  const { crmLoading } = useCRM()
   const isMobile = useIsMobile()
 
-  if (!currentUser) return <AuthPage />
+  if (crmLoading) return <LoadingScreen />
 
   const PAGES = {
     dashboard:     <Dashboard />,
@@ -50,7 +69,6 @@ function AppContent() {
 
   return (
     <div style={{ display: 'flex', height: '100dvh', overflow: 'hidden', position: 'relative' }}>
-      {/* Mobile sidebar backdrop */}
       {isMobile && sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
@@ -88,14 +106,23 @@ function AppContent() {
   )
 }
 
+// Mounts CRM/KPI providers only after login so they fetch with a valid JWT
+function AppGate() {
+  const { currentUser } = useAuth()
+  if (!currentUser) return <AuthPage />
+  return (
+    <KPIProvider>
+      <CRMProvider>
+        <AppContent />
+      </CRMProvider>
+    </KPIProvider>
+  )
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <KPIProvider>
-        <CRMProvider>
-          <AppContent />
-        </CRMProvider>
-      </KPIProvider>
+      <AppGate />
     </AuthProvider>
   )
 }

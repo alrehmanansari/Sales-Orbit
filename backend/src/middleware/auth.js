@@ -13,6 +13,7 @@ async function protect(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findOne({ userId: decoded.userId, isActive: true }).lean();
     if (!user) return unauthorized(res, 'User not found or deactivated');
+    user.name = `${user.firstName} ${user.lastName}`;
     req.user = user;
     next();
   } catch {

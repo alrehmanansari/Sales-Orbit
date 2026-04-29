@@ -1,30 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
-import { TEAM_MEMBERS } from '../data/constants'
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
+import * as api from '../services/api'
 
 const KPIContext = createContext(null)
-const KPI_KEY = 'salesorbit_kpis_v3'
 
 export const QUARTERS = ['Q2', 'Q3', 'Q4']
 export const KPI_WEIGHTS = { tc: 70, ac: 30 }
-
-function buildDefault() {
-  const kpiData = {}
-  TEAM_MEMBERS.forEach(name => {
-    kpiData[name] = {}
-    QUARTERS.forEach(q => {
-      kpiData[name][q] = { tcTarget: 0, tcAch: 0, acTarget: 0, acAch: 0 }
-    })
-  })
-  return { version: 3, kpiData }
-}
-
-function load() {
-  try {
-    const s = JSON.parse(localStorage.getItem(KPI_KEY))
-    if (s?.version === 3) return s
-  } catch {}
-  return buildDefault()
-}
 
 export function calcScore(q) {
   if (!q) return 0
@@ -33,27 +13,81 @@ export function calcScore(q) {
   return Math.round(tcPct * KPI_WEIGHTS.tc + acPct * KPI_WEIGHTS.ac)
 }
 
+function buildEmpty() {
+  return { version: 3, kpiData: {} }
+}
+
+// Convert backend array to frontend shape keyed by userName
+function fromApi(rows) {
+  const kpiData = {}
+  rows.forEach(r => {
+    if (!kpiData[r.userName]) kpiData[r.userName] = {}
+    kpiData[r.userName][r.quarter] = {
+      tcTarget: r.tcTarget,
+      tcAch: r.tcAch,
+      acTarget: r.acTarget,
+      acAch: r.acAch,
+    }
+  })
+  return { version: 3, kpiData }
+}
+
 export function KPIProvider({ children }) {
-  const [data, setData] = useState(load)
+  const [data, setData] = useState(buildEmpty)
+  const [userIdMap, setUserIdMap] = useState({}) // { "Alice Johnson": "USR-..." }
+  const currentYear = new Date().getFullYear()
+  const dataRef = useRef(data)
+  useEffect(() => { dataRef.current = data }, [data])
 
   useEffect(() => {
-    localStorage.setItem(KPI_KEY, JSON.stringify(data))
-  }, [data])
+    Promise.all([
+      api.kpis.list(currentYear),
+      api.users.list(),
+    ]).then(([kpiRes, userRes]) => {
+      setData(fromApi(kpiRes.kpis))
+      const map = {}
+      userRes.users.forEach(u => { map[u.name] = u.userId })
+      setUserIdMap(map)
+    }).catch(err => {
+      console.error('Failed to load KPIs:', err)
+    })
+  }, [])
 
   function updateKPI(name, quarter, field, value) {
-    setData(prev => ({
-      ...prev,
-      kpiData: {
-        ...prev.kpiData,
-        [name]: {
-          ...prev.kpiData[name],
-          [quarter]: {
-            ...prev.kpiData[name]?.[quarter],
-            [field]: parseFloat(value) || 0
-          }
-        }
+    const newVal = parseFloat(value) || 0
+
+    setData(prev => {
+      const updated = {
+        ...prev,
+        kpiData: {
+          ...prev.kpiData,
+          [name]: {
+            ...prev.kpiData[name],
+            [quarter]: {
+              ...prev.kpiData[name]?.[quarter],
+              [field]: newVal,
+            },
+          },
+        },
       }
-    }))
+      return updated
+    })
+
+    // Sync to backend
+    const userId = userIdMap[name]
+    if (!userId) return
+
+    const q = dataRef.current.kpiData[name]?.[quarter] || { tcTarget: 0, tcAch: 0, acTarget: 0, acAch: 0 }
+    api.kpis.upsert([{
+      userId,
+      userName: name,
+      quarter,
+      year: currentYear,
+      ...q,
+      [field]: newVal,
+    }]).catch(err => {
+      console.error('Failed to sync KPI:', err)
+    })
   }
 
   return (

@@ -96,6 +96,7 @@ exports.verifyOtp = async (req, res, next) => {
 
     const user = await User.findOne({ email: value.email }).lean();
     if (!user) return badRequest(res, 'User not found');
+    user.name = `${user.firstName} ${user.lastName}`;
 
     const token = signToken(user.userId);
     return ok(res, { token, user });

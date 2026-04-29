@@ -1,85 +1,93 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { MANAGER_DESIGNATIONS } from '../data/constants'
+import * as api from '../services/api'
 
 const AuthContext = createContext(null)
-const USERS_KEY = 'salesorbit_users_v1'
-const SESSION_KEY = 'salesorbit_session_v1'
 
-function loadUsers() {
-  try { return JSON.parse(localStorage.getItem(USERS_KEY)) || [] } catch { return [] }
-}
-function saveUsers(users) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users))
-}
-function loadSession() {
-  try { return JSON.parse(localStorage.getItem(SESSION_KEY)) } catch { return null }
-}
-function saveSession(user) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(user))
-}
-function clearSession() {
-  localStorage.removeItem(SESSION_KEY)
-}
+const TOKEN_KEY = 'so_token'
+const USER_KEY  = 'so_user'
 
-export function generateOTP() {
-  return String(Math.floor(100000 + Math.random() * 900000))
+function loadStoredUser() {
+  try { return JSON.parse(localStorage.getItem(USER_KEY)) } catch { return null }
 }
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(loadSession)
-  const [users, setUsers] = useState(loadUsers)
+  const [currentUser, setCurrentUser] = useState(loadStoredUser)
 
+  // On mount, validate the stored token (in case it expired)
   useEffect(() => {
-    saveUsers(users)
-  }, [users])
+    const token = localStorage.getItem(TOKEN_KEY)
+    if (!token) return
 
-  function isManager(user) {
-    return MANAGER_DESIGNATIONS.includes(user?.designation)
-  }
+    api.auth.me().then(res => {
+      const user = { ...res.user }
+      localStorage.setItem(USER_KEY, JSON.stringify(user))
+      setCurrentUser(user)
+    }).catch(() => {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(USER_KEY)
+      setCurrentUser(null)
+    })
+  }, [])
 
-  function signup(userData) {
-    const existing = users.find(u => u.email.toLowerCase() === userData.email.toLowerCase())
-    if (existing) return { error: 'An account with this email already exists.' }
-    const newUser = {
-      id: `USR-${Date.now()}`,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      name: `${userData.firstName} ${userData.lastName}`,
-      designation: userData.designation,
-      email: userData.email,
-      role: MANAGER_DESIGNATIONS.includes(userData.designation) ? 'Manager' : 'Rep',
-      createdAt: new Date().toISOString()
+  async function signup(data) {
+    try {
+      const res = await api.auth.signup(data)
+      return { otp: res.otp }
+    } catch (err) {
+      return { error: err.message }
     }
-    setUsers(prev => [...prev, newUser])
-    return { user: newUser }
   }
 
-  function login(email) {
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase())
-    if (!user) return { error: 'No account found with this email. Please sign up first.' }
-    return { user }
+  async function login(email) {
+    try {
+      const res = await api.auth.login(email)
+      return { otp: res.otp }
+    } catch (err) {
+      return { error: err.message }
+    }
   }
 
-  function confirmLogin(user) {
-    setCurrentUser(user)
-    saveSession(user)
+  async function verifyOtp(email, otp) {
+    try {
+      const res = await api.auth.verifyOtp(email, otp)
+      localStorage.setItem(TOKEN_KEY, res.token)
+      const user = { ...res.user }
+      localStorage.setItem(USER_KEY, JSON.stringify(user))
+      setCurrentUser(user)
+      return {}
+    } catch (err) {
+      return { error: err.message }
+    }
   }
 
   function logout() {
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(USER_KEY)
     setCurrentUser(null)
-    clearSession()
   }
 
-  function updateUser(updated) {
-    setUsers(prev => prev.map(u => u.id === updated.id ? updated : u))
-    if (currentUser?.id === updated.id) {
+  async function updateUser(data) {
+    try {
+      const res = await api.auth.updateMe(data)
+      const updated = { ...currentUser, ...res.user }
+      localStorage.setItem(USER_KEY, JSON.stringify(updated))
       setCurrentUser(updated)
-      saveSession(updated)
+      return {}
+    } catch (err) {
+      return { error: err.message }
     }
   }
 
   return (
-    <AuthContext.Provider value={{ currentUser, users, isManager: isManager(currentUser), signup, login, confirmLogin, logout, updateUser }}>
+    <AuthContext.Provider value={{
+      currentUser,
+      isManager: currentUser?.role === 'Manager',
+      signup,
+      login,
+      verifyOtp,
+      logout,
+      updateUser,
+    }}>
       {children}
     </AuthContext.Provider>
   )
