@@ -1,195 +1,156 @@
-const Lead = require('../models/Lead');
-const Opportunity = require('../models/Opportunity');
-const Activity = require('../models/Activity');
+const pool = require('../config/db');
 const { ok } = require('../utils/response');
 
-function dateRange(filter) {
+function sinceDate(range) {
   const now = new Date();
-  let start;
-  switch (filter) {
-    case 'week':  start = new Date(now); start.setDate(now.getDate() - 7);  break;
-    case 'month': start = new Date(now.getFullYear(), now.getMonth(), 1);   break;
-    case 'quarter': {
-      const q = Math.floor(now.getMonth() / 3);
-      start = new Date(now.getFullYear(), q * 3, 1);
-      break;
-    }
-    case 'year':  start = new Date(now.getFullYear(), 0, 1);                break;
-    default:      start = null;
+  switch (range) {
+    case 'week':    { const d = new Date(now); d.setDate(now.getDate() - 7); return d; }
+    case 'month':   return new Date(now.getFullYear(), now.getMonth(), 1);
+    case 'quarter': { const q = Math.floor(now.getMonth() / 3); return new Date(now.getFullYear(), q * 3, 1); }
+    case 'year':    return new Date(now.getFullYear(), 0, 1);
+    default:        return null;
   }
-  return start;
 }
 
-function userFilter(user) {
-  return user.role === 'Rep' ? user.name : null;
+function dateClause(field, since) {
+  return since ? `AND ${field} >= '${since.toISOString().slice(0,19).replace('T',' ')}'` : '';
 }
 
 // GET /api/v1/dashboard/stats
 exports.stats = async (req, res, next) => {
   try {
-    const owner = userFilter(req.user);
-    const range = req.query.range || 'month';
-    const since = dateRange(range);
-    const dateFilter = since ? { $gte: since } : undefined;
+    const since = sinceDate(req.query.range || 'month');
+    const ownerClause = req.user.role === 'Rep' ? `AND lead_owner = '${req.user.name}'` : '';
+    const dc = dateClause('created_at', since);
+    const adc = dateClause('date_time', since);
 
-    const leadFilter = owner ? { leadOwner: owner } : {};
-    const oppFilter = owner ? { leadOwner: owner } : {};
-    if (dateFilter) {
-      leadFilter.createdAt = dateFilter;
-      oppFilter.createdAt = dateFilter;
-    }
-    const actFilter = owner ? { loggedBy: owner } : {};
-    if (dateFilter) actFilter.dateTime = dateFilter;
+    const [[lStats]] = await pool.query(
+      `SELECT
+         COUNT(*) AS total,
+         SUM(status = 'Converted') AS converted
+       FROM leads WHERE 1=1 ${ownerClause} ${dc}`
+    );
+    const [[oStats]] = await pool.query(
+      `SELECT
+         COUNT(*) AS total,
+         SUM(stage NOT IN ('Lost')) AS active,
+         SUM(stage IN ('Won','Onboarded','Activated')) AS won,
+         COALESCE(SUM(CASE WHEN stage IN ('Won','Onboarded','Activated') THEN expected_monthly_revenue ELSE 0 END),0) AS revenue
+       FROM opportunities WHERE 1=1 ${ownerClause} ${dc}`
+    );
+    const [[aStats]] = await pool.query(
+      `SELECT COUNT(*) AS total, SUM(type='Call') AS calls
+       FROM activities WHERE 1=1 ${req.user.role === 'Rep' ? `AND logged_by = '${req.user.name}'` : ''} ${adc}`
+    );
 
-    const [
-      totalLeads,
-      convertedLeads,
-      totalOpps,
-      activeOpps,
-      wonOpps,
-      totalActivities,
-      callActivities,
-    ] = await Promise.all([
-      Lead.countDocuments(leadFilter),
-      Lead.countDocuments({ ...leadFilter, status: 'Converted' }),
-      Opportunity.countDocuments(oppFilter),
-      Opportunity.countDocuments({ ...oppFilter, stage: { $in: ['Prospecting', 'Won', 'Onboarded', 'Activated', 'On Hold'] } }),
-      Opportunity.countDocuments({ ...oppFilter, stage: { $in: ['Won', 'Onboarded', 'Activated'] } }),
-      Activity.countDocuments(actFilter),
-      Activity.countDocuments({ ...actFilter, type: 'Call' }),
-    ]);
+    const convRate = lStats.total > 0
+      ? parseFloat(((lStats.converted / lStats.total) * 100).toFixed(1)) : 0;
 
-    const revenueAgg = await Opportunity.aggregate([
-      { $match: { ...oppFilter, stage: { $in: ['Won', 'Onboarded', 'Activated'] } } },
-      { $group: { _id: null, total: { $sum: '$expectedMonthlyRevenue' } } },
-    ]);
-    const totalRevenue = revenueAgg[0]?.total || 0;
-
-    const conversionRate = totalLeads > 0 ? ((convertedLeads / totalLeads) * 100).toFixed(1) : '0.0';
-
-    ok(res, {
-      stats: {
-        totalLeads,
-        convertedLeads,
-        conversionRate: parseFloat(conversionRate),
-        totalOpportunities: totalOpps,
-        activeOpportunities: activeOpps,
-        wonOpportunities: wonOpps,
-        totalRevenue,
-        totalActivities,
-        callActivities,
-      },
-    });
-  } catch (err) {
-    next(err);
-  }
+    ok(res, { stats: {
+      totalLeads:           lStats.total,
+      convertedLeads:       lStats.converted,
+      conversionRate:       convRate,
+      totalOpportunities:   oStats.total,
+      activeOpportunities:  oStats.active,
+      wonOpportunities:     oStats.won,
+      totalRevenue:         parseFloat(oStats.revenue) || 0,
+      totalActivities:      aStats.total,
+      callActivities:       aStats.calls,
+    }});
+  } catch (err) { next(err); }
 };
 
 // GET /api/v1/dashboard/pipeline
 exports.pipeline = async (req, res, next) => {
   try {
-    const owner = userFilter(req.user);
-    const matchFilter = owner ? { leadOwner: owner } : {};
-
-    const stages = await Opportunity.aggregate([
-      { $match: matchFilter },
-      {
-        $group: {
-          _id: '$stage',
-          count: { $sum: 1 },
-          totalVolume: { $sum: '$expectedMonthlyVolume' },
-          totalRevenue: { $sum: '$expectedMonthlyRevenue' },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]);
-
-    ok(res, { pipeline: stages });
-  } catch (err) {
-    next(err);
-  }
+    const ownerClause = req.user.role === 'Rep' ? `WHERE lead_owner = '${req.user.name}'` : '';
+    const [rows] = await pool.query(
+      `SELECT stage,
+              COUNT(*) AS count,
+              COALESCE(SUM(expected_monthly_volume),0)  AS totalVolume,
+              COALESCE(SUM(expected_monthly_revenue),0) AS totalRevenue
+       FROM opportunities ${ownerClause}
+       GROUP BY stage ORDER BY stage`
+    );
+    ok(res, { pipeline: rows.map(r => ({
+      _id: r.stage, count: r.count,
+      totalVolume:  parseFloat(r.totalVolume),
+      totalRevenue: parseFloat(r.totalRevenue),
+    }))});
+  } catch (err) { next(err); }
 };
 
 // GET /api/v1/dashboard/leaderboard
 exports.leaderboard = async (req, res, next) => {
   try {
-    const range = req.query.range || 'month';
-    const since = dateRange(range);
-    const dateFilter = since ? { createdAt: { $gte: since } } : {};
+    const since = sinceDate(req.query.range || 'month');
+    const dc  = dateClause('created_at', since);
+    const adc = dateClause('date_time', since);
 
-    const [leadsByOwner, oppsByOwner, actsByOwner] = await Promise.all([
-      Lead.aggregate([
-        { $match: dateFilter },
-        { $group: { _id: '$leadOwner', leads: { $sum: 1 }, converted: { $sum: { $cond: [{ $eq: ['$status', 'Converted'] }, 1, 0] } } } },
-      ]),
-      Opportunity.aggregate([
-        { $match: { ...dateFilter, stage: { $in: ['Won', 'Onboarded', 'Activated'] } } },
-        { $group: { _id: '$leadOwner', won: { $sum: 1 }, revenue: { $sum: '$expectedMonthlyRevenue' } } },
-      ]),
-      Activity.aggregate([
-        { $match: since ? { dateTime: { $gte: since } } : {} },
-        { $group: { _id: '$loggedBy', activities: { $sum: 1 } } },
-      ]),
-    ]);
+    const [byLead] = await pool.query(
+      `SELECT lead_owner AS name,
+              COUNT(*) AS leads,
+              SUM(status='Converted') AS converted
+       FROM leads WHERE 1=1 ${dc}
+       GROUP BY lead_owner`
+    );
+    const [byOpp] = await pool.query(
+      `SELECT lead_owner AS name,
+              SUM(stage IN ('Won','Onboarded','Activated')) AS won,
+              COALESCE(SUM(CASE WHEN stage IN ('Won','Onboarded','Activated') THEN expected_monthly_revenue ELSE 0 END),0) AS revenue
+       FROM opportunities WHERE 1=1 ${dc}
+       GROUP BY lead_owner`
+    );
+    const [byAct] = await pool.query(
+      `SELECT logged_by AS name, COUNT(*) AS activities
+       FROM activities WHERE 1=1 ${adc}
+       GROUP BY logged_by`
+    );
 
     const map = {};
-    leadsByOwner.forEach(r => { map[r._id] = { name: r._id, leads: r.leads, converted: r.converted }; });
-    oppsByOwner.forEach(r => { if (!map[r._id]) map[r._id] = { name: r._id }; Object.assign(map[r._id], { won: r.won, revenue: r.revenue }); });
-    actsByOwner.forEach(r => { if (!map[r._id]) map[r._id] = { name: r._id }; map[r._id].activities = r.activities; });
+    byLead.forEach(r => { map[r.name] = { name: r.name, leads: r.leads, converted: r.converted }; });
+    byOpp.forEach(r  => {
+      if (!map[r.name]) map[r.name] = { name: r.name };
+      Object.assign(map[r.name], { won: r.won, revenue: parseFloat(r.revenue) });
+    });
+    byAct.forEach(r  => {
+      if (!map[r.name]) map[r.name] = { name: r.name };
+      map[r.name].activities = r.activities;
+    });
 
     const leaderboard = Object.values(map).map(r => ({
-      name: r.name || '',
-      leads: r.leads || 0,
-      converted: r.converted || 0,
-      won: r.won || 0,
-      revenue: r.revenue || 0,
+      name:       r.name       || '',
+      leads:      r.leads      || 0,
+      converted:  r.converted  || 0,
+      won:        r.won        || 0,
+      revenue:    r.revenue    || 0,
       activities: r.activities || 0,
     })).sort((a, b) => b.revenue - a.revenue);
 
     ok(res, { leaderboard });
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 };
 
 // GET /api/v1/dashboard/activity-breakdown
 exports.activityBreakdown = async (req, res, next) => {
   try {
-    const owner = userFilter(req.user);
-    const range = req.query.range || 'month';
-    const since = dateRange(range);
-    const matchFilter = {};
-    if (owner) matchFilter.loggedBy = owner;
-    if (since) matchFilter.dateTime = { $gte: since };
+    const since = sinceDate(req.query.range || 'month');
+    const ownerClause = req.user.role === 'Rep' ? `AND logged_by = '${req.user.name}'` : '';
+    const adc = dateClause('date_time', since);
+    const base = `FROM activities WHERE 1=1 ${ownerClause} ${adc}`;
 
-    const [byType, byOutcome, byCallType, daily] = await Promise.all([
-      Activity.aggregate([
-        { $match: matchFilter },
-        { $group: { _id: '$type', count: { $sum: 1 } } },
-      ]),
-      Activity.aggregate([
-        { $match: { ...matchFilter, type: 'Call', callOutcome: { $ne: '' } } },
-        { $group: { _id: '$callOutcome', count: { $sum: 1 } } },
-      ]),
-      Activity.aggregate([
-        { $match: { ...matchFilter, type: 'Call', callType: { $ne: '' } } },
-        { $group: { _id: '$callType', count: { $sum: 1 } } },
-      ]),
-      Activity.aggregate([
-        { $match: matchFilter },
-        {
-          $group: {
-            _id: { $dateToString: { format: '%Y-%m-%d', date: '$dateTime' } },
-            count: { $sum: 1 },
-          },
-        },
-        { $sort: { _id: 1 } },
-        { $limit: 30 },
-      ]),
-    ]);
+    const [byType]     = await pool.query(`SELECT type AS _id, COUNT(*) AS count ${base} GROUP BY type`);
+    const [byOutcome]  = await pool.query(
+      `SELECT call_outcome AS _id, COUNT(*) AS count ${base} AND type='Call' AND call_outcome != '' GROUP BY call_outcome`
+    );
+    const [byCallType] = await pool.query(
+      `SELECT call_type AS _id, COUNT(*) AS count ${base} AND type='Call' AND call_type != '' GROUP BY call_type`
+    );
+    const [daily] = await pool.query(
+      `SELECT DATE_FORMAT(date_time,'%Y-%m-%d') AS _id, COUNT(*) AS count
+       ${base} GROUP BY DATE_FORMAT(date_time,'%Y-%m-%d') ORDER BY _id DESC LIMIT 30`
+    );
 
-    ok(res, { byType, byOutcome, byCallType, daily });
-  } catch (err) {
-    next(err);
-  }
+    ok(res, { byType, byOutcome, byCallType, daily: daily.reverse() });
+  } catch (err) { next(err); }
 };

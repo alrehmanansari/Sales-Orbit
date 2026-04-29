@@ -1,166 +1,111 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
-const mongoose = require('mongoose');
-const User = require('../src/models/User');
-const Lead = require('../src/models/Lead');
-const Opportunity = require('../src/models/Opportunity');
-const Activity = require('../src/models/Activity');
-const Kpi = require('../src/models/Kpi');
+const pool = require('../src/config/db');
 
 const TEAM = [
-  { firstName: 'Alice', lastName: 'Johnson', email: 'alice@salesorbit.io', designation: 'Head of Sales' },
-  { firstName: 'Bob', lastName: 'Martinez', email: 'bob@salesorbit.io', designation: 'Sales Rep' },
-  { firstName: 'Clara', lastName: 'Singh', email: 'clara@salesorbit.io', designation: 'Sales Rep' },
-  { firstName: 'David', lastName: 'Kim', email: 'david@salesorbit.io', designation: 'Sales Rep' },
+  { userId: 'USR-1001', firstName: 'Alice', lastName: 'Johnson', email: 'alice@salesorbit.io', designation: 'Head of Sales',  role: 'Manager' },
+  { userId: 'USR-1002', firstName: 'Bob',   lastName: 'Martinez',email: 'bob@salesorbit.io',   designation: 'Sales Rep',      role: 'Rep' },
+  { userId: 'USR-1003', firstName: 'Clara', lastName: 'Singh',   email: 'clara@salesorbit.io', designation: 'Sales Rep',      role: 'Rep' },
+  { userId: 'USR-1004', firstName: 'David', lastName: 'Kim',     email: 'david@salesorbit.io', designation: 'Sales Rep',      role: 'Rep' },
 ];
 
-async function seed() {
-  await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/salesorbit');
-  console.log('Connected to MongoDB');
+async function run() {
+  console.log('Seeding MySQL database…\n');
 
-  // Clear
-  await Promise.all([
-    User.deleteMany({}),
-    Lead.deleteMany({}),
-    Opportunity.deleteMany({}),
-    Activity.deleteMany({}),
-    Kpi.deleteMany({}),
-  ]);
+  // ── Truncate (safe order respecting FK deps) ──────────────────────────
+  await pool.query('SET FOREIGN_KEY_CHECKS = 0');
+  for (const t of ['kpis','activities','stage_history','opportunities','leads','otps','users']) {
+    await pool.query(`TRUNCATE TABLE ${t}`);
+  }
+  await pool.query('SET FOREIGN_KEY_CHECKS = 1');
   console.log('Cleared existing data');
 
-  // Users
-  const users = await User.insertMany(TEAM);
-  console.log(`Created ${users.length} users`);
+  // ── Users ─────────────────────────────────────────────────────────────
+  for (const u of TEAM) {
+    await pool.query(
+      'INSERT INTO users (user_id,first_name,last_name,email,designation,role) VALUES (?,?,?,?,?,?)',
+      [u.userId, u.firstName, u.lastName, u.email, u.designation, u.role]
+    );
+  }
+  console.log(`Created ${TEAM.length} users`);
 
-  // Leads
-  const leads = await Lead.insertMany([
-    {
-      leadId: 'LD-20260218-1001',
-      contactPerson: 'Sarah Mitchell',
-      companyName: 'NexaTech Solutions',
-      website: 'nexatech.io',
-      email: 'sarah@nexatech.io',
-      phone: '5551234567',
-      city: 'New York',
-      leadSource: 'Cold Outreach',
-      vertical: 'IT Services',
-      natureOfBusiness: 'IT Services',
-      leadOwner: 'Alice Johnson',
-      priority: 'Hot',
-      notes: 'Interested in cross-border payments',
-      status: 'Qualified',
-      createdBy: 'Alice Johnson',
-    },
-    {
-      leadId: 'LD-20260301-1002',
-      contactPerson: 'James Wei',
-      companyName: 'CloudBridge Inc',
-      email: 'james@cloudbridge.com',
-      city: 'San Francisco',
-      leadSource: 'Customer Referral',
-      vertical: 'B2B Seller',
-      natureOfBusiness: 'Software Development',
-      leadOwner: 'Bob Martinez',
-      priority: 'Warm',
-      status: 'Contacted',
-      createdBy: 'Bob Martinez',
-    },
-    {
-      leadId: 'LD-20260310-1003',
-      contactPerson: 'Priya Sharma',
-      companyName: 'EcomGlobe',
-      email: 'priya@ecomglobe.com',
-      city: 'Dubai',
-      leadSource: 'Trade Show/Event',
-      vertical: 'Ecom Seller',
-      natureOfBusiness: 'Shopify',
-      leadOwner: 'Clara Singh',
-      priority: 'Hot',
-      status: 'New',
-      createdBy: 'Clara Singh',
-    },
-  ]);
+  // ── Leads ─────────────────────────────────────────────────────────────
+  const leads = [
+    ['LD-20260218-1001','Sarah Mitchell','NexaTech Solutions','nexatech.io','sarah@nexatech.io','5551234567','New York','Cold Outreach','IT Services','IT Services','Alice Johnson','Hot','Interested in cross-border payments','Qualified','Alice Johnson'],
+    ['LD-20260301-1002','James Wei','CloudBridge Inc','cloudbridge.com','james@cloudbridge.com','5559876543','San Francisco','Customer Referral','B2B Seller','Software Development','Bob Martinez','Warm','','Contacted','Bob Martinez'],
+    ['LD-20260310-1003','Priya Kapoor','TradeLink B2B','tradelink.in','priya@tradelink.in','5554445555','Mumbai','Customer Referral','B2B Seller','B2B Goods','Clara Singh','Hot','High volume FX requirements','Qualified','Clara Singh'],
+  ];
+  for (const l of leads) {
+    await pool.query(
+      `INSERT INTO leads (lead_id,contact_person,company_name,website,email,phone,city,
+       lead_source,vertical,nature_of_business,lead_owner,priority,notes,status,created_by)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, l
+    );
+  }
   console.log(`Created ${leads.length} leads`);
 
-  // Opportunities
-  const opps = await Opportunity.insertMany([
-    {
-      opportunityId: 'OPP-20260220-1001',
-      leadId: 'LD-20260218-1001',
-      opportunityName: 'NexaTech Solutions – IT Services',
-      companyName: 'NexaTech Solutions',
-      contactPerson: 'Sarah Mitchell',
-      email: 'sarah@nexatech.io',
-      city: 'New York',
-      leadSource: 'Cold Outreach',
-      vertical: 'IT Services',
-      natureOfBusiness: 'IT Services',
-      leadOwner: 'Alice Johnson',
-      priority: 'Hot',
-      expectedMonthlyVolume: 250000,
-      expectedMonthlyRevenue: 12500,
-      expectedCloseDate: new Date('2026-05-12'),
-      decisionMaker: 'Sarah Mitchell',
-      stage: 'Onboarded',
-      stageHistory: [
-        { stage: 'Prospecting', enteredAt: new Date('2026-02-20'), exitedAt: new Date('2026-02-26'), note: 'Opportunity created from lead', changedBy: 'Alice Johnson' },
-        { stage: 'Onboarded', enteredAt: new Date('2026-02-26'), note: 'Moved after contract signed', changedBy: 'Alice Johnson' },
-      ],
-      createdBy: 'Alice Johnson',
-    },
-  ]);
-  console.log(`Created ${opps.length} opportunities`);
+  // ── Opportunities ─────────────────────────────────────────────────────
+  await pool.query(
+    `INSERT INTO opportunities
+      (opportunity_id,lead_id,opportunity_name,company_name,contact_person,email,phone,city,
+       lead_source,vertical,nature_of_business,lead_owner,priority,
+       expected_monthly_volume,expected_monthly_revenue,expected_close_date,
+       decision_maker,competitors,deal_notes,stage,created_by)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    ['OPP-20260220-1001','LD-20260218-1001','NexaTech Solutions – IT Services',
+     'NexaTech Solutions','Sarah Mitchell','sarah@nexatech.io','5551234567','New York',
+     'Cold Outreach','IT Services','IT Services','Alice Johnson','Hot',
+     250000,12500,'2026-05-12','Sarah Mitchell',
+     JSON.stringify(['Payoneer','Wise']),'Strong interest, budget confirmed','Onboarded','Alice Johnson']
+  );
+  console.log('Created 1 opportunity');
 
-  // Activities
-  await Activity.insertMany([
-    {
-      activityId: 'ACT-001',
-      entityType: 'lead',
-      entityId: 'LD-20260218-1001',
-      type: 'Call',
-      callType: 'Discovery Call',
-      callOutcome: 'Connected – Interested',
-      dateTime: new Date('2026-02-19'),
-      notes: 'Discussed cross-border payments needs. Budget confirmed ~$250k/month.',
-      loggedBy: 'Alice Johnson',
-    },
-    {
-      activityId: 'ACT-002',
-      entityType: 'opportunity',
-      entityId: 'OPP-20260220-1001',
-      type: 'Meeting',
-      dateTime: new Date('2026-02-25'),
-      notes: 'Product demo completed. Client very interested.',
-      loggedBy: 'Alice Johnson',
-    },
-  ]);
+  // ── Stage history ─────────────────────────────────────────────────────
+  const sh = [
+    ['OPP-20260220-1001','Prospecting',new Date('2026-02-20'),new Date('2026-02-26'),'Opportunity created from lead','Alice Johnson'],
+    ['OPP-20260220-1001','Won',        new Date('2026-02-26'),new Date('2026-03-05'),'Account registered','Alice Johnson'],
+    ['OPP-20260220-1001','Onboarded',  new Date('2026-03-05'),null,'KYC completed','Alice Johnson'],
+  ];
+  for (const [oid,stage,ea,xa,note,by] of sh) {
+    await pool.query(
+      'INSERT INTO stage_history (opportunity_id,stage,entered_at,exited_at,note,changed_by) VALUES (?,?,?,?,?,?)',
+      [oid, stage, ea, xa, note, by]
+    );
+  }
+  console.log('Created stage history');
+
+  // ── Activities ────────────────────────────────────────────────────────
+  const acts = [
+    ['ACT-001','lead','LD-20260218-1001','Call','Discovery Call','Connected – Interested',new Date('2026-02-19'),new Date('2026-02-21'),'Discussed cross-border payments. Budget confirmed ~$250k/month.','Alice Johnson'],
+    ['ACT-002','opportunity','OPP-20260220-1001','Meeting','','',new Date('2026-02-25'),null,'Product demo completed. Client very interested.','Alice Johnson'],
+  ];
+  for (const [id,et,eid,type,ct,co,dt,nfd,notes,by] of acts) {
+    await pool.query(
+      `INSERT INTO activities (activity_id,entity_type,entity_id,type,call_type,call_outcome,
+       date_time,next_follow_up_date,notes,logged_by) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+      [id, et, eid, type, ct, co, dt, nfd, notes, by]
+    );
+  }
   console.log('Created sample activities');
 
-  // KPIs
+  // ── KPIs ──────────────────────────────────────────────────────────────
   const year = 2026;
-  const kpis = [];
-  for (const u of users) {
-    for (const q of ['Q2', 'Q3', 'Q4']) {
-      kpis.push({
-        userId: u.userId,
-        userName: `${u.firstName} ${u.lastName}`,
-        quarter: q,
-        year,
-        tcTarget: 50,
-        tcAch: q === 'Q2' ? 12 : 0,
-        acTarget: 10,
-        acAch: q === 'Q2' ? 3 : 0,
-      });
+  for (const u of TEAM) {
+    for (const q of ['Q2','Q3','Q4']) {
+      await pool.query(
+        `INSERT INTO kpis (user_id,user_name,quarter,year,tc_target,tc_ach,ac_target,ac_ach)
+         VALUES (?,?,?,?,?,?,?,?)`,
+        [u.userId, `${u.firstName} ${u.lastName}`, q, year, 50, q==='Q2'?12:0, 10, q==='Q2'?3:0]
+      );
     }
   }
-  await Kpi.insertMany(kpis);
-  console.log(`Created ${kpis.length} KPI records`);
+  console.log(`Created ${TEAM.length * 3} KPI records`);
 
   console.log('\n✓ Seed complete!');
-  console.log('\nTest credentials (use any seeded email + request OTP):');
+  console.log('\nTest users (request OTP to login):');
   TEAM.forEach(u => console.log(`  ${u.email}`));
-  console.log('\nIn development mode, OTP is returned in the API response.');
+  console.log('\nIn development mode the OTP is returned in the API response.\n');
 
-  await mongoose.disconnect();
+  await pool.end();
 }
 
-seed().catch(err => { console.error(err); process.exit(1); });
+run().catch(err => { console.error(err); process.exit(1); });

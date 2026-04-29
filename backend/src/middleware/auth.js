@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const pool = require('../config/db');
 const { unauthorized } = require('../utils/response');
 
 async function protect(req, res, next) {
@@ -11,10 +11,23 @@ async function protect(req, res, next) {
   try {
     const token = header.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findOne({ userId: decoded.userId, isActive: true }).lean();
-    if (!user) return unauthorized(res, 'User not found or deactivated');
-    user.name = `${user.firstName} ${user.lastName}`;
-    req.user = user;
+
+    const [rows] = await pool.query(
+      'SELECT * FROM users WHERE user_id = ? AND is_active = 1',
+      [decoded.userId]
+    );
+    if (!rows.length) return unauthorized(res, 'User not found or deactivated');
+
+    const u = rows[0];
+    req.user = {
+      userId:      u.user_id,
+      firstName:   u.first_name,
+      lastName:    u.last_name,
+      name:        `${u.first_name} ${u.last_name}`,
+      email:       u.email,
+      designation: u.designation,
+      role:        u.role,
+    };
     next();
   } catch {
     return unauthorized(res, 'Invalid or expired token');

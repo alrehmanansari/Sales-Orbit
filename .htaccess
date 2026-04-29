@@ -1,0 +1,9 @@
+Options -MultiViews
+RewriteEngine On
+
+# Serve existing files and directories directly
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Fall back to index.html for React Router
+RewriteRule ^ index.html [QSA,L]

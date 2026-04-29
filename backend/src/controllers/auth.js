@@ -1,12 +1,14 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Joi = require('joi');
-const User = require('../models/User');
-const Otp = require('../models/Otp');
+const pool = require('../config/db');
 const { sendOtpEmail } = require('../config/mail');
 const { ok, created, badRequest } = require('../utils/response');
+const { transformUser } = require('../utils/transform');
 
 const ROUNDS = parseInt(process.env.BCRYPT_ROUNDS) || 10;
+const OTP_MS = parseInt(process.env.OTP_EXPIRES_MS) || 600000;
+const MANAGER_DESIGNATIONS = ['Head of Sales', 'Country Manager', 'Head of MENA'];
 
 function signToken(userId) {
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
@@ -14,45 +16,53 @@ function signToken(userId) {
   });
 }
 
-function generateOtp() {
+function genOtp() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
 async function issueOtp(email, name) {
-  const otp = generateOtp();
-  const otpHash = await bcrypt.hash(otp, ROUNDS);
-  await Otp.deleteMany({ email });
-  await Otp.create({ email, otpHash });
+  const otp = genOtp();
+  const hash = await bcrypt.hash(otp, ROUNDS);
+  const expiresAt = new Date(Date.now() + OTP_MS);
+
+  await pool.query('DELETE FROM otps WHERE email = ?', [email]);
+  await pool.query('DELETE FROM otps WHERE expires_at < NOW()');
+  await pool.query(
+    'INSERT INTO otps (email, otp_hash, expires_at) VALUES (?, ?, ?)',
+    [email, hash, expiresAt]
+  );
+
   await sendOtpEmail(email, otp, name);
-  // Return otp only in development (never in production)
   return process.env.NODE_ENV !== 'production' ? otp : null;
 }
 
 // POST /api/v1/auth/signup
 exports.signup = async (req, res, next) => {
   try {
-    const schema = Joi.object({
-      firstName: Joi.string().trim().min(1).max(50).required(),
-      lastName: Joi.string().trim().min(1).max(50).required(),
-      email: Joi.string().email().lowercase().required(),
+    const { error, value } = Joi.object({
+      firstName:   Joi.string().trim().min(1).max(50).required(),
+      lastName:    Joi.string().trim().min(1).max(50).required(),
+      email:       Joi.string().email().lowercase().required(),
       designation: Joi.string().trim().min(1).max(100).required(),
-    });
-    const { error, value } = schema.validate(req.body);
+    }).validate(req.body);
     if (error) return badRequest(res, error.details[0].message);
 
-    const existing = await User.findOne({ email: value.email });
-    if (existing) return badRequest(res, 'Email already registered. Please log in.');
+    const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [value.email]);
+    if (existing.length) return badRequest(res, 'Email already registered. Please log in.');
 
-    const user = await User.create(value);
-    const otp = await issueOtp(user.email, user.firstName);
+    const userId = `USR-${Date.now()}`;
+    const role = MANAGER_DESIGNATIONS.includes(value.designation) ? 'Manager' : 'Rep';
 
-    const payload = { message: 'OTP sent to your email', userId: user.userId };
-    if (otp) payload.otp = otp; // dev only
+    await pool.query(
+      'INSERT INTO users (user_id, first_name, last_name, email, designation, role) VALUES (?,?,?,?,?,?)',
+      [userId, value.firstName, value.lastName, value.email, value.designation, role]
+    );
 
+    const otp = await issueOtp(value.email, value.firstName);
+    const payload = { message: 'Account created. OTP sent.', userId };
+    if (otp) payload.otp = otp;
     return created(res, payload, 'Account created. OTP sent.');
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 };
 
 // POST /api/v1/auth/login
@@ -63,18 +73,17 @@ exports.login = async (req, res, next) => {
     }).validate(req.body);
     if (error) return badRequest(res, error.details[0].message);
 
-    const user = await User.findOne({ email: value.email, isActive: true });
-    if (!user) return badRequest(res, 'No account found for this email. Please sign up.');
+    const [rows] = await pool.query(
+      'SELECT * FROM users WHERE email = ? AND is_active = 1', [value.email]
+    );
+    if (!rows.length) return badRequest(res, 'No account found for this email. Please sign up.');
 
-    const otp = await issueOtp(user.email, user.firstName);
-
-    const payload = { message: 'OTP sent to your email', userId: user.userId };
+    const u = rows[0];
+    const otp = await issueOtp(u.email, u.first_name);
+    const payload = { message: 'OTP sent to your email', userId: u.user_id };
     if (otp) payload.otp = otp;
-
     return ok(res, payload);
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 };
 
 // POST /api/v1/auth/verify-otp
@@ -82,27 +91,27 @@ exports.verifyOtp = async (req, res, next) => {
   try {
     const { error, value } = Joi.object({
       email: Joi.string().email().lowercase().required(),
-      otp: Joi.string().length(6).required(),
+      otp:   Joi.string().length(6).required(),
     }).validate(req.body);
     if (error) return badRequest(res, error.details[0].message);
 
-    const record = await Otp.findOne({ email: value.email });
-    if (!record) return badRequest(res, 'OTP expired or not found. Please request a new one.');
+    const [otpRows] = await pool.query(
+      'SELECT * FROM otps WHERE email = ? AND expires_at > NOW()', [value.email]
+    );
+    if (!otpRows.length) return badRequest(res, 'OTP expired or not found. Please request a new one.');
 
-    const valid = await bcrypt.compare(value.otp, record.otpHash);
+    const valid = await bcrypt.compare(value.otp, otpRows[0].otp_hash);
     if (!valid) return badRequest(res, 'Invalid OTP');
 
-    await Otp.deleteMany({ email: value.email });
+    await pool.query('DELETE FROM otps WHERE email = ?', [value.email]);
 
-    const user = await User.findOne({ email: value.email }).lean();
-    if (!user) return badRequest(res, 'User not found');
-    user.name = `${user.firstName} ${user.lastName}`;
+    const [userRows] = await pool.query('SELECT * FROM users WHERE email = ?', [value.email]);
+    if (!userRows.length) return badRequest(res, 'User not found');
 
+    const user = transformUser(userRows[0]);
     const token = signToken(user.userId);
     return ok(res, { token, user });
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 };
 
 // GET /api/v1/auth/me
@@ -114,20 +123,26 @@ exports.getMe = async (req, res) => {
 exports.updateMe = async (req, res, next) => {
   try {
     const { error, value } = Joi.object({
-      firstName: Joi.string().trim().min(1).max(50),
-      lastName: Joi.string().trim().min(1).max(50),
+      firstName:   Joi.string().trim().min(1).max(50),
+      lastName:    Joi.string().trim().min(1).max(50),
       designation: Joi.string().trim().min(1).max(100),
     }).validate(req.body);
     if (error) return badRequest(res, error.details[0].message);
 
-    const user = await User.findOneAndUpdate(
-      { userId: req.user.userId },
-      value,
-      { new: true, runValidators: true }
-    ).lean();
+    const sets = [], params = [];
+    if (value.firstName)   { sets.push('first_name = ?');  params.push(value.firstName); }
+    if (value.lastName)    { sets.push('last_name = ?');   params.push(value.lastName); }
+    if (value.designation) {
+      sets.push('designation = ?'); params.push(value.designation);
+      sets.push('role = ?');
+      params.push(MANAGER_DESIGNATIONS.includes(value.designation) ? 'Manager' : 'Rep');
+    }
+    if (!sets.length) return badRequest(res, 'No fields to update');
 
-    ok(res, { user });
-  } catch (err) {
-    next(err);
-  }
+    params.push(req.user.userId);
+    await pool.query(`UPDATE users SET ${sets.join(', ')} WHERE user_id = ?`, params);
+
+    const [rows] = await pool.query('SELECT * FROM users WHERE user_id = ?', [req.user.userId]);
+    ok(res, { user: transformUser(rows[0]) });
+  } catch (err) { next(err); }
 };
