@@ -2,7 +2,7 @@ const Joi = require('joi');
 const pool = require('../config/db');
 const { ok, created, badRequest, notFound } = require('../utils/response');
 const { sendCSV } = require('../utils/csvExport');
-const { transformLead, transformOpportunity, transformStageHistory } = require('../utils/transform');
+const { transformLead, transformOpportunity, transformStageHistory, transformActivity } = require('../utils/transform');
 
 const SAFE_SORT = {
   '-createdAt': 'created_at DESC', 'createdAt': 'created_at ASC',
@@ -113,7 +113,7 @@ exports.get = async (req, res, next) => {
       'SELECT * FROM activities WHERE entity_type = ? AND entity_id = ? ORDER BY date_time DESC',
       ['lead', req.params.id]
     );
-    ok(res, { lead: transformLead(rows[0]), activities: acts.map(a => require('./activities')._transform(a)) });
+    ok(res, { lead: transformLead(rows[0]), activities: acts.map(transformActivity) });
   } catch (err) { next(err); }
 };
 

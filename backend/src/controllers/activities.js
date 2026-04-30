@@ -3,8 +3,6 @@ const pool = require('../config/db');
 const { ok, created, badRequest, notFound } = require('../utils/response');
 const { transformActivity } = require('../utils/transform');
 
-// Exported for leads.js GET single lead (reuses transform)
-exports._transform = transformActivity;
 
 const activitySchema = Joi.object({
   entityType:        Joi.string().valid('lead','opportunity').required(),
