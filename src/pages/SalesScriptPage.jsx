@@ -80,133 +80,279 @@ const QUICK_REF = [
   { stage: 'Total',        goal: '',                          time: '~12–15 min', bold: true },
 ]
 
+// Language tab pill
+function LangTab({ label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: '6px 18px', borderRadius: 20, border: 'none', cursor: 'pointer',
+        fontFamily: 'var(--font)', fontSize: 12, fontWeight: active ? 600 : 400,
+        background: active ? 'var(--bg-card)' : 'transparent',
+        color: active ? 'var(--text-primary)' : 'var(--text-tertiary)',
+        boxShadow: active ? '0 1px 4px rgba(0,0,0,0.12)' : 'none',
+        transition: 'all 0.15s',
+      }}
+    >{label}</button>
+  )
+}
+
 export default function SalesScriptPage() {
-  const [open, setOpen] = useState(STEPS.reduce((acc, s) => ({ ...acc, [s.step]: true }), {}))
+  const [lang, setLang] = useState('Both')
+  const [open, setOpen] = useState(() => STEPS.reduce((a, s) => ({ ...a, [s.step]: true }), {}))
   const toggle = step => setOpen(p => ({ ...p, [step]: !p[step] }))
+  const allOpen = Object.values(open).every(Boolean)
+  const toggleAll = () => setOpen(STEPS.reduce((a, s) => ({ ...a, [s.step]: !allOpen }), {}))
+
+  const showEN = lang === 'English' || lang === 'Both'
+  const showUR = lang === 'Urdu'    || lang === 'Both'
 
   return (
     <div className="page">
-      {/* Header */}
-      <div className="page-header">
+      {/* ── Page header ────────────────────────────────────────────── */}
+      <div className="page-header" style={{ flexWrap: 'wrap', gap: 10 }}>
         <div>
           <h2 style={{ margin: 0 }}>Sales Call Script</h2>
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-            BD Sales Guide · English &amp; Urdu · ~12–15 min call
+            BD Sales Guide · 9 Steps · ~12–15 min call
           </div>
         </div>
-        <div style={{
-          padding: '6px 16px', borderRadius: 24,
-          background: 'var(--so-gradient)', color: '#fff',
-          fontSize: 11, fontWeight: 700, letterSpacing: '0.2px'
-        }}>
-          📞 SUNRATE · BD Guide
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          {/* Language selector */}
+          <div style={{ display: 'flex', gap: 2, background: 'var(--bg-tertiary)', borderRadius: 22, padding: 3, border: '1px solid var(--border-color)' }}>
+            {['English', 'Urdu', 'Both'].map(l => (
+              <LangTab key={l} label={l} active={lang === l} onClick={() => setLang(l)} />
+            ))}
+          </div>
+
+          {/* Collapse/expand all */}
+          <button
+            onClick={toggleAll}
+            style={{
+              padding: '6px 14px', borderRadius: 20, border: '1px solid var(--border-color)',
+              background: 'var(--bg-card)', color: 'var(--text-secondary)',
+              fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font)',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--so-blue)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
+          >
+            {allOpen ? 'Collapse All' : 'Expand All'}
+          </button>
+
+          <div style={{ padding: '6px 16px', borderRadius: 24, background: 'var(--so-gradient)', color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '0.2px' }}>
+            📞 SUNRATE · BD Guide
+          </div>
         </div>
       </div>
 
-      {/* Scrollable body */}
+      {/* ── Body ───────────────────────────────────────────────────── */}
       <div className="page-body">
-        <div style={{ maxWidth: 900, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ maxWidth: 820, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-          {/* Steps */}
           {STEPS.map(s => (
             <div key={s.step} style={{
-              border: '1px solid var(--border-color)',
-              borderRadius: 12, overflow: 'hidden',
-              background: 'var(--bg-card)',
-              boxShadow: 'var(--shadow-xs)'
+              border: '1px solid var(--border-color)', borderRadius: 14,
+              overflow: 'hidden', background: 'var(--bg-card)',
+              boxShadow: 'var(--shadow-xs)',
             }}>
-              {/* Step header — clickable to collapse */}
+
+              {/* ── Step header ─────────────────────────────────── */}
               <div
                 onClick={() => toggle(s.step)}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '11px 16px', cursor: 'pointer', userSelect: 'none',
-                  background: 'linear-gradient(90deg, var(--so-blue-soft), var(--so-purple-soft))',
+                  padding: '13px 18px', cursor: 'pointer', userSelect: 'none',
+                  background: open[s.step]
+                    ? 'linear-gradient(90deg, rgba(71,150,227,0.07), transparent)'
+                    : 'transparent',
                   borderBottom: open[s.step] ? '1px solid var(--border-color)' : 'none',
-                  transition: 'background 0.15s'
+                  transition: 'background 0.15s',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  {/* Step number */}
                   <div style={{
-                    width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                    width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
                     background: 'var(--so-gradient)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 800, color: '#fff'
+                    fontSize: 13, fontWeight: 800, color: '#fff',
+                    boxShadow: '0 2px 8px rgba(71,150,227,0.3)',
                   }}>{s.step}</div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                    Step {s.step}: {s.title}
-                  </span>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                      {s.title}
+                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                      Step {s.step} of {STEPS.length}
+                    </div>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   {s.target && (
-                    <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--so-blue)', background: 'var(--so-blue-soft)', padding: '2px 9px', borderRadius: 20 }}>
+                    <span style={{
+                      fontSize: 11, fontWeight: 600, color: 'var(--so-blue)',
+                      background: 'var(--so-blue-soft)', padding: '3px 10px',
+                      borderRadius: 20, letterSpacing: '0.2px',
+                    }}>
                       ⏱ {s.target}
                     </span>
                   )}
-                  <span style={{ fontSize: 12, color: 'var(--text-tertiary)', transition: 'transform 0.2s', display: 'inline-block', transform: open[s.step] ? 'rotate(0deg)' : 'rotate(-90deg)' }}>▼</span>
+                  <svg
+                    width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="var(--text-tertiary)" strokeWidth="2.5"
+                    strokeLinecap="round" strokeLinejoin="round"
+                    style={{ transition: 'transform 0.2s', transform: open[s.step] ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}
+                  >
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
                 </div>
               </div>
 
-              {/* Step body */}
+              {/* ── Step body ───────────────────────────────────── */}
               {open[s.step] && (
-                <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-                  {/* EN / UR scripts */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                    <div style={{ background: 'var(--bg-tertiary)', borderRadius: 8, padding: '10px 14px', borderLeft: '3px solid var(--so-blue)' }}>
-                      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--so-blue)', marginBottom: 6 }}>English</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.75, fontStyle: 'italic', wordBreak: 'break-word' }}>{s.en}</div>
-                    </div>
-                    <div style={{ background: 'var(--bg-tertiary)', borderRadius: 8, padding: '10px 14px', borderLeft: '3px solid var(--so-purple)' }}>
-                      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--so-purple)', marginBottom: 6 }}>Urdu</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.75, fontStyle: 'italic', wordBreak: 'break-word' }}>{s.ur}</div>
-                    </div>
+                  {/* Script blocks */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+                    {showEN && (
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--so-blue)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ width: 3, height: 14, borderRadius: 2, background: 'var(--so-blue)', display: 'inline-block' }} />
+                          English Script
+                        </div>
+                        <div style={{
+                          borderLeft: '3px solid var(--so-blue)',
+                          background: 'rgba(71,150,227,0.04)',
+                          borderRadius: '0 10px 10px 0',
+                          padding: '14px 18px',
+                          fontSize: 14, lineHeight: 1.85,
+                          color: 'var(--text-primary)',
+                        }}>
+                          {s.en}
+                        </div>
+                      </div>
+                    )}
+
+                    {showUR && (
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--so-purple)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ width: 3, height: 14, borderRadius: 2, background: 'var(--so-purple)', display: 'inline-block' }} />
+                          Urdu Script
+                        </div>
+                        <div style={{
+                          borderLeft: '3px solid var(--so-purple)',
+                          background: 'rgba(145,119,199,0.04)',
+                          borderRadius: '0 10px 10px 0',
+                          padding: '14px 18px',
+                          fontSize: 14, lineHeight: 1.85,
+                          color: 'var(--text-primary)',
+                        }}>
+                          {s.ur}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Discovery questions */}
                   {s.questions && (
-                    <div style={{ border: '1px solid var(--border-color)', borderRadius: 8, overflow: 'hidden' }}>
-                      <div style={{ padding: '7px 14px', background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-tertiary)' }}>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-tertiary)', marginBottom: 10 }}>
                         Discovery Questions
                       </div>
-                      {s.questions.map((q, i) => (
-                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: i === 0 ? 'none' : '0.5px solid var(--border-color)' }}>
-                          <div style={{ padding: '8px 14px', fontSize: 12, lineHeight: 1.55, borderRight: '0.5px solid var(--border-color)', display: 'flex', gap: 8 }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--so-blue)', fontFamily: 'var(--font-mono)', flexShrink: 0, marginTop: 1 }}>{i + 1}</span>
-                            <span style={{ color: 'var(--text-primary)', wordBreak: 'break-word' }}>{q.en}</span>
+                      <div style={{ border: '1px solid var(--border-color)', borderRadius: 10, overflow: 'hidden' }}>
+                        {s.questions.map((q, i) => (
+                          <div key={i} style={{
+                            display: 'flex', gap: 14, alignItems: 'flex-start',
+                            padding: '12px 16px',
+                            borderTop: i > 0 ? '1px solid var(--border-color)' : 'none',
+                            background: i % 2 === 0 ? 'transparent' : 'var(--bg-tertiary)',
+                          }}>
+                            {/* Number bubble */}
+                            <div style={{
+                              width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+                              background: 'var(--so-blue-soft)', color: 'var(--so-blue)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 11, fontWeight: 700, marginTop: 1,
+                            }}>{i + 1}</div>
+
+                            <div style={{ flex: 1 }}>
+                              {showEN && (
+                                <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.65, marginBottom: showUR ? 5 : 0 }}>
+                                  {q.en}
+                                </div>
+                              )}
+                              {showUR && (
+                                <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.65, ...(showEN ? { paddingTop: 5, borderTop: '0.5px dashed var(--border-color)' } : {}) }}>
+                                  {q.ur}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <div style={{ padding: '8px 14px', fontSize: 12, lineHeight: 1.55, display: 'flex', gap: 8 }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--so-purple)', fontFamily: 'var(--font-mono)', flexShrink: 0, marginTop: 1 }}>{i + 1}</span>
-                            <span style={{ color: 'var(--text-secondary)', wordBreak: 'break-word' }}>{q.ur}</span>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   )}
 
                   {/* Solution pillars */}
                   {s.pillars && (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                      {s.pillars.map((p, i) => (
-                        <div key={i} style={{ border: '1px solid var(--border-color)', borderRadius: 8, padding: '12px 14px', background: 'var(--bg-tertiary)' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                            <span style={{ fontSize: 15, fontWeight: 800, background: 'var(--so-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', flexShrink: 0 }}>{p.n}</span>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3 }}>{p.title}</span>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-tertiary)', marginBottom: 10 }}>
+                        Solution Pillars
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {s.pillars.map((p, i) => (
+                          <div key={i} style={{ border: '1px solid var(--border-color)', borderRadius: 10, overflow: 'hidden' }}>
+                            {/* Pillar header */}
+                            <div style={{
+                              display: 'flex', alignItems: 'center', gap: 10,
+                              padding: '10px 16px',
+                              background: 'linear-gradient(90deg, rgba(71,150,227,0.06), transparent)',
+                              borderBottom: '1px solid var(--border-color)',
+                            }}>
+                              <span style={{
+                                fontSize: 18, fontWeight: 800,
+                                background: 'var(--so-gradient)',
+                                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text', flexShrink: 0,
+                              }}>{p.n}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{p.title}</span>
+                            </div>
+                            {/* Pillar content */}
+                            <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                              {showEN && (
+                                <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.75 }}>{p.en}</div>
+                              )}
+                              {showUR && (
+                                <div style={{
+                                  fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.75,
+                                  ...(showEN ? { paddingTop: 10, borderTop: '0.5px dashed var(--border-color)' } : {}),
+                                }}>{p.ur}</div>
+                              )}
+                            </div>
                           </div>
-                          <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.65, marginBottom: 8, wordBreak: 'break-word' }}>{p.en}</div>
-                          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.65, fontStyle: 'italic', borderTop: '0.5px solid var(--border-color)', paddingTop: 8, wordBreak: 'break-word' }}>{p.ur}</div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   )}
 
                   {/* BD Tip */}
                   {s.tip && (
-                    <div style={{ background: 'rgba(227,116,0,0.07)', border: '1px solid rgba(227,116,0,0.22)', borderRadius: 8, padding: '10px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                      <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>💡</span>
-                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7, wordBreak: 'break-word' }}>
-                        <span style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#E37400', marginRight: 8 }}>BD Tip</span>
-                        {s.tip}
+                    <div style={{
+                      background: 'rgba(227,116,0,0.06)', border: '1px solid rgba(227,116,0,0.25)',
+                      borderRadius: 10, padding: '14px 16px',
+                      display: 'flex', gap: 12, alignItems: 'flex-start',
+                    }}>
+                      <span style={{ fontSize: 18, flexShrink: 0, lineHeight: 1 }}>💡</span>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#E37400', marginBottom: 6 }}>
+                          BD Coach Tip
+                        </div>
+                        <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.8 }}>
+                          {s.tip}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -216,34 +362,60 @@ export default function SalesScriptPage() {
             </div>
           ))}
 
-          {/* Quick Reference */}
-          <div style={{ border: '1px solid var(--border-color)', borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-xs)' }}>
-            <div style={{ padding: '12px 16px', background: 'linear-gradient(90deg, var(--so-blue-soft), var(--so-pink-soft))', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* ── Quick Reference Card ──────────────────────────────── */}
+          <div style={{ border: '1px solid var(--border-color)', borderRadius: 14, overflow: 'hidden', boxShadow: 'var(--shadow-xs)' }}>
+            <div style={{
+              padding: '13px 18px',
+              background: 'linear-gradient(90deg, rgba(71,150,227,0.07), rgba(202,102,115,0.05))',
+              borderBottom: '1px solid var(--border-color)',
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}>
               <span style={{ fontSize: 16 }}>📋</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>Quick Reference Card</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Quick Reference Card</span>
             </div>
             <table className="data-table">
               <thead>
-                <tr><th>Stage</th><th>Goal</th><th>Target Time</th></tr>
+                <tr>
+                  <th>Stage</th>
+                  <th>Goal</th>
+                  <th>Target Time</th>
+                </tr>
               </thead>
               <tbody>
                 {QUICK_REF.map(r => (
-                  <tr key={r.stage}>
-                    <td style={{ fontWeight: r.bold ? 800 : 600, color: r.bold ? 'var(--so-blue)' : 'var(--text-primary)' }}>{r.stage}</td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{r.goal}</td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontWeight: r.bold ? 800 : 600, color: r.bold ? 'var(--so-blue)' : 'var(--text-primary)' }}>{r.time}</td>
+                  <tr key={r.stage} style={r.bold ? { background: 'var(--so-blue-soft)' } : {}}>
+                    <td style={{ fontWeight: r.bold ? 800 : 600, color: r.bold ? 'var(--so-blue)' : 'var(--text-primary)', fontSize: r.bold ? 13 : 12 }}>
+                      {r.stage}
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)', fontSize: 12 }}>{r.goal}</td>
+                    <td style={{ fontFamily: 'var(--font-mono)', fontWeight: r.bold ? 800 : 600, color: r.bold ? 'var(--so-blue)' : 'var(--text-primary)', fontSize: r.bold ? 13 : 12 }}>
+                      {r.time}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          {/* Golden Rule */}
-          <div style={{ background: 'linear-gradient(135deg, var(--so-blue-soft), var(--so-purple-soft))', border: '1px solid rgba(71,150,227,0.2)', borderRadius: 12, padding: '16px 20px', display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 8 }}>
-            <span style={{ fontSize: 22, flexShrink: 0 }}>🏆</span>
+          {/* ── Golden Rule ────────────────────────────────────────── */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(71,150,227,0.08), rgba(145,119,199,0.08))',
+            border: '1px solid rgba(71,150,227,0.2)',
+            borderRadius: 14, padding: '20px 22px',
+            display: 'flex', gap: 16, alignItems: 'flex-start',
+            marginBottom: 8,
+          }}>
+            <span style={{ fontSize: 26, flexShrink: 0, lineHeight: 1 }}>🏆</span>
             <div>
-              <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', background: 'var(--so-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 6 }}>Golden Rule for BDs</div>
-              <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.75 }}>
+              <div style={{
+                fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.2px',
+                background: 'var(--so-gradient)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text', marginBottom: 8,
+              }}>
+                Golden Rule for BDs
+              </div>
+              <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.85, fontWeight: 400 }}>
                 The client who talks the most in a sales call is the one most likely to convert. Your job is to ask smart questions, listen carefully, and present SUNRATE as the natural answer to the pain the client described in their own words.
               </div>
             </div>
