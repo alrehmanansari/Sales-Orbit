@@ -93,25 +93,29 @@ export default function Sidebar({ page, onNav, onLogout, isMobile, isOpen, onClo
 
       {/* ── Logo row ─────────────────────────────────────── */}
       <div style={{
-        padding: isCollapsed ? '14px 0' : '16px',
+        padding: '0 8px 0 12px',
+        height: 56,
         borderBottom: '0.5px solid var(--border-color)',
         flexShrink: 0,
         display: 'flex', alignItems: 'center',
-        justifyContent: isCollapsed ? 'center' : 'space-between',
+        gap: 8,
+        overflow: 'hidden',
       }}>
-        {isCollapsed ? (
-          <StarLogo />
-        ) : (
-          <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <StarLogo />
-            <div style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.4px', lineHeight: 1 }}>
-              <span style={{ background: 'linear-gradient(90deg,#4796E3,#9177C7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Sales </span>
-              <span style={{ background: 'linear-gradient(90deg,#9177C7,#CA6673)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Orbit</span>
-            </div>
+        {/* Logo mark — always visible */}
+        <StarLogo />
+
+        {/* Wordmark — hidden when collapsed */}
+        {!isCollapsed && (
+          <div className="sidebar-logo" style={{ flex: 1, fontWeight: 700, fontSize: 18, letterSpacing: '-0.4px', lineHeight: 1, whiteSpace: 'nowrap' }}>
+            <span style={{ background: 'linear-gradient(90deg,#4796E3,#9177C7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Sales </span>
+            <span style={{ background: 'linear-gradient(90deg,#9177C7,#CA6673)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Orbit</span>
           </div>
         )}
 
-        {/* Collapse toggle — desktop only */}
+        {/* Spacer in collapsed mode so button stays right-aligned */}
+        {isCollapsed && <div style={{ flex: 1 }} />}
+
+        {/* Collapse / expand toggle — desktop only, always visible */}
         {!isMobile && (
           <button
             onClick={toggleCollapse}
@@ -119,16 +123,13 @@ export default function Sidebar({ page, onNav, onLogout, isMobile, isOpen, onClo
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
               color: 'var(--text-tertiary)',
-              width: 24, height: 24, borderRadius: 6, flexShrink: 0,
+              width: 28, height: 28, borderRadius: 7, flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'color 0.15s, background 0.15s',
-              position: isCollapsed ? 'absolute' : 'relative',
-              ...(isCollapsed ? { bottom: -12, left: '50%', transform: 'translateX(-50%)', zIndex: 1 } : {}),
             }}
             onMouseEnter={e => { e.currentTarget.style.color = 'var(--so-blue)'; e.currentTarget.style.background = 'var(--so-blue-soft)' }}
             onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.background = 'none' }}
           >
-            {/* Chevron SVG */}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               {isCollapsed
                 ? <polyline points="9 18 15 12 9 6"/>
