@@ -6,3 +6,9 @@ dist/
 # Backend secrets
 backend/.env
 .env
+
+# SQLite runtime data
+data/
+*.db
+*.db-shm
+*.db-wal

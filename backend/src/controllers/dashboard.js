@@ -12,8 +12,10 @@ function sinceDate(range) {
   }
 }
 
+// Returns a safe WHERE fragment — value is a JS Date, not user input
 function dateClause(field, since) {
-  return since ? `AND ${field} >= '${since.toISOString().slice(0,19).replace('T',' ')}'` : '';
+  if (!since) return '';
+  return `AND ${field} >= '${since.toISOString().slice(0, 19).replace('T', ' ')}'`;
 }
 
 // GET /api/v1/dashboard/stats
@@ -21,42 +23,49 @@ exports.stats = async (req, res, next) => {
   try {
     const since = sinceDate(req.query.range || 'month');
     const ownerClause = req.user.role === 'Rep' ? `AND lead_owner = '${req.user.name}'` : '';
-    const dc = dateClause('created_at', since);
-    const adc = dateClause('date_time', since);
+    const dc  = dateClause('created_at', since);
+    const adc = dateClause('date_time',  since);
 
     const [[lStats]] = await pool.query(
       `SELECT
          COUNT(*) AS total,
-         SUM(status = 'Converted') AS converted
+         SUM(CASE WHEN status = 'Converted' THEN 1 ELSE 0 END) AS converted
        FROM leads WHERE 1=1 ${ownerClause} ${dc}`
     );
+
     const [[oStats]] = await pool.query(
       `SELECT
          COUNT(*) AS total,
-         SUM(stage NOT IN ('Lost')) AS active,
-         SUM(stage IN ('Won','Onboarded','Activated')) AS won,
-         COALESCE(SUM(CASE WHEN stage IN ('Won','Onboarded','Activated') THEN expected_monthly_revenue ELSE 0 END),0) AS revenue
+         SUM(CASE WHEN stage != 'Lost' THEN 1 ELSE 0 END) AS active,
+         SUM(CASE WHEN stage IN ('Won','Onboarded','Activated') THEN 1 ELSE 0 END) AS won,
+         COALESCE(SUM(CASE WHEN stage IN ('Won','Onboarded','Activated') THEN expected_monthly_revenue ELSE 0 END), 0) AS revenue
        FROM opportunities WHERE 1=1 ${ownerClause} ${dc}`
     );
+
+    const actOwner = req.user.role === 'Rep' ? `AND logged_by = '${req.user.name}'` : '';
     const [[aStats]] = await pool.query(
-      `SELECT COUNT(*) AS total, SUM(type='Call') AS calls
-       FROM activities WHERE 1=1 ${req.user.role === 'Rep' ? `AND logged_by = '${req.user.name}'` : ''} ${adc}`
+      `SELECT
+         COUNT(*) AS total,
+         SUM(CASE WHEN type = 'Call' THEN 1 ELSE 0 END) AS calls
+       FROM activities WHERE 1=1 ${actOwner} ${adc}`
     );
 
     const convRate = lStats.total > 0
       ? parseFloat(((lStats.converted / lStats.total) * 100).toFixed(1)) : 0;
 
-    ok(res, { stats: {
-      totalLeads:           lStats.total,
-      convertedLeads:       lStats.converted,
-      conversionRate:       convRate,
-      totalOpportunities:   oStats.total,
-      activeOpportunities:  oStats.active,
-      wonOpportunities:     oStats.won,
-      totalRevenue:         parseFloat(oStats.revenue) || 0,
-      totalActivities:      aStats.total,
-      callActivities:       aStats.calls,
-    }});
+    ok(res, {
+      stats: {
+        totalLeads:          Number(lStats.total),
+        convertedLeads:      Number(lStats.converted),
+        conversionRate:      convRate,
+        totalOpportunities:  Number(oStats.total),
+        activeOpportunities: Number(oStats.active),
+        wonOpportunities:    Number(oStats.won),
+        totalRevenue:        parseFloat(oStats.revenue) || 0,
+        totalActivities:     Number(aStats.total),
+        callActivities:      Number(aStats.calls),
+      },
+    });
   } catch (err) { next(err); }
 };
 
@@ -67,16 +76,19 @@ exports.pipeline = async (req, res, next) => {
     const [rows] = await pool.query(
       `SELECT stage,
               COUNT(*) AS count,
-              COALESCE(SUM(expected_monthly_volume),0)  AS totalVolume,
-              COALESCE(SUM(expected_monthly_revenue),0) AS totalRevenue
+              COALESCE(SUM(expected_monthly_volume),  0) AS totalVolume,
+              COALESCE(SUM(expected_monthly_revenue), 0) AS totalRevenue
        FROM opportunities ${ownerClause}
        GROUP BY stage ORDER BY stage`
     );
-    ok(res, { pipeline: rows.map(r => ({
-      _id: r.stage, count: r.count,
-      totalVolume:  parseFloat(r.totalVolume),
-      totalRevenue: parseFloat(r.totalRevenue),
-    }))});
+    ok(res, {
+      pipeline: rows.map(r => ({
+        _id:         r.stage,
+        count:       Number(r.count),
+        totalVolume:  parseFloat(r.totalVolume)  || 0,
+        totalRevenue: parseFloat(r.totalRevenue) || 0,
+      })),
+    });
   } catch (err) { next(err); }
 };
 
@@ -85,38 +97,29 @@ exports.leaderboard = async (req, res, next) => {
   try {
     const since = sinceDate(req.query.range || 'month');
     const dc  = dateClause('created_at', since);
-    const adc = dateClause('date_time', since);
+    const adc = dateClause('date_time',  since);
 
     const [byLead] = await pool.query(
       `SELECT lead_owner AS name,
               COUNT(*) AS leads,
-              SUM(status='Converted') AS converted
-       FROM leads WHERE 1=1 ${dc}
-       GROUP BY lead_owner`
+              SUM(CASE WHEN status = 'Converted' THEN 1 ELSE 0 END) AS converted
+       FROM leads WHERE 1=1 ${dc} GROUP BY lead_owner`
     );
     const [byOpp] = await pool.query(
       `SELECT lead_owner AS name,
-              SUM(stage IN ('Won','Onboarded','Activated')) AS won,
-              COALESCE(SUM(CASE WHEN stage IN ('Won','Onboarded','Activated') THEN expected_monthly_revenue ELSE 0 END),0) AS revenue
-       FROM opportunities WHERE 1=1 ${dc}
-       GROUP BY lead_owner`
+              SUM(CASE WHEN stage IN ('Won','Onboarded','Activated') THEN 1 ELSE 0 END) AS won,
+              COALESCE(SUM(CASE WHEN stage IN ('Won','Onboarded','Activated') THEN expected_monthly_revenue ELSE 0 END), 0) AS revenue
+       FROM opportunities WHERE 1=1 ${dc} GROUP BY lead_owner`
     );
     const [byAct] = await pool.query(
       `SELECT logged_by AS name, COUNT(*) AS activities
-       FROM activities WHERE 1=1 ${adc}
-       GROUP BY logged_by`
+       FROM activities WHERE 1=1 ${adc} GROUP BY logged_by`
     );
 
     const map = {};
-    byLead.forEach(r => { map[r.name] = { name: r.name, leads: r.leads, converted: r.converted }; });
-    byOpp.forEach(r  => {
-      if (!map[r.name]) map[r.name] = { name: r.name };
-      Object.assign(map[r.name], { won: r.won, revenue: parseFloat(r.revenue) });
-    });
-    byAct.forEach(r  => {
-      if (!map[r.name]) map[r.name] = { name: r.name };
-      map[r.name].activities = r.activities;
-    });
+    byLead.forEach(r => { map[r.name] = { name: r.name, leads: Number(r.leads), converted: Number(r.converted) }; });
+    byOpp.forEach(r  => { if (!map[r.name]) map[r.name] = { name: r.name }; Object.assign(map[r.name], { won: Number(r.won), revenue: parseFloat(r.revenue) || 0 }); });
+    byAct.forEach(r  => { if (!map[r.name]) map[r.name] = { name: r.name }; map[r.name].activities = Number(r.activities); });
 
     const leaderboard = Object.values(map).map(r => ({
       name:       r.name       || '',
@@ -136,19 +139,20 @@ exports.activityBreakdown = async (req, res, next) => {
   try {
     const since = sinceDate(req.query.range || 'month');
     const ownerClause = req.user.role === 'Rep' ? `AND logged_by = '${req.user.name}'` : '';
-    const adc = dateClause('date_time', since);
+    const adc  = dateClause('date_time', since);
     const base = `FROM activities WHERE 1=1 ${ownerClause} ${adc}`;
 
     const [byType]     = await pool.query(`SELECT type AS _id, COUNT(*) AS count ${base} GROUP BY type`);
     const [byOutcome]  = await pool.query(
-      `SELECT call_outcome AS _id, COUNT(*) AS count ${base} AND type='Call' AND call_outcome != '' GROUP BY call_outcome`
+      `SELECT call_outcome AS _id, COUNT(*) AS count ${base} AND type = 'Call' AND call_outcome != '' GROUP BY call_outcome`
     );
     const [byCallType] = await pool.query(
-      `SELECT call_type AS _id, COUNT(*) AS count ${base} AND type='Call' AND call_type != '' GROUP BY call_type`
+      `SELECT call_type AS _id, COUNT(*) AS count ${base} AND type = 'Call' AND call_type != '' GROUP BY call_type`
     );
+    // DATE_FORMAT is transformed to strftime by db adapter for SQLite
     const [daily] = await pool.query(
-      `SELECT DATE_FORMAT(date_time,'%Y-%m-%d') AS _id, COUNT(*) AS count
-       ${base} GROUP BY DATE_FORMAT(date_time,'%Y-%m-%d') ORDER BY _id DESC LIMIT 30`
+      `SELECT DATE_FORMAT(date_time, '%Y-%m-%d') AS _id, COUNT(*) AS count
+       ${base} GROUP BY DATE_FORMAT(date_time, '%Y-%m-%d') ORDER BY _id DESC LIMIT 30`
     );
 
     ok(res, { byType, byOutcome, byCallType, daily: daily.reverse() });

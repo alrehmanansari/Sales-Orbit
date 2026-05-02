@@ -42,7 +42,7 @@ exports.getByUser = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// PUT /api/v1/kpis  (bulk upsert)
+// PUT /api/v1/kpis  — upsert using SELECT + INSERT/UPDATE (works on MySQL & SQLite)
 exports.upsert = async (req, res, next) => {
   try {
     const rows = req.body.kpis;
@@ -52,18 +52,26 @@ exports.upsert = async (req, res, next) => {
       const { error, value } = kpiEntry.validate(row);
       if (error) return badRequest(res, error.details[0].message);
 
-      await pool.query(
-        `INSERT INTO kpis (user_id, user_name, quarter, year, tc_target, tc_ach, ac_target, ac_ach)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE
-           user_name = VALUES(user_name),
-           tc_target = VALUES(tc_target),
-           tc_ach    = VALUES(tc_ach),
-           ac_target = VALUES(ac_target),
-           ac_ach    = VALUES(ac_ach)`,
-        [value.userId, value.userName, value.quarter, value.year,
-         value.tcTarget, value.tcAch, value.acTarget, value.acAch]
+      const [existing] = await pool.query(
+        'SELECT id FROM kpis WHERE user_id = ? AND quarter = ? AND year = ?',
+        [value.userId, value.quarter, value.year]
       );
+
+      if (existing.length) {
+        await pool.query(
+          `UPDATE kpis SET user_name = ?, tc_target = ?, tc_ach = ?, ac_target = ?, ac_ach = ?
+           WHERE user_id = ? AND quarter = ? AND year = ?`,
+          [value.userName, value.tcTarget, value.tcAch, value.acTarget, value.acAch,
+           value.userId, value.quarter, value.year]
+        );
+      } else {
+        await pool.query(
+          `INSERT INTO kpis (user_id, user_name, quarter, year, tc_target, tc_ach, ac_target, ac_ach)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [value.userId, value.userName, value.quarter, value.year,
+           value.tcTarget, value.tcAch, value.acTarget, value.acAch]
+        );
+      }
     }
     ok(res, {}, 'KPIs updated');
   } catch (err) { next(err); }
