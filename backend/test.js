@@ -1,5 +1,5 @@
-// Quick integration test — run with: node test.js
-require('dotenv').config();
+// Quick integration test — run with: node backend/test.js
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 const BASE = `http://localhost:${process.env.PORT || 5001}/api/v1`;
 
 async function req(method, path, body, token) {

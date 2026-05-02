@@ -42,15 +42,45 @@ function LoadingScreen() {
   )
 }
 
+function BackendError({ message }) {
+  return (
+    <div style={{
+      display: 'flex', height: '100dvh', alignItems: 'center', justifyContent: 'center',
+      background: 'var(--bg-base)', flexDirection: 'column', gap: 12, padding: 24, textAlign: 'center'
+    }}>
+      <div style={{ fontSize: 32 }}>⚠️</div>
+      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Backend not reachable</div>
+      <div style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 420, lineHeight: 1.6 }}>{message}</div>
+      <div style={{
+        marginTop: 8, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)',
+        borderRadius: 10, padding: '12px 20px', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)'
+      }}>
+        cd backend &nbsp;&&nbsp; npm run dev
+      </div>
+      <button
+        onClick={() => window.location.reload()}
+        style={{
+          marginTop: 8, padding: '9px 24px', borderRadius: 24, border: 'none',
+          background: 'var(--so-gradient)', color: '#fff', cursor: 'pointer',
+          fontFamily: 'var(--font)', fontSize: 13, fontWeight: 600
+        }}
+      >
+        Retry
+      </button>
+    </div>
+  )
+}
+
 function AppContent() {
   const [page, setPage] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
   const { logout } = useAuth()
-  const { crmLoading } = useCRM()
+  const { crmLoading, crmError } = useCRM()
   const isMobile = useIsMobile()
 
   if (crmLoading) return <LoadingScreen />
+  if (crmError)   return <BackendError message={crmError} />
 
   const PAGES = {
     dashboard:     <Dashboard />,

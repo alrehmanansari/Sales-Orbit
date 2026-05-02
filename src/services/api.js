@@ -9,13 +9,28 @@ async function request(method, path, body) {
   const token = getToken()
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  })
+  let res
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    })
+  } catch {
+    // Network failure — backend is not reachable at all
+    throw new Error('BACKEND_UNREACHABLE')
+  }
 
-  const json = await res.json()
+  // Read body as text first — avoids crash when body is empty or non-JSON
+  // (Vite proxy returns HTTP 500 with empty body when backend is offline)
+  let json = {}
+  try {
+    const text = await res.text()
+    if (text) json = JSON.parse(text)
+  } catch {
+    throw new Error(res.ok ? 'Invalid response from server' : `Server error (${res.status})`)
+  }
+
   if (!res.ok) throw new Error(json.message || `Request failed (${res.status})`)
   return json
 }
@@ -32,11 +47,11 @@ function qs(params = {}) {
 }
 
 export const auth = {
-  signup:    (data)        => post('/auth/signup', data),
-  login:     (email)       => post('/auth/login', { email }),
-  verifyOtp: (email, otp)  => post('/auth/verify-otp', { email, otp }),
-  me:        ()            => get('/auth/me'),
-  updateMe:  (data)        => put('/auth/me', data),
+  signup:    (data)       => post('/auth/signup', data),
+  login:     (email)      => post('/auth/login', { email }),
+  verifyOtp: (email, otp) => post('/auth/verify-otp', { email, otp }),
+  me:        ()           => get('/auth/me'),
+  updateMe:  (data)       => put('/auth/me', data),
 }
 
 export const users = {
@@ -44,31 +59,31 @@ export const users = {
 }
 
 export const leads = {
-  list:    (params)  => get(`/leads${qs(params)}`),
-  create:  (data)    => post('/leads', data),
+  list:    (params)   => get(`/leads${qs(params)}`),
+  create:  (data)     => post('/leads', data),
   update:  (id, data) => put(`/leads/${id}`, data),
-  remove:  (id)      => del(`/leads/${id}`),
-  bulk:    (rows)    => post('/leads/bulk', { leads: rows }),
+  remove:  (id)       => del(`/leads/${id}`),
+  bulk:    (rows)     => post('/leads/bulk', { leads: rows }),
   convert: (id, data) => post(`/leads/${id}/convert`, data),
 }
 
 export const opportunities = {
-  list:      (params)       => get(`/opportunities${qs(params)}`),
-  create:    (data)         => post('/opportunities', data),
-  update:    (id, data)     => put(`/opportunities/${id}`, data),
-  remove:    (id)           => del(`/opportunities/${id}`),
-  moveStage: (id, data)     => patch(`/opportunities/${id}/stage`, data),
+  list:      (params)   => get(`/opportunities${qs(params)}`),
+  create:    (data)     => post('/opportunities', data),
+  update:    (id, data) => put(`/opportunities/${id}`, data),
+  remove:    (id)       => del(`/opportunities/${id}`),
+  moveStage: (id, data) => patch(`/opportunities/${id}/stage`, data),
 }
 
 export const activities = {
-  list:     (params)     => get(`/activities${qs(params)}`),
-  create:   (data)       => post('/activities', data),
-  byEntity: (type, id)   => get(`/activities/entity/${type}/${id}`),
+  list:     (params)   => get(`/activities${qs(params)}`),
+  create:   (data)     => post('/activities', data),
+  byEntity: (type, id) => get(`/activities/entity/${type}/${id}`),
 }
 
 export const kpis = {
-  list:   (year)   => get(`/kpis?year=${year}`),
-  upsert: (rows)   => put('/kpis', { kpis: rows }),
+  list:   (year) => get(`/kpis?year=${year}`),
+  upsert: (rows) => put('/kpis', { kpis: rows }),
 }
 
 export const dashboard = {

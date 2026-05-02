@@ -107,6 +107,7 @@ function reducer(state, action) {
 export function CRMProvider({ children }) {
   const [state, realDispatch] = useReducer(reducer, INITIAL_STATE)
   const [crmLoading, setCrmLoading] = React.useState(true)
+  const [crmError, setCrmError]     = React.useState(null)
   const stateRef = useRef(state)
   useEffect(() => { stateRef.current = state }, [state])
 
@@ -133,6 +134,9 @@ export function CRMProvider({ children }) {
       })
     }).catch(err => {
       console.error('CRM initial load failed:', err)
+      setCrmError(err.message === 'BACKEND_UNREACHABLE'
+        ? 'Cannot reach the backend server. Make sure it is running on port 5001.'
+        : 'Failed to load data: ' + err.message)
     }).finally(() => setCrmLoading(false))
   }, [])
 
@@ -311,7 +315,7 @@ export function CRMProvider({ children }) {
   }, [])
 
   return (
-    <CRMContext.Provider value={{ state, dispatch, crmLoading }}>
+    <CRMContext.Provider value={{ state, dispatch, crmLoading, crmError }}>
       {children}
     </CRMContext.Provider>
   )

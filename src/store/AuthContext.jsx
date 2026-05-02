@@ -22,10 +22,14 @@ export function AuthProvider({ children }) {
       const user = { ...res.user }
       localStorage.setItem(USER_KEY, JSON.stringify(user))
       setCurrentUser(user)
-    }).catch(() => {
-      localStorage.removeItem(TOKEN_KEY)
-      localStorage.removeItem(USER_KEY)
-      setCurrentUser(null)
+    }).catch(err => {
+      // BACKEND_UNREACHABLE: keep the stored user so the app loads from cache
+      // Any other error (401, expired token): clear the session
+      if (err.message !== 'BACKEND_UNREACHABLE') {
+        localStorage.removeItem(TOKEN_KEY)
+        localStorage.removeItem(USER_KEY)
+        setCurrentUser(null)
+      }
     })
   }, [])
 

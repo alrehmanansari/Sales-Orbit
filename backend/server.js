@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 require('./src/config/db'); // initialises pool (SQLite auto-creates tables; MySQL connects)
 const app = require('./src/app');
 
