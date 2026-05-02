@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '../store/AuthContext'
 import { DESIGNATIONS } from '../data/constants'
 
@@ -57,7 +57,15 @@ export default function AuthPage() {
   const [otpInput, setOtpInput] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [serverOnline, setServerOnline] = useState(null) // null=checking, true=ok, false=down
   const [form, setForm] = useState({ firstName: '', lastName: '', designation: '', email: '', loginEmail: '' })
+
+  // Ping the backend — any valid HTTP response means it's online
+  useEffect(() => {
+    fetch('/api/v1/auth/me')
+      .then(r => setServerOnline(r.status < 600))
+      .catch(() => setServerOnline(false))
+  }, [])
 
   function setF(k, v) { setForm(p => ({ ...p, [k]: v })); setError('') }
 
@@ -146,8 +154,22 @@ export default function AuthPage() {
           }} />
         </div>
 
+        {/* Backend status indicator */}
+        {serverOnline === false && (
+          <div style={{ background: 'rgba(217,48,37,0.08)', border: '1px solid rgba(217,48,37,0.25)', borderRadius: 8, padding: '9px 12px', fontSize: 12, color: '#D93025', marginBottom: 14 }}>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>⚠ Backend server is not running</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>cd backend &nbsp;&amp;&amp;&nbsp; npm run dev</div>
+          </div>
+        )}
+        {serverOnline === true && mode !== 'otp' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 14 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#1E8E3E', display: 'inline-block' }} />
+            Server connected
+          </div>
+        )}
+
         {error && (
-          <div style={{ background: 'rgba(217,48,37,0.08)', border: '1px solid rgba(217,48,37,0.25)', borderRadius: 8, padding: '9px 12px', fontSize: 12, color: '#D93025', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ background: 'rgba(217,48,37,0.08)', border: '1px solid rgba(217,48,37,0.25)', borderRadius: 8, padding: '9px 12px', fontSize: 12, color: '#D93025', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'pre-line' }}>
             ⚠ {error}
           </div>
         )}

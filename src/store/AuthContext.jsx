@@ -38,6 +38,8 @@ export function AuthProvider({ children }) {
       const res = await api.auth.signup(data)
       return { otp: res.otp }
     } catch (err) {
+      if (err.message === 'BACKEND_UNREACHABLE')
+        return { error: 'Cannot reach the backend. Open a terminal and run:\ncd backend && npm run dev' }
       return { error: err.message }
     }
   }
@@ -47,6 +49,8 @@ export function AuthProvider({ children }) {
       const res = await api.auth.login(email)
       return { otp: res.otp }
     } catch (err) {
+      if (err.message === 'BACKEND_UNREACHABLE')
+        return { error: 'Cannot reach the backend. Open a terminal and run:\ncd backend && npm run dev' }
       return { error: err.message }
     }
   }
@@ -60,6 +64,8 @@ export function AuthProvider({ children }) {
       setCurrentUser(user)
       return {}
     } catch (err) {
+      if (err.message === 'BACKEND_UNREACHABLE')
+        return { error: 'Lost connection to backend. Make sure it is still running.' }
       return { error: err.message }
     }
   }
