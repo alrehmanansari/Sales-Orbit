@@ -12,15 +12,19 @@ const app = express();
 app.use(helmet());
 app.use(compression());
 
-// Allow any localhost / 127.0.0.1 origin in dev; strict in production
+// Reflect origin for all localhost origins in dev; strict in production
 app.use(cors({
   origin(origin, cb) {
-    if (!origin) return cb(null, true); // Postman, mobile, same-origin
+    if (!origin) return cb(null, true); // Postman / curl / same-origin
     if (process.env.NODE_ENV !== 'production') {
-      if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return cb(null, true);
+      // Dev: allow any localhost or 127.0.0.1 origin by reflecting it
+      if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+        return cb(null, origin);
+      }
     }
+    // Production: only the configured frontend URL
     const allowed = process.env.FRONTEND_URL || 'http://localhost:3000';
-    cb(origin === allowed ? null : new Error('CORS'), origin === allowed);
+    cb(null, origin === allowed ? origin : false);
   },
   credentials: true,
 }));

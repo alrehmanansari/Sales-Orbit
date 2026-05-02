@@ -92,53 +92,69 @@ export default function Sidebar({ page, onNav, onLogout, isMobile, isOpen, onClo
     <aside style={sidebarStyle}>
 
       {/* ── Logo row ─────────────────────────────────────── */}
-      <div style={{
-        padding: '0 8px 0 12px',
-        height: 56,
-        borderBottom: '0.5px solid var(--border-color)',
-        flexShrink: 0,
-        display: 'flex', alignItems: 'center',
-        gap: 8,
-        overflow: 'hidden',
-      }}>
-        {/* Logo mark — always visible */}
-        <StarLogo />
 
-        {/* Wordmark — hidden when collapsed */}
-        {!isCollapsed && (
-          <div className="sidebar-logo" style={{ flex: 1, fontWeight: 700, fontSize: 18, letterSpacing: '-0.4px', lineHeight: 1, whiteSpace: 'nowrap' }}>
-            <span style={{ background: 'linear-gradient(90deg,#4796E3,#9177C7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Sales </span>
-            <span style={{ background: 'linear-gradient(90deg,#9177C7,#CA6673)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Orbit</span>
-          </div>
-        )}
-
-        {/* Spacer in collapsed mode so button stays right-aligned */}
-        {isCollapsed && <div style={{ flex: 1 }} />}
-
-        {/* Collapse / expand toggle — desktop only, always visible */}
-        {!isMobile && (
+      {/* COLLAPSED: only the expand button — no other content competing for space */}
+      {isCollapsed && !isMobile && (
+        <div style={{
+          height: 56, flexShrink: 0,
+          borderBottom: '0.5px solid var(--border-color)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
           <button
             onClick={toggleCollapse}
-            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title="Expand sidebar"
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--text-tertiary)',
-              width: 28, height: 28, borderRadius: 7, flexShrink: 0,
+              color: 'var(--text-secondary)',
+              width: 36, height: 36, borderRadius: 8,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'color 0.15s, background 0.15s',
             }}
             onMouseEnter={e => { e.currentTarget.style.color = 'var(--so-blue)'; e.currentTarget.style.background = 'var(--so-blue-soft)' }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.background = 'none' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'none' }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              {isCollapsed
-                ? <polyline points="9 18 15 12 9 6"/>
-                : <polyline points="15 18 9 12 15 6"/>
-              }
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"/>
             </svg>
           </button>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* EXPANDED (desktop) or mobile: logo + wordmark + collapse button */}
+      {(!isCollapsed || isMobile) && (
+        <div style={{
+          padding: '0 8px 0 12px', height: 56, flexShrink: 0,
+          borderBottom: '0.5px solid var(--border-color)',
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+          <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, overflow: 'hidden' }}>
+            <StarLogo />
+            <div style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.4px', lineHeight: 1, whiteSpace: 'nowrap' }}>
+              <span style={{ background: 'linear-gradient(90deg,#4796E3,#9177C7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Sales </span>
+              <span style={{ background: 'linear-gradient(90deg,#9177C7,#CA6673)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Orbit</span>
+            </div>
+          </div>
+          {!isMobile && (
+            <button
+              onClick={toggleCollapse}
+              title="Collapse sidebar"
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--text-tertiary)',
+                width: 28, height: 28, borderRadius: 7, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'color 0.15s, background 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--so-blue)'; e.currentTarget.style.background = 'var(--so-blue-soft)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.background = 'none' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── Nav ──────────────────────────────────────────── */}
       <nav style={{ flex: 1, padding: isCollapsed ? '12px 8px' : '10px 8px', overflowY: 'auto' }}>
