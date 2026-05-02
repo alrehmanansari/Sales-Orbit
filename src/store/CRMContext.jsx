@@ -67,7 +67,7 @@ function reducer(state, action) {
       return { ...state, opportunities: state.opportunities.filter(o => o.id !== action.id) }
 
     case 'MOVE_STAGE': {
-      const { id, newStage, note, lostReason, onHoldReviewDate } = action.payload
+      const { id, newStage, note, lostReason, onHoldReviewDate, clientId } = action.payload
       const opp = state.opportunities.find(o => o.id === id)
       if (!opp) return state
       const now = new Date().toISOString()
@@ -75,7 +75,14 @@ function reducer(state, action) {
         idx === opp.stageHistory.length - 1 ? { ...s, exitedAt: now } : s
       )
       updatedHistory.push({ stage: newStage, enteredAt: now, exitedAt: null, note, changedBy: state.currentUser?.name })
-      const updated = { ...opp, stage: newStage, stageHistory: updatedHistory, lostReason: lostReason || opp.lostReason, onHoldReviewDate: onHoldReviewDate || opp.onHoldReviewDate }
+      const updated = {
+        ...opp,
+        stage: newStage,
+        stageHistory: updatedHistory,
+        lostReason: lostReason || opp.lostReason,
+        onHoldReviewDate: onHoldReviewDate || opp.onHoldReviewDate,
+        ...(clientId ? { clientId } : {}),
+      }
       return { ...state, opportunities: state.opportunities.map(o => o.id === id ? updated : o) }
     }
 
@@ -281,8 +288,8 @@ export function CRMProvider({ children }) {
 
       case 'MOVE_STAGE': {
         realDispatch(action)
-        const { id, newStage, note, lostReason, onHoldReviewDate } = action.payload
-        api.opportunities.moveStage(id, { stage: newStage, note, lostReason, onHoldReviewDate }).catch(err => {
+        const { id, newStage, note, lostReason, onHoldReviewDate, clientId } = action.payload
+        api.opportunities.moveStage(id, { stage: newStage, note, lostReason, onHoldReviewDate, clientId }).catch(err => {
           console.error('Failed to move stage:', err)
         })
         break

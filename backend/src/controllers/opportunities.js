@@ -32,6 +32,7 @@ const oppSchema = Joi.object({
   stage:                  Joi.string().valid('Prospecting','Won','Onboarded','Activated','Lost','On Hold').default('Prospecting'),
   lostReason:             Joi.string().trim().allow('').default(''),
   onHoldReviewDate:       Joi.date().iso().allow(null).default(null),
+  clientId:               Joi.string().trim().allow('').default(''),
 });
 
 function genOppId() {
@@ -103,15 +104,15 @@ exports.create = async (req, res, next) => {
         (opportunity_id,opportunity_name,company_name,contact_person,email,phone,city,website,
          lead_source,vertical,nature_of_business,lead_owner,priority,expected_monthly_volume,
          expected_monthly_revenue,expected_close_date,decision_maker,competitors,deal_notes,
-         stage,lost_reason,on_hold_review_date,created_by)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+         stage,lost_reason,on_hold_review_date,client_id,created_by)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [oppId, value.opportunityName, value.companyName, value.contactPerson, value.email,
        value.phone, value.city, value.website, value.leadSource, value.vertical,
        value.natureOfBusiness, value.leadOwner, value.priority,
        value.expectedMonthlyVolume, value.expectedMonthlyRevenue,
        value.expectedCloseDate || null, value.decisionMaker,
        JSON.stringify(value.competitors), value.dealNotes,
-       value.stage, value.lostReason, value.onHoldReviewDate || null, req.user.name]
+       value.stage, value.lostReason, value.onHoldReviewDate || null, value.clientId || '', req.user.name]
     );
     await pool.query(
       'INSERT INTO stage_history (opportunity_id,stage,entered_at,note,changed_by) VALUES (?,?,?,?,?)',
@@ -173,7 +174,7 @@ exports.update = async (req, res, next) => {
       `UPDATE opportunities SET opportunity_name=?,company_name=?,contact_person=?,email=?,
        phone=?,city=?,website=?,lead_source=?,vertical=?,nature_of_business=?,lead_owner=?,
        priority=?,expected_monthly_volume=?,expected_monthly_revenue=?,expected_close_date=?,
-       decision_maker=?,competitors=?,deal_notes=?,lost_reason=?,on_hold_review_date=?
+       decision_maker=?,competitors=?,deal_notes=?,lost_reason=?,on_hold_review_date=?,client_id=?
        WHERE opportunity_id=?`,
       [value.opportunityName, value.companyName, value.contactPerson, value.email,
        value.phone, value.city, value.website, value.leadSource, value.vertical,
@@ -181,7 +182,7 @@ exports.update = async (req, res, next) => {
        value.expectedMonthlyVolume, value.expectedMonthlyRevenue,
        value.expectedCloseDate || null, value.decisionMaker,
        JSON.stringify(value.competitors), value.dealNotes,
-       value.lostReason, value.onHoldReviewDate || null, req.params.id]
+       value.lostReason, value.onHoldReviewDate || null, value.clientId || '', req.params.id]
     );
     const [rows] = await pool.query('SELECT * FROM opportunities WHERE opportunity_id = ?', [req.params.id]);
     const [sh]   = await pool.query('SELECT * FROM stage_history WHERE opportunity_id = ? ORDER BY id ASC', [req.params.id]);
@@ -208,6 +209,7 @@ exports.moveStage = async (req, res, next) => {
       note:               Joi.string().trim().allow('').default(''),
       lostReason:         Joi.string().trim().allow('').default(''),
       onHoldReviewDate:   Joi.date().iso().allow(null).default(null),
+      clientId:           Joi.string().trim().allow('').default(''),
     }).validate(req.body);
     if (error) return badRequest(res, error.details[0].message);
 
@@ -234,6 +236,7 @@ exports.moveStage = async (req, res, next) => {
     const params = [value.stage];
     if (value.lostReason)       { sets.push('lost_reason = ?');         params.push(value.lostReason); }
     if (value.onHoldReviewDate) { sets.push('on_hold_review_date = ?'); params.push(value.onHoldReviewDate); }
+    if (value.clientId)         { sets.push('client_id = ?');           params.push(value.clientId); }
     params.push(req.params.id);
     await pool.query(`UPDATE opportunities SET ${sets.join(', ')} WHERE opportunity_id = ?`, params);
 

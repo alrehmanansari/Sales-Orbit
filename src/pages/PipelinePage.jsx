@@ -31,8 +31,8 @@ export default function PipelinePage() {
     setCollapsed(p => ({ ...p, [stage]: !p[stage] }))
   }
 
-  function moveStage(id, { newStage, note, lostReason, onHoldReviewDate }) {
-    dispatch({ type: 'MOVE_STAGE', payload: { id, newStage, note, lostReason, onHoldReviewDate } })
+  function moveStage(id, { newStage, note, lostReason, onHoldReviewDate, clientId }) {
+    dispatch({ type: 'MOVE_STAGE', payload: { id, newStage, note, lostReason, onHoldReviewDate, clientId } })
     setStageModal(null)
   }
 

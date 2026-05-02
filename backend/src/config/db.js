@@ -59,6 +59,12 @@ function makeSQLitePool(dbPath) {
       .forEach(stmt => { try { db.prepare(stmt).run(); } catch {} });
   }
 
+  // Migrations — add new columns to existing databases
+  const oppCols = db.prepare("PRAGMA table_info(opportunities)").all().map(c => c.name);
+  if (!oppCols.includes('client_id')) {
+    db.prepare("ALTER TABLE opportunities ADD COLUMN client_id TEXT NOT NULL DEFAULT ''").run();
+  }
+
   console.log(`SQLite  →  ${dbPath}`);
   return {
     isSQLite: true,
