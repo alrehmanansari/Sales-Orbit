@@ -160,7 +160,12 @@ export default function OpportunitiesPage() {
                     <tr key={opp.id} onClick={() => setSelected(opp)}>
                       <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textAlign: 'center' }}>{idx + 1}</td>
                       <td>
-                        <div style={{ fontWeight: 700 }}>{opp.companyName}</div>
+                        <div style={{ fontWeight: 700 }}>
+                          {opp.companyName}
+                          {opp.clientId && (
+                            <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: 11, marginLeft: 6 }}>— {opp.clientId}</span>
+                          )}
+                        </div>
                         <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontWeight: 400, marginTop: 1 }}>{opp.vertical}</div>
                       </td>
                       <td onClick={e => e.stopPropagation()}>

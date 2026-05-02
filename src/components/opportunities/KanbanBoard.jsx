@@ -129,6 +129,9 @@ function KanbanCard({ opp, isDragging, onDragStart, onDragEnd, onClick }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3, flex: 1, marginRight: 8 }}>
           {opp.companyName}
+          {opp.clientId && (
+            <span style={{ display: 'block', fontWeight: 400, color: 'var(--text-muted)', fontSize: 10, marginTop: 1 }}>— {opp.clientId}</span>
+          )}
         </div>
         <PriorityBadge priority={opp.priority} />
       </div>

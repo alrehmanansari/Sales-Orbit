@@ -24,7 +24,15 @@ export default function OpportunityDetail({ opp, onClose, onEdit }) {
 
   return (
     <>
-      <Drawer onClose={onClose} title={opp.opportunityName} subtitle={opp.id}>
+      <Drawer
+        onClose={onClose}
+        title={
+          opp.clientId
+            ? <>{opp.opportunityName} <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 13 }}>— {opp.clientId}</span></>
+            : opp.opportunityName
+        }
+        subtitle={opp.id}
+      >
         {/* Actions */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
           <StageBadge stage={opp.stage} />
