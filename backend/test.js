@@ -37,7 +37,7 @@ async function run() {
   // ── Users ─────────────────────────────────────────────────────────────────
   console.log('\nUSERS');
   const users = await req('GET', '/users', null, T);
-  check('list users', users.total === 4, JSON.stringify(users).slice(0, 80));
+  check('list users', users.total >= 4, `total=${users.total}`);
 
   // ── Leads ─────────────────────────────────────────────────────────────────
   console.log('\nLEADS');

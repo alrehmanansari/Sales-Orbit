@@ -22,13 +22,16 @@ async function request(method, path, body) {
   }
 
   // Read body as text first — avoids crash when body is empty or non-JSON
-  // (Vite proxy returns HTTP 500 with empty body when backend is offline)
   let json = {}
   try {
     const text = await res.text()
     if (text) json = JSON.parse(text)
   } catch {
-    throw new Error(res.ok ? 'Invalid response from server' : `Server error (${res.status})`)
+    // Non-JSON body (plain text, HTML error page, etc.)
+    if (res.status === 429) throw new Error('Too many requests. Please wait a moment and try again.')
+    if (res.status === 405) throw new Error('Method not allowed. Make sure the backend server is running.')
+    if (res.status === 0 || res.status >= 500) throw new Error('Backend server is not responding. Run: cd backend && npm run dev')
+    throw new Error(`Server error (${res.status})`)
   }
 
   if (!res.ok) throw new Error(json.message || `Request failed (${res.status})`)
