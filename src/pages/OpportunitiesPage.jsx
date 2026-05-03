@@ -161,9 +161,9 @@ export default function OpportunitiesPage() {
                       <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', textAlign: 'center' }}>{idx + 1}</td>
                       <td>
                         <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 260 }}>
-                          {opp.opportunityName}
+                          {opp.companyName}
                           {opp.clientId && (
-                            <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: 11, marginLeft: 6 }}>— {opp.clientId}</span>
+                            <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: 11 }}> - {opp.clientId}</span>
                           )}
                         </div>
                       </td>

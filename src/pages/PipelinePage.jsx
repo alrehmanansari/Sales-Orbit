@@ -154,9 +154,9 @@ export default function PipelinePage() {
                             <td style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'center' }}>{idx + 1}</td>
                             <td>
                               <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 240 }}>
-                                {opp.opportunityName}
+                                {opp.companyName}
                                 {opp.clientId && (
-                                  <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: 11, marginLeft: 6 }}>— {opp.clientId}</span>
+                                  <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: 11 }}> - {opp.clientId}</span>
                                 )}
                               </div>
                             </td>

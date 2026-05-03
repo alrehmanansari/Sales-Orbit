@@ -26,11 +26,7 @@ export default function OpportunityDetail({ opp, onClose, onEdit }) {
     <>
       <Drawer
         onClose={onClose}
-        title={
-          opp.clientId
-            ? <>{opp.opportunityName} <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 13 }}>— {opp.clientId}</span></>
-            : opp.opportunityName
-        }
+        title={opp.clientId ? `${opp.companyName} - ${opp.clientId}` : opp.companyName}
         subtitle={opp.id}
       >
         {/* Actions */}

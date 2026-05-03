@@ -129,11 +129,11 @@ function KanbanCard({ opp, isDragging, onDragStart, onDragEnd, onClick }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3, flex: 1, marginRight: 8, overflow: 'hidden' }}>
           <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {opp.opportunityName}
+            {opp.companyName}
+            {opp.clientId && (
+              <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 11 }}> - {opp.clientId}</span>
+            )}
           </div>
-          {opp.clientId && (
-            <div style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 10, marginTop: 2 }}>— {opp.clientId}</div>
-          )}
         </div>
         <PriorityBadge priority={opp.priority} />
       </div>
