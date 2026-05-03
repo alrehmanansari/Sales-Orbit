@@ -64,6 +64,9 @@ function makeSQLitePool(dbPath) {
   if (!oppCols.includes('client_id')) {
     db.prepare("ALTER TABLE opportunities ADD COLUMN client_id TEXT NOT NULL DEFAULT ''").run();
   }
+  if (!oppCols.includes('kyc_agent')) {
+    db.prepare("ALTER TABLE opportunities ADD COLUMN kyc_agent TEXT NOT NULL DEFAULT ''").run();
+  }
 
   console.log(`SQLite  →  ${dbPath}`);
   return {

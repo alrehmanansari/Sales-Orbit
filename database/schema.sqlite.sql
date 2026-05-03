@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS opportunities (
   lost_reason              TEXT NOT NULL DEFAULT '',
   on_hold_review_date      TEXT,
   client_id                TEXT NOT NULL DEFAULT '',
+  kyc_agent                TEXT NOT NULL DEFAULT '',
   created_by               TEXT NOT NULL DEFAULT '',
   created_at               TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at               TEXT NOT NULL DEFAULT (datetime('now'))

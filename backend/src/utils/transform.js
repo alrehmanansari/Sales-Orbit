@@ -85,6 +85,7 @@ function transformOpportunity(row, stageHistory = []) {
     lostReason:              row.lost_reason        || '',
     onHoldReviewDate:        row.on_hold_review_date || null,
     clientId:                row.client_id          || '',
+    kycAgent:                row.kyc_agent          || '',
     createdBy:               row.created_by         || '',
     stageHistory,
     createdAt:               row.created_at,

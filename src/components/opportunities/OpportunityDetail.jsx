@@ -18,8 +18,8 @@ export default function OpportunityDetail({ opp, onClose, onEdit }) {
   const activities = state.activities.filter(a => a.entityId === opp.id || a.entityId === opp.leadId)
   const daysInPipeline = daysDiff(opp.createdAt)
 
-  function moveStage({ newStage, note, lostReason, onHoldReviewDate, clientId }) {
-    dispatch({ type: 'MOVE_STAGE', payload: { id: opp.id, newStage, note, lostReason, onHoldReviewDate, clientId } })
+  function moveStage({ newStage, note, lostReason, onHoldReviewDate, clientId, kycAgent }) {
+    dispatch({ type: 'MOVE_STAGE', payload: { id: opp.id, newStage, note, lostReason, onHoldReviewDate, clientId, kycAgent } })
   }
 
   return (
@@ -78,19 +78,28 @@ export default function OpportunityDetail({ opp, onClose, onEdit }) {
           )}
         </div>
 
-        {/* Client ID banner — shown when Won and clientId is set */}
+        {/* Client ID + KYC Agent banner — shown when Won */}
         {opp.clientId && (
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16,
+            display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16,
             background: 'linear-gradient(90deg, rgba(71,150,227,0.08), rgba(145,119,199,0.08))',
             border: '1px solid rgba(71,150,227,0.25)', borderRadius: 'var(--radius)',
-            padding: '10px 14px',
+            padding: '10px 14px', flexWrap: 'wrap',
           }}>
             <span style={{ fontSize: 18 }}>🏆</span>
             <div>
               <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Client ID</div>
               <div style={{ fontSize: 15, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--so-blue)', letterSpacing: '0.5px' }}>{opp.clientId}</div>
             </div>
+            {opp.kycAgent && (
+              <>
+                <div style={{ width: 1, height: 32, background: 'rgba(71,150,227,0.2)', flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>KYC Agent</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{opp.kycAgent}</div>
+                </div>
+              </>
+            )}
           </div>
         )}
 

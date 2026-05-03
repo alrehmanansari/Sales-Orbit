@@ -151,12 +151,6 @@ function KanbanCard({ opp, isDragging, onDragStart, onDragEnd, onClick }) {
         </div>
       </div>
 
-      {opp.vertical && (
-        <div style={{ fontSize: 10, color: 'var(--blue)', background: 'rgba(59,130,246,0.1)', borderRadius: 20, padding: '1px 7px', display: 'inline-block', marginBottom: 6 }}>
-          {opp.vertical}
-        </div>
-      )}
-
       {isOverdue && (
         <div style={{ fontSize: 10, color: 'var(--red)', display: 'flex', alignItems: 'center', gap: 3 }}>
           ⚠ Close date passed
