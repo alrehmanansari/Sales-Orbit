@@ -22,7 +22,7 @@ const IconViewDetail = () => (
 )
 
 // Grid columns: Opportunity | Contact | Priority | Phone | Email | Rev | Vol | Close | Owner | Actions
-const GRID = '2fr 1fr 75px 120px 1fr 52px 105px 105px 100px 70px 56px'
+const GRID = '2fr 1fr 120px 1fr 52px 105px 105px 100px 70px 56px'
 
 export default function PipelinePage() {
   const { state, dispatch } = useCRM()
@@ -215,7 +215,6 @@ export default function PipelinePage() {
                   {[
                     { label: 'Opportunity',  align: 'left'  },
                     { label: 'Contact',      align: 'left'  },
-                    { label: 'Priority',     align: 'left'  },
                     { label: 'Phone',        align: 'left'  },
                     { label: 'Email',        align: 'left'  },
                     { label: 'Age',          align: 'right' },
@@ -254,9 +253,6 @@ export default function PipelinePage() {
                       <div style={{ fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {opp.contactPerson || '—'}
                       </div>
-
-                      {/* Priority */}
-                      <div><PriorityBadge priority={opp.priority} /></div>
 
                       {/* Phone */}
                       <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
