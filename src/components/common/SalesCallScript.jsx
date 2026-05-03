@@ -108,36 +108,41 @@ export default function SalesCallScript({ onClose }) {
       <div className="modal" style={{ maxWidth: 860, width: '100%', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
 
         {/* ── Modal header ──────────────────────────────────────────── */}
-        <div className="modal-header" style={{ background: 'linear-gradient(135deg,rgba(71,150,227,0.07),rgba(145,119,199,0.07))', flexShrink: 0, flexWrap: 'wrap', gap: 10 }}>
-          <div>
+        <div className="modal-header" style={{
+          background: 'linear-gradient(135deg,rgba(71,150,227,0.07),rgba(145,119,199,0.07))',
+          flexShrink: 0, gap: 12, justifyContent: 'flex-start',
+        }}>
+          {/* Title */}
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.4px', textTransform: 'uppercase', background: 'var(--so-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 3 }}>
               SUNRATE · BD Sales Guide
             </div>
             <h3 style={{ margin: 0 }}>Sales Call Script &nbsp;·&nbsp; 9 Steps · ~12–15 min</h3>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
 
-            {/* Language switcher */}
+          {/* Controls — language switcher + collapse toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <div style={{ display: 'flex', gap: 2, background: 'var(--bg-tertiary)', borderRadius: 22, padding: 3, border: '1px solid var(--border-color)' }}>
               {['English','Urdu','Both'].map(l => (
                 <LangTab key={l} label={l} active={lang === l} onClick={() => setLang(l)} />
               ))}
             </div>
 
-            {/* Collapse / expand all */}
             <button onClick={toggleAll} style={{
               padding: '5px 12px', borderRadius: 20, border: '1px solid var(--border-color)',
               background: 'var(--bg-card)', color: 'var(--text-secondary)',
               fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font)', transition: 'all 0.15s',
+              whiteSpace: 'nowrap',
             }}
               onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--so-blue)'}
               onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
             >
               {allOpen ? 'Collapse All' : 'Expand All'}
             </button>
-
-            <button className="btn-icon" onClick={onClose} style={{ fontSize: 16 }}>✕</button>
           </div>
+
+          {/* Close — separate, always at far right */}
+          <button className="btn-icon" onClick={onClose} style={{ fontSize: 16, flexShrink: 0 }}>✕</button>
         </div>
 
         {/* ── Scrollable body ────────────────────────────────────────── */}
