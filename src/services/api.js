@@ -1,4 +1,6 @@
-const BASE = '/api/v1'
+// VITE_API_URL: set in .env.production when frontend & backend are on different domains.
+// Leave unset for the standard Nginx reverse-proxy setup (same domain).
+const BASE = import.meta.env.VITE_API_URL || '/api/v1'
 
 function getToken() {
   return localStorage.getItem('so_token')

@@ -1,205 +1,323 @@
-# SalesOrbit CRM — cPanel Deployment Guide
+# SalesOrbit CRM — VPS Deployment Guide
+
+Ubuntu 22.04 LTS · Nginx · PM2 · Node.js 20 · MySQL or SQLite
+
+---
 
 ## Prerequisites
 
-- cPanel hosting with **Node.js** support (via "Setup Node.js App")
-- MySQL database created in cPanel → **MySQL Databases**
-- Domain / subdomain pointed to `public_html`
+| | Minimum | Recommended |
+|---|---|---|
+| RAM | 1 GB | 2 GB |
+| CPU | 1 vCPU | 2 vCPU |
+| Disk | 20 GB SSD | 40 GB SSD |
+| OS | Ubuntu 22.04 | Ubuntu 24.04 |
+
+A domain name pointed to the VPS IP address (A record).
 
 ---
 
-## Step 1 — Import the MySQL Schema
-
-1. Open **cPanel → phpMyAdmin**
-2. Select your database (or create one)
-3. Click the **Import** tab
-4. Choose `database/schema.sql` → click **Go**
-
-All six tables will be created: `users`, `otps`, `leads`, `opportunities`, `stage_history`, `activities`, `kpis`.
-
----
-
-## Step 2 — Deploy the Backend
-
-### 2a — Upload backend files
-
-Upload the entire `backend/` folder to your server. Recommended path:
-
-```
-/home/<cpanel_user>/salesorbit-backend/
-```
-
-Do **not** place it inside `public_html` — it should be outside the web root.
-
-### 2b — Create the Node.js App in cPanel
-
-1. cPanel → **Setup Node.js App** → **Create Application**
-2. Fill in:
-   | Field | Value |
-   |---|---|
-   | Node.js version | 18 (or latest available) |
-   | Application mode | Production |
-   | Application root | `salesorbit-backend` |
-   | Application URL | `yourdomain.com` (leave path blank — API prefix handled by app) |
-   | Application startup file | `server.js` |
-3. Click **Create**
-
-### 2c — Install dependencies
-
-In the cPanel Node.js panel, click **Run NPM Install** (or SSH into the server and run):
+## Step 1 — Initial server setup
 
 ```bash
-cd ~/salesorbit-backend
-npm install
+# Log in as root, then create a deploy user
+adduser deploy
+usermod -aG sudo deploy
+su - deploy
+
+# Firewall — allow SSH, HTTP, HTTPS only
+sudo ufw allow OpenSSH
+sudo ufw allow 'Nginx Full'
+sudo ufw enable
+sudo ufw status
 ```
 
-### 2d — Set environment variables
+> Port 5001 (Node.js) is **not** opened — Nginx proxies to it internally.
 
-In the cPanel Node.js panel add these environment variables (or create `~/salesorbit-backend/.env`):
+---
 
+## Step 2 — Install Node.js (via nvm)
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+source ~/.bashrc
+
+nvm install 20
+nvm use 20
+nvm alias default 20
+node -v    # v20.x.x
 ```
-PORT=5000
+
+---
+
+## Step 3 — Install Nginx
+
+```bash
+sudo apt update && sudo apt install -y nginx
+sudo systemctl enable nginx
+sudo systemctl start nginx
+curl http://localhost   # should return Nginx welcome page
+```
+
+---
+
+## Step 4 — Install PM2 (process manager)
+
+```bash
+npm install -g pm2
+pm2 startup            # follow the printed command (runs PM2 on boot)
+```
+
+---
+
+## Step 5 — Install MySQL (optional — skip to use SQLite)
+
+SQLite works well for teams up to ~20 users. Use MySQL for larger teams or if you need concurrent write performance.
+
+```bash
+sudo apt install -y mysql-server
+sudo mysql_secure_installation
+
+# Create database and user
+sudo mysql -u root -p
+```
+
+Inside the MySQL shell:
+```sql
+CREATE DATABASE salesorbit CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'salesorbit_user'@'localhost' IDENTIFIED BY 'strong_password_here';
+GRANT ALL PRIVILEGES ON salesorbit.* TO 'salesorbit_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+Import the schema:
+```bash
+mysql -u salesorbit_user -p salesorbit < /var/www/salesorbit/database/schema.sql
+```
+
+---
+
+## Step 6 — Clone the repository
+
+```bash
+sudo mkdir -p /var/www/salesorbit
+sudo chown deploy:deploy /var/www/salesorbit
+
+cd /var/www/salesorbit
+git clone https://github.com/alrehmanansari/Sales-Orbit.git .
+```
+
+---
+
+## Step 7 — Configure the backend
+
+```bash
+cd /var/www/salesorbit/backend
+cp .env.example .env
+nano .env   # fill in all values
+```
+
+Key values to set:
+
+```env
 NODE_ENV=production
-DB_HOST=localhost
-DB_USER=cpanel_dbusername
-DB_PASSWORD=your_db_password
-DB_NAME=cpanel_dbname
-JWT_SECRET=long-random-secret-here
-JWT_EXPIRES_IN=7d
-OTP_EXPIRES_MS=600000
-BCRYPT_ROUNDS=10
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
+PORT=5001
+
+# SQLite (default — no extra setup):
+DB_ENGINE=sqlite
+
+# OR MySQL:
+# DB_ENGINE=mysql
+# DB_HOST=localhost
+# DB_USER=salesorbit_user
+# DB_PASSWORD=strong_password_here
+# DB_NAME=salesorbit
+
+# Generate: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+JWT_SECRET=<64-char random hex>
+
 SMTP_USER=your@gmail.com
 SMTP_PASS=your-app-password
-FROM_EMAIL=noreply@yourdomain.com
-FROM_NAME=SalesOrbit CRM
 FRONTEND_URL=https://yourdomain.com
 ```
 
-> **cPanel DB prefix**: cPanel prepends your username to DB names and users, e.g. `alice_salesorbit` and `alice_dbuser`. Use the full prefixed names.
-
-### 2e — Restart the app
-
-Click **Restart** in the cPanel Node.js panel. Verify it is running by visiting:
-
-```
-https://yourdomain.com:5000/health
+Install dependencies:
+```bash
+npm install --omit=dev
 ```
 
 ---
 
-## Step 3 — Configure Apache to Proxy API Requests
-
-cPanel uses Apache in front of your Node.js app. Add the following to the `.htaccess` in `public_html/` (this file is already included in the project root and will be copied in Step 4):
-
-```apache
-Options -MultiViews
-RewriteEngine On
-
-# Forward /api requests to the Node.js backend
-RewriteCond %{REQUEST_URI} ^/api [NC]
-RewriteRule ^(.*)$ http://localhost:5000/$1 [P,L]
-
-# React Router — fall back to index.html for all other paths
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ index.html [QSA,L]
-```
-
-> If your host does not allow `mod_proxy` (some shared hosts restrict it), you may need to run the backend on a **subdomain** (e.g. `api.yourdomain.com`) and update `FRONTEND_URL` and the Vite proxy / `src/services/api.js` base URL accordingly.
-
----
-
-## Step 4 — Build and Deploy the Frontend
-
-### 4a — Set the production API URL
-
-For most cPanel setups where the API is proxied from the same domain, the existing `src/services/api.js` base path `/api/v1` works without any change.
-
-If your backend is on a **separate subdomain**, create a `.env.production` file in the project root:
-
-```
-VITE_API_URL=https://api.yourdomain.com/api/v1
-```
-
-Then update `src/services/api.js` line 1:
-```js
-const BASE = import.meta.env.VITE_API_URL || '/api/v1'
-```
-
-### 4b — Build
+## Step 8 — Seed sample data (optional)
 
 ```bash
-# From the project root (not /backend)
-npm run build
-```
-
-This produces a `dist/` folder.
-
-### 4c — Upload to public_html
-
-Upload the **contents** of `dist/` to `public_html/`:
-
-```
-public_html/
-  index.html
-  assets/
-  .htaccess       ← copy from project root
-```
-
-Make sure `.htaccess` is in `public_html/` — it enables React Router on Apache.
-
----
-
-## Step 5 — Seed Sample Data (optional)
-
-SSH into the server and run:
-
-```bash
-cd ~/salesorbit-backend
+cd /var/www/salesorbit/backend
 node scripts/seed.js
 ```
 
-This creates 4 users, 3 leads, 1 opportunity, stage history, activities, and KPI records.
-
-Test logins: `alice@salesorbit.io`, `bob@salesorbit.io`, `clara@salesorbit.io`, `david@salesorbit.io`
+Test accounts after seeding: `alice@salesorbit.io`, `bob@salesorbit.io`, etc.
 
 ---
 
-## Step 6 — Verify
-
-| Check | URL |
-|---|---|
-| Backend health | `https://yourdomain.com/api/health` (or `:5000/health`) |
-| Frontend loads | `https://yourdomain.com` |
-| Login works | Enter a seeded email → OTP sent (or check mail logs) |
-
----
-
-## Local Development
+## Step 9 — Build the frontend
 
 ```bash
-# Terminal 1 — backend
-cd backend
-cp .env.example .env   # fill in DB creds + JWT_SECRET
-npm run dev            # → http://localhost:5000
+cd /var/www/salesorbit
+npm install --omit=dev
+npm run build   # outputs → dist/
+```
 
-# Terminal 2 — frontend
-npm run dev            # → http://localhost:3000
-                       # Vite proxy forwards /api → localhost:5000
+If the API is on a **different domain** (e.g. `api.yourdomain.com`), create `.env.production` first:
+```bash
+echo "VITE_API_URL=https://api.yourdomain.com/api/v1" > .env.production
+npm run build
+```
+
+For the standard single-domain setup (frontend + backend on the same domain), no `.env.production` is needed.
+
+---
+
+## Step 10 — Configure Nginx
+
+```bash
+# Update the server_name in the config first
+nano /var/www/salesorbit/nginx/salesorbit.conf
+# Replace every 'yourdomain.com' with your actual domain
+
+# Symlink into Nginx
+sudo ln -s /var/www/salesorbit/nginx/salesorbit.conf /etc/nginx/sites-enabled/salesorbit
+
+# Remove default site
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# Test and reload
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+---
+
+## Step 11 — SSL with Let's Encrypt
+
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+```
+
+Certbot automatically edits the Nginx config to add SSL and sets up auto-renewal.
+
+Verify auto-renewal:
+```bash
+sudo certbot renew --dry-run
+```
+
+---
+
+## Step 12 — Start the backend with PM2
+
+```bash
+cd /var/www/salesorbit/backend
+
+# Create log directory
+sudo mkdir -p /var/log/salesorbit
+sudo chown deploy:deploy /var/log/salesorbit
+
+# Start
+pm2 start ecosystem.config.js --env production
+
+# Persist across reboots
+pm2 save
+```
+
+---
+
+## Step 13 — Verify everything is working
+
+```bash
+# Backend health
+curl https://yourdomain.com/health
+
+# Backend logs
+pm2 logs salesorbit --lines 50
+
+# Nginx status
+sudo systemctl status nginx
+
+# PM2 status
+pm2 status
+```
+
+Open `https://yourdomain.com` in a browser — the app should load.
+
+---
+
+## Deploying updates
+
+After pushing new code to GitHub, run on the VPS:
+
+```bash
+cd /var/www/salesorbit
+./deploy.sh
+```
+
+The script: pulls latest → installs deps → builds frontend → reloads backend → health-checks.
+
+---
+
+## Environment quick reference
+
+| Variable | Dev default | Production |
+|---|---|---|
+| `NODE_ENV` | `development` | `production` |
+| `DB_ENGINE` | `sqlite` | `sqlite` or `mysql` |
+| `PORT` | `5001` | `5001` |
+| `JWT_SECRET` | dev-only string | 48+ char random hex |
+| `BCRYPT_ROUNDS` | `10` | `12` |
+| `FRONTEND_URL` | `http://localhost:3000` | `https://yourdomain.com` |
+| `SMTP_USER` | (blank → OTP in API) | Gmail / SMTP |
+
+---
+
+## Useful PM2 commands
+
+```bash
+pm2 status                    # process list
+pm2 logs salesorbit           # tail logs
+pm2 logs salesorbit --lines 200 --err   # errors only
+pm2 restart salesorbit        # restart
+pm2 reload salesorbit         # zero-downtime reload
+pm2 stop salesorbit           # stop
+pm2 monit                     # real-time CPU/memory
 ```
 
 ---
 
 ## Troubleshooting
 
-| Problem | Fix |
+| Symptom | Check |
 |---|---|
-| `ER_ACCESS_DENIED_ERROR` | Wrong `DB_USER` / `DB_PASSWORD` in `.env` |
-| `ER_NO_SUCH_TABLE` | Schema not imported — run Step 1 again |
-| `404` on page refresh | `.htaccess` missing from `public_html/` |
-| API returns `401` | JWT_SECRET mismatch between frontend token and backend |
-| OTP not arriving | Check `SMTP_PASS` is an App Password, not your account password |
-| `mod_proxy` blocked | Move backend to a subdomain — see Step 3 note |
+| 502 Bad Gateway | Backend not running: `pm2 status` and `pm2 logs salesorbit` |
+| Cannot connect to DB | Check `DB_ENGINE`, credentials in `.env`, MySQL service status |
+| CORS error | `FRONTEND_URL` in `.env` must match exact browser URL (with https://) |
+| OTP not arriving | `SMTP_USER` / `SMTP_PASS` in `.env`; or check spam folder |
+| JWT errors | `JWT_SECRET` mismatch between old and new `.env`; clear browser localStorage |
+| 404 on page refresh | Nginx `try_files` directive — check Nginx config is loaded |
+| SSL errors | `sudo certbot renew` and `sudo systemctl reload nginx` |
+
+---
+
+## Local development
+
+```bash
+# Terminal 1 — backend
+cd backend && npm run dev    # → http://localhost:5001
+
+# Terminal 2 — frontend  
+npm run dev                  # → http://localhost:3000
+```
+
+Or use the helper script (installs MySQL if not present, seeds DB, starts both):
+```bash
+./start.sh
+```

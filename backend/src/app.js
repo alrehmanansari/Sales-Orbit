@@ -9,6 +9,10 @@ const errorHandler = require('./middleware/error');
 
 const app = express();
 
+// Trust Nginx reverse proxy — required for req.ip to be the real client IP
+// (affects rate limiting, logging, and CORS origin detection)
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(compression());
 
