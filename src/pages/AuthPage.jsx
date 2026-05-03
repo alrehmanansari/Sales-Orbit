@@ -138,13 +138,11 @@ export default function AuthPage() {
                 <span style={{ background: 'linear-gradient(90deg,#4796E3,#9177C7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Sales </span>
                 <span style={{ background: 'linear-gradient(90deg,#9177C7,#CA6673)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Orbit</span>
               </div>
-              <div style={{
-                fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1,
-                textAlign: 'justify', textAlignLast: 'justify',
-                animation: 'taglineFloat 0.55s cubic-bezier(0.4,0,0.2,1) 0.2s both'
-              }}>
-                {mode === 'otp' ? 'Verify your identity' : 'Sell Faster. Orbit Further.'}
-              </div>
+              {mode === 'otp' && (
+                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1 }}>
+                  Verify your identity
+                </div>
+              )}
             </div>
           </div>
           <div style={{

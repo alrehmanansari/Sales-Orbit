@@ -87,7 +87,7 @@ const gridCfg = { stroke: 'var(--border-color)', strokeWidth: 0.5 }
 export default function Dashboard() {
   const { state } = useCRM()
   const { currentUser } = useAuth()
-  const [timeFilter, setTimeFilter] = useState('month')
+  const [timeFilter, setTimeFilter] = useState('this-month')
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
   const [order, setOrder] = useState(loadOrder)

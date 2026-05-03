@@ -75,7 +75,7 @@ const grid = { stroke: 'var(--border-color)', strokeWidth: 0.5 }
 
 export default function ReportsPage() {
   const { state } = useCRM()
-  const [timeFilter, setTimeFilter] = useState('month')
+  const [timeFilter, setTimeFilter] = useState('this-month')
   const [customFrom, setCustomFrom] = useState('')
   const [customTo,   setCustomTo]   = useState('')
 

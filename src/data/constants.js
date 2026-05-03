@@ -103,12 +103,12 @@ export const STAGE_BADGE = {
 }
 
 export const TIME_FILTERS = [
-  { label: 'This Week',    value: 'week' },
-  { label: 'This Month',   value: 'month' },
-  { label: 'This Quarter', value: 'quarter' },
-  { label: 'This Year',    value: 'year' },
-  { label: 'All Time',     value: 'all' },
-  { label: 'Custom',       value: 'custom' },
+  { label: 'This Week',    value: 'this-week'    },
+  { label: 'Last Week',    value: 'last-week'    },
+  { label: 'This Month',   value: 'this-month'   },
+  { label: 'This Quarter', value: 'this-quarter' },
+  { label: 'This Year',    value: 'this-year'    },
+  { label: 'Custom',       value: 'custom'       },
 ]
 
 export const ACTIVITY_ICONS = {

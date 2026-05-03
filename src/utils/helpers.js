@@ -56,28 +56,41 @@ export function daysDiff(from, to) {
 
 export function getDateRange(filter) {
   const now = new Date()
-  const start = new Date()
+  // Monday-start: getDay() 0=Sun,1=Mon,...,6=Sat → daysFromMon: Mon=0, Sun=6
+  const dow = now.getDay()
+  const daysFromMon = dow === 0 ? 6 : dow - 1
+
   switch (filter) {
-    case 'week':
-      start.setDate(now.getDate() - now.getDay())
-      start.setHours(0, 0, 0, 0)
-      break
-    case 'month':
-      start.setDate(1)
-      start.setHours(0, 0, 0, 0)
-      break
-    case 'quarter':
-      start.setMonth(Math.floor(now.getMonth() / 3) * 3, 1)
-      start.setHours(0, 0, 0, 0)
-      break
-    case 'year':
-      start.setMonth(0, 1)
-      start.setHours(0, 0, 0, 0)
-      break
+    case 'this-week': case 'week': {
+      const s = new Date(now)
+      s.setDate(now.getDate() - daysFromMon)
+      s.setHours(0, 0, 0, 0)
+      return { start: s, end: now }
+    }
+    case 'last-week': {
+      const s = new Date(now)
+      s.setDate(now.getDate() - daysFromMon - 7)
+      s.setHours(0, 0, 0, 0)
+      const e = new Date(now)
+      e.setDate(now.getDate() - daysFromMon - 1)
+      e.setHours(23, 59, 59, 999)
+      return { start: s, end: e }
+    }
+    case 'this-month': case 'month': {
+      const s = new Date(now.getFullYear(), now.getMonth(), 1)
+      return { start: s, end: now }
+    }
+    case 'this-quarter': case 'quarter': {
+      const s = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1)
+      return { start: s, end: now }
+    }
+    case 'this-year': case 'year': {
+      const s = new Date(now.getFullYear(), 0, 1)
+      return { start: s, end: now }
+    }
     default:
       return null
   }
-  return { start, end: now }
 }
 
 export function filterByDateRange(items, field, filter) {
