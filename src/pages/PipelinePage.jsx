@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useCRM } from '../store/CRMContext'
 import OpportunityDetail from '../components/opportunities/OpportunityDetail'
 import OpportunityForm from '../components/opportunities/OpportunityForm'
@@ -7,6 +7,19 @@ import { formatDate, formatCurrency, daysDiff } from '../utils/helpers'
 import { OPPORTUNITY_STAGES, STAGE_COLORS } from '../data/constants'
 import { PriorityBadge } from '../components/common/Badge'
 
+const FILTERS = ['All', 'Week', 'Month', 'Quarter', 'Year', 'Custom']
+
+function sinceDate(filter) {
+  const now = new Date()
+  switch (filter) {
+    case 'Week':    { const d = new Date(now); d.setDate(now.getDate() - 7); return d }
+    case 'Month':   return new Date(now.getFullYear(), now.getMonth(), 1)
+    case 'Quarter': return new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1)
+    case 'Year':    return new Date(now.getFullYear(), 0, 1)
+    default:        return null
+  }
+}
+
 export default function PipelinePage() {
   const { state, dispatch } = useCRM()
   const [activeStage,  setActiveStage]  = useState(OPPORTUNITY_STAGES[0])
@@ -14,8 +27,24 @@ export default function PipelinePage() {
   const [showForm,     setShowForm]     = useState(false)
   const [editOpp,      setEditOpp]      = useState(null)
   const [stageModal,   setStageModal]   = useState(null)
+  const [dateFilter,   setDateFilter]   = useState('All')
+  const [customFrom,   setCustomFrom]   = useState('')
+  const [customTo,     setCustomTo]     = useState('')
 
-  const activeOpps   = state.opportunities.filter(o => !['Lost','On Hold'].includes(o.stage))
+  // Apply date filter to all opportunities
+  const allOpps = useMemo(() => {
+    let opps = state.opportunities
+    if (dateFilter === 'Custom') {
+      if (customFrom) opps = opps.filter(o => new Date(o.createdAt) >= new Date(customFrom))
+      if (customTo)   opps = opps.filter(o => new Date(o.createdAt) <= new Date(customTo + 'T23:59:59'))
+    } else {
+      const since = sinceDate(dateFilter)
+      if (since) opps = opps.filter(o => new Date(o.createdAt) >= since)
+    }
+    return opps
+  }, [state.opportunities, dateFilter, customFrom, customTo])
+
+  const activeOpps   = allOpps.filter(o => !['Lost','On Hold'].includes(o.stage))
   const totalVolume  = activeOpps.reduce((s, o) => s + (o.expectedMonthlyVolume  || 0), 0)
   const totalRevenue = activeOpps.reduce((s, o) => s + (o.expectedMonthlyRevenue || 0), 0)
 
@@ -24,19 +53,28 @@ export default function PipelinePage() {
     setStageModal(null)
   }
 
-  // Opportunities for the currently selected stage
-  const stageOpps = state.opportunities
+  // Deals for the selected stage (within current filter)
+  const stageOpps = allOpps
     .filter(o => o.stage === activeStage)
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
   const stageRevenue = stageOpps.reduce((s, o) => s + (o.expectedMonthlyRevenue || 0), 0)
   const stageVolume  = stageOpps.reduce((s, o) => s + (o.expectedMonthlyVolume  || 0), 0)
 
+  const filterBtnStyle = (f) => ({
+    padding: '5px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
+    fontFamily: 'var(--font)', fontSize: 12, fontWeight: dateFilter === f ? 600 : 400,
+    background: dateFilter === f ? 'var(--so-blue)' : 'transparent',
+    color: dateFilter === f ? '#fff' : 'var(--text-secondary)',
+    transition: 'all 0.15s',
+    whiteSpace: 'nowrap',
+  })
+
   return (
     <div className="page" style={{ overflow: 'hidden' }}>
 
       {/* ── Page header ────────────────────────────────────────────── */}
-      <div className="page-header">
+      <div className="page-header" style={{ flexWrap: 'wrap', gap: 10 }}>
         <div>
           <h2 style={{ margin: 0 }}>Pipeline</h2>
           <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>
@@ -47,7 +85,41 @@ export default function PipelinePage() {
             &nbsp;rev
           </div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>+ New Opportunity</button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {/* Date filter tabs */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 2,
+            background: 'var(--bg-tertiary)', borderRadius: 22,
+            padding: 3, border: '1px solid var(--border-color)',
+          }}>
+            {FILTERS.filter(f => f !== 'Custom').map(f => (
+              <button key={f} style={filterBtnStyle(f)} onClick={() => setDateFilter(f)}
+                onMouseEnter={e => { if (dateFilter !== f) e.currentTarget.style.background = 'var(--bg-card)' }}
+                onMouseLeave={e => { if (dateFilter !== f) e.currentTarget.style.background = 'transparent' }}
+              >{f}</button>
+            ))}
+            <button style={filterBtnStyle('Custom')} onClick={() => setDateFilter('Custom')}
+              onMouseEnter={e => { if (dateFilter !== 'Custom') e.currentTarget.style.background = 'var(--bg-card)' }}
+              onMouseLeave={e => { if (dateFilter !== 'Custom') e.currentTarget.style.background = 'transparent' }}
+            >Custom</button>
+          </div>
+
+          {/* Custom date range inputs */}
+          {dateFilter === 'Custom' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
+                style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 12, fontFamily: 'var(--font)', outline: 'none' }}
+              />
+              <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>to</span>
+              <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
+                style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 12, fontFamily: 'var(--font)', outline: 'none' }}
+              />
+            </div>
+          )}
+
+          <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>+ New Opportunity</button>
+        </div>
       </div>
 
       {/* ── Split layout ───────────────────────────────────────────── */}
@@ -55,7 +127,7 @@ export default function PipelinePage() {
 
         {/* ── LEFT: stage list ─────────────────────────────────────── */}
         <div style={{
-          width: 210, flexShrink: 0,
+          width: 200, flexShrink: 0,
           borderRight: '1px solid var(--border-color)',
           background: 'var(--bg-secondary)',
           overflowY: 'auto',
@@ -70,8 +142,7 @@ export default function PipelinePage() {
           </div>
 
           {OPPORTUNITY_STAGES.map(stage => {
-            const opps    = state.opportunities.filter(o => o.stage === stage)
-            const rev     = opps.reduce((s, o) => s + (o.expectedMonthlyRevenue || 0), 0)
+            const opps     = allOpps.filter(o => o.stage === stage)
             const isActive = activeStage === stage
             const isDim    = ['Lost','On Hold'].includes(stage)
 
@@ -80,7 +151,7 @@ export default function PipelinePage() {
                 key={stage}
                 onClick={() => setActiveStage(stage)}
                 style={{
-                  padding: '11px 16px',
+                  padding: '12px 16px',
                   cursor: 'pointer',
                   borderLeft: `3px solid ${isActive ? STAGE_COLORS[stage] : 'transparent'}`,
                   background: isActive
@@ -93,7 +164,6 @@ export default function PipelinePage() {
                 onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--bg-tertiary)' }}
                 onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
               >
-                {/* Stage name row */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
                     <span style={{
@@ -108,7 +178,6 @@ export default function PipelinePage() {
                       {stage}
                     </span>
                   </div>
-                  {/* Count badge */}
                   <span style={{
                     fontSize: 11, fontWeight: 700,
                     minWidth: 20, textAlign: 'center',
@@ -120,16 +189,6 @@ export default function PipelinePage() {
                   }}>
                     {opps.length}
                   </span>
-                </div>
-
-                {/* Revenue */}
-                <div style={{
-                  marginTop: 4, marginLeft: 16,
-                  fontSize: 11, fontFamily: 'var(--font-mono)',
-                  color: rev > 0 ? 'var(--green)' : 'var(--text-hint)',
-                  fontWeight: rev > 0 ? 600 : 400,
-                }}>
-                  {rev > 0 ? formatCurrency(rev) : '—'}
                 </div>
               </div>
             )
@@ -161,23 +220,18 @@ export default function PipelinePage() {
               </span>
             </div>
 
-            {/* Stage totals */}
             {(stageVolume > 0 || stageRevenue > 0) && (
               <div style={{ display: 'flex', gap: 20 }}>
                 {stageVolume > 0 && (
                   <div>
                     <div style={{ fontSize: 9, color: 'var(--text-hint)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Volume / mo</div>
-                    <div style={{ fontSize: 14, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--so-blue)' }}>
-                      {formatCurrency(stageVolume)}
-                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--so-blue)' }}>{formatCurrency(stageVolume)}</div>
                   </div>
                 )}
                 {stageRevenue > 0 && (
                   <div>
                     <div style={{ fontSize: 9, color: 'var(--text-hint)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Revenue / mo</div>
-                    <div style={{ fontSize: 14, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--green)' }}>
-                      {formatCurrency(stageRevenue)}
-                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--green)' }}>{formatCurrency(stageRevenue)}</div>
                   </div>
                 )}
               </div>
@@ -187,12 +241,12 @@ export default function PipelinePage() {
           {/* Opportunities list */}
           <div style={{ flex: 1, overflowY: 'auto' }}>
             {stageOpps.length === 0 ? (
-              <div style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                height: '100%', gap: 10,
-              }}>
-                <div style={{ fontSize: 32, opacity: 0.25 }}>◎</div>
-                <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>No opportunities in <strong>{activeStage}</strong></div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10 }}>
+                <div style={{ fontSize: 32, opacity: 0.2 }}>◎</div>
+                <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>
+                  No opportunities in <strong>{activeStage}</strong>
+                  {dateFilter !== 'All' && <span style={{ color: 'var(--text-hint)' }}> for this period</span>}
+                </div>
                 <button className="btn btn-ghost btn-sm" onClick={() => setShowForm(true)}>+ Add One</button>
               </div>
             ) : (
@@ -207,19 +261,18 @@ export default function PipelinePage() {
                   gap: 12, position: 'sticky', top: 0, zIndex: 1,
                 }}>
                   {[
-                    { label: 'Opportunity', align: 'left' },
-                    { label: 'Contact',     align: 'left' },
+                    { label: 'Opportunity', align: 'left'  },
+                    { label: 'Contact',     align: 'left'  },
                     { label: 'Revenue/mo',  align: 'right' },
                     { label: 'Volume/mo',   align: 'right' },
                     { label: 'Close Date',  align: 'right' },
-                    { label: 'Owner',       align: 'left' },
+                    { label: 'Owner',       align: 'left'  },
                     { label: '',            align: 'right' },
                   ].map((col, i) => (
                     <div key={i} style={{
                       fontSize: 10, fontWeight: 700,
                       textTransform: 'uppercase', letterSpacing: '0.6px',
-                      color: 'var(--text-tertiary)',
-                      textAlign: col.align,
+                      color: 'var(--text-tertiary)', textAlign: col.align,
                     }}>
                       {col.label}
                     </div>
@@ -227,7 +280,7 @@ export default function PipelinePage() {
                 </div>
 
                 {/* Deal rows */}
-                {stageOpps.map((opp, idx) => {
+                {stageOpps.map((opp) => {
                   const age    = daysDiff(opp.createdAt)
                   const isLate = opp.expectedCloseDate
                     && new Date(opp.expectedCloseDate) < new Date()
@@ -240,85 +293,50 @@ export default function PipelinePage() {
                       style={{
                         display: 'grid',
                         gridTemplateColumns: '2fr 1fr 120px 120px 110px 80px 68px',
-                        padding: '13px 20px',
-                        gap: 12,
+                        padding: '13px 20px', gap: 12,
                         borderBottom: '1px solid var(--border-color)',
-                        cursor: 'pointer',
-                        alignItems: 'center',
+                        cursor: 'pointer', alignItems: 'center',
                         transition: 'background 0.12s',
                         background: 'var(--bg-card)',
                       }}
                       onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-tertiary)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}
                     >
-                      {/* Opportunity */}
                       <div>
-                        <div style={{
-                          fontWeight: 600, fontSize: 13,
-                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                          color: 'var(--text-primary)',
-                        }}>
+                        <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {opp.companyName}
                           {opp.clientId && (
-                            <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: 11 }}>
-                              {' '}- {opp.clientId}
-                            </span>
+                            <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: 11 }}> - {opp.clientId}</span>
                           )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
                           <PriorityBadge priority={opp.priority} />
-                          <span style={{ fontSize: 10, color: 'var(--text-hint)', fontFamily: 'var(--font-mono)' }}>
-                            {age}d
-                          </span>
+                          <span style={{ fontSize: 10, color: 'var(--text-hint)', fontFamily: 'var(--font-mono)' }}>{age}d</span>
                         </div>
                       </div>
 
-                      {/* Contact */}
-                      <div style={{
-                        fontSize: 12, color: 'var(--text-secondary)',
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                      }}>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {opp.contactPerson || '—'}
                       </div>
 
-                      {/* Revenue */}
-                      <div style={{
-                        textAlign: 'right', fontFamily: 'var(--font-mono)',
-                        fontWeight: 700, fontSize: 13, color: 'var(--green)',
-                      }}>
+                      <div style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 13, color: 'var(--green)' }}>
                         {formatCurrency(opp.expectedMonthlyRevenue)}
                       </div>
 
-                      {/* Volume */}
-                      <div style={{
-                        textAlign: 'right', fontFamily: 'var(--font-mono)',
-                        fontSize: 12, color: 'var(--text-secondary)', fontWeight: 400,
-                      }}>
+                      <div style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 400 }}>
                         {formatCurrency(opp.expectedMonthlyVolume)}
                       </div>
 
-                      {/* Close date */}
-                      <div style={{
-                        textAlign: 'right', fontSize: 12, fontWeight: 400,
-                        color: isLate ? 'var(--red)' : 'var(--text-secondary)',
-                      }}>
+                      <div style={{ textAlign: 'right', fontSize: 12, fontWeight: 400, color: isLate ? 'var(--red)' : 'var(--text-secondary)' }}>
                         {isLate && <span style={{ marginRight: 3 }}>⚠</span>}
                         {formatDate(opp.expectedCloseDate) || '—'}
                       </div>
 
-                      {/* Owner */}
-                      <div style={{
-                        fontSize: 12, color: 'var(--text-secondary)',
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                      }}>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {opp.leadOwner?.split(' ')[0] || '—'}
                       </div>
 
-                      {/* Actions */}
-                      <div
-                        style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}
-                        onClick={e => e.stopPropagation()}
-                      >
+                      <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
                         <button className="btn-icon" title="Move Stage" onClick={() => setStageModal(opp)}>⟳</button>
                         <button className="btn-icon" title="View Detail" onClick={() => setSelected(opp)}>↗</button>
                       </div>
