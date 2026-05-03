@@ -153,13 +153,12 @@ export default function PipelinePage() {
                           <tr key={opp.id} onClick={() => setSelected(opp)}>
                             <td style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'center' }}>{idx + 1}</td>
                             <td>
-                              <div style={{ fontWeight: 700, fontSize: 13 }}>
-                                {opp.companyName}
+                              <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 240 }}>
+                                {opp.opportunityName}
                                 {opp.clientId && (
                                   <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: 11, marginLeft: 6 }}>— {opp.clientId}</span>
                                 )}
                               </div>
-                              <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 1 }}>{opp.vertical}</div>
                             </td>
                             <td style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 400 }}>{opp.contactPerson}</td>
                             <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 400 }}>{formatCurrency(opp.expectedMonthlyVolume)}</td>
