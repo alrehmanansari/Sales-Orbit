@@ -22,7 +22,7 @@ const IconViewDetail = () => (
 )
 
 // Grid columns: Opportunity | Contact | Priority | Phone | Email | Rev | Vol | Close | Owner | Actions
-const GRID = '2fr 1fr 75px 120px 1fr 105px 105px 100px 70px 56px'
+const GRID = '2fr 1fr 75px 120px 1fr 52px 105px 105px 100px 70px 56px'
 
 export default function PipelinePage() {
   const { state, dispatch } = useCRM()
@@ -218,6 +218,7 @@ export default function PipelinePage() {
                     { label: 'Priority',     align: 'left'  },
                     { label: 'Phone',        align: 'left'  },
                     { label: 'Email',        align: 'left'  },
+                    { label: 'Age',          align: 'right' },
                     { label: 'Revenue/mo',   align: 'right' },
                     { label: 'Volume/mo',    align: 'right' },
                     { label: 'Close Date',   align: 'right' },
@@ -244,12 +245,9 @@ export default function PipelinePage() {
                       onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}
                     >
                       {/* Opportunity */}
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {opp.companyName}
-                          {opp.clientId && <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: 11 }}> - {opp.clientId}</span>}
-                        </div>
-                        <span style={{ fontSize: 10, color: 'var(--text-hint)', fontFamily: 'var(--font-mono)' }}>{age}d</span>
+                      <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {opp.companyName}
+                        {opp.clientId && <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: 11 }}> - {opp.clientId}</span>}
                       </div>
 
                       {/* Contact */}
@@ -270,6 +268,11 @@ export default function PipelinePage() {
                         onClick={e => { if (opp.email) { e.stopPropagation(); window.location.href = `mailto:${opp.email}` } }}
                       >
                         {opp.email || '—'}
+                      </div>
+
+                      {/* Age */}
+                      <div style={{ textAlign: 'right', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', fontWeight: 400 }}>
+                        {age}d
                       </div>
 
                       {/* Revenue */}
