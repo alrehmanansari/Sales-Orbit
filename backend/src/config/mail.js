@@ -130,17 +130,18 @@ async function sendViaEthereal(to, otp, name) {
 // ── Public: sendOtpEmail ─────────────────────────────────────────────────────
 async function sendOtpEmail(to, otp, name) {
   // 1. Resend (HTTPS — preferred, no port restrictions)
-  if (process.env.RESEND_API_KEY) {
+  if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 're_xxxxxxxxxxxxxxxxxxxx') {
     return sendViaResend(to, otp, name);
   }
 
-  // 2. SMTP
+  // 2. SMTP (Gmail, SendGrid, etc.)
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     return sendViaSmtp(to, otp, name);
   }
 
-  // 3. Ethereal fallback
-  return sendViaEthereal(to, otp, name);
+  // 3. No provider configured — skip silently, OTP will be shown on screen
+  console.log('✉  No email provider configured — OTP returned in API response');
+  return { previewUrl: null };
 }
 
 module.exports = { sendOtpEmail };
