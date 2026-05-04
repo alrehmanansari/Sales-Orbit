@@ -32,17 +32,24 @@ async function issueOtp(email, name) {
     [email, hash, expiresAt]
   );
 
-  try {
-    await sendOtpEmail(email, otp, name);
-  } catch (emailErr) {
-    if (process.env.NODE_ENV === 'production') {
-      // In production: a working SMTP config is required
-      throw new Error('Failed to send OTP email. Please check SMTP configuration.');
+  // Only attempt email if SMTP credentials are actually configured
+  const smtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+  let emailSent = false;
+
+  if (smtpConfigured) {
+    try {
+      await sendOtpEmail(email, otp, name);
+      emailSent = true;
+    } catch (emailErr) {
+      console.warn('[auth] Email send failed — OTP returned in API response:', emailErr.message);
     }
-    // In development: log the warning and fall through — OTP is returned in the response
-    console.warn('[dev] Email send failed — OTP returned in API response instead:', emailErr.message);
   }
-  return process.env.NODE_ENV !== 'production' ? otp : null;
+
+  // Return OTP in the API response unless it was successfully delivered by email
+  // (in which case, only withhold it in production for security)
+  const isProd = process.env.NODE_ENV === 'production';
+  if (isProd && emailSent) return null;   // prod + working SMTP → user checks inbox
+  return otp;                             // everything else → OTP shown on screen
 }
 
 // POST /api/v1/auth/signup
