@@ -32,7 +32,16 @@ async function issueOtp(email, name) {
     [email, hash, expiresAt]
   );
 
-  await sendOtpEmail(email, otp, name);
+  try {
+    await sendOtpEmail(email, otp, name);
+  } catch (emailErr) {
+    if (process.env.NODE_ENV === 'production') {
+      // In production: a working SMTP config is required
+      throw new Error('Failed to send OTP email. Please check SMTP configuration.');
+    }
+    // In development: log the warning and fall through — OTP is returned in the response
+    console.warn('[dev] Email send failed — OTP returned in API response instead:', emailErr.message);
+  }
   return process.env.NODE_ENV !== 'production' ? otp : null;
 }
 
