@@ -4,6 +4,9 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
+
+const DIST = path.join(__dirname, '../../dist');
 
 const errorHandler = require('./middleware/error');
 
@@ -70,8 +73,19 @@ app.use('/api/v1/dashboard',    require('./routes/dashboard'));
 
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: new Date() }));
 
-// Catch-all: return JSON 404 instead of Express's default HTML page
+// Serve built React app in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(DIST));
+}
+
+// Catch-all: API routes → JSON 404; frontend routes → serve index.html (SPA)
 app.use((req, res) => {
+  if (req.path.startsWith('/api/') || req.path === '/health') {
+    return res.status(404).json({ success: false, message: `${req.method} ${req.path} not found` });
+  }
+  if (process.env.NODE_ENV === 'production') {
+    return res.sendFile(path.join(DIST, 'index.html'));
+  }
   res.status(404).json({ success: false, message: `${req.method} ${req.path} not found` });
 });
 

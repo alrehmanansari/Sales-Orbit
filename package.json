@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node backend/server.js",
+    "start:prod": "npm run build && node backend/server.js"
   },
   "dependencies": {
     "papaparse": "^5.4.1",
