@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
   async function signup(data) {
     try {
       const res = await api.auth.signup(data)
-      return { otp: res.otp }
+      return { otp: res.otp, previewUrl: res.previewUrl }
     } catch (err) {
       if (err.message === 'BACKEND_UNREACHABLE')
         return { error: 'Cannot reach the backend. Open a terminal and run:\ncd backend && npm run dev' }
@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
   async function login(email) {
     try {
       const res = await api.auth.login(email)
-      return { otp: res.otp }
+      return { otp: res.otp, previewUrl: res.previewUrl }
     } catch (err) {
       if (err.message === 'BACKEND_UNREACHABLE')
         return { error: 'Cannot reach the backend. Open a terminal and run:\ncd backend && npm run dev' }

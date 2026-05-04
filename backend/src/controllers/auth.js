@@ -32,17 +32,23 @@ async function issueOtp(email, name) {
     [email, hash, expiresAt]
   );
 
+  // Send OTP email (always — uses real SMTP or Ethereal auto-account)
+  let previewUrl = null;
+  let realEmailSent = false;
+
   try {
-    await sendOtpEmail(email, otp, name);
+    const result = await sendOtpEmail(email, otp, name);
+    previewUrl   = result.previewUrl || null;
+    realEmailSent = !previewUrl; // previewUrl only exists for Ethereal, not real SMTP
   } catch (emailErr) {
-    if (process.env.NODE_ENV === 'production') {
-      // In production: a working SMTP config is required
-      throw new Error('Failed to send OTP email. Please check SMTP configuration.');
-    }
-    // In development: log the warning and fall through — OTP is returned in the response
-    console.warn('[dev] Email send failed — OTP returned in API response instead:', emailErr.message);
+    console.warn('[auth] Email send failed — OTP returned in API response:', emailErr.message);
   }
-  return process.env.NODE_ENV !== 'production' ? otp : null;
+
+  // In production with real SMTP delivery: don't expose OTP in response
+  const isProd = process.env.NODE_ENV === 'production';
+  const exposeOtp = !isProd || !realEmailSent;
+
+  return { otp: exposeOtp ? otp : null, previewUrl };
 }
 
 // POST /api/v1/auth/signup
@@ -67,9 +73,10 @@ exports.signup = async (req, res, next) => {
       [userId, value.firstName, value.lastName, value.email, value.designation, role]
     );
 
-    const otp = await issueOtp(value.email, value.firstName);
-    const payload = { message: 'Account created. OTP sent.', userId };
-    if (otp) payload.otp = otp;
+    const { otp, previewUrl } = await issueOtp(value.email, value.firstName);
+    const payload = { message: 'Account created. OTP sent to your email.', userId };
+    if (otp)        payload.otp        = otp;
+    if (previewUrl) payload.previewUrl = previewUrl;
     return created(res, payload, 'Account created. OTP sent.');
   } catch (err) { next(err); }
 };
@@ -88,9 +95,10 @@ exports.login = async (req, res, next) => {
     if (!rows.length) return badRequest(res, 'No account found for this email. Please sign up.');
 
     const u = rows[0];
-    const otp = await issueOtp(u.email, u.first_name);
+    const { otp, previewUrl } = await issueOtp(u.email, u.first_name);
     const payload = { message: 'OTP sent to your email', userId: u.user_id };
-    if (otp) payload.otp = otp;
+    if (otp)        payload.otp        = otp;
+    if (previewUrl) payload.previewUrl = previewUrl;
     return ok(res, payload);
   } catch (err) { next(err); }
 };

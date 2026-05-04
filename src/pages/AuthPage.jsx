@@ -53,7 +53,8 @@ export default function AuthPage() {
   const { signup, login, verifyOtp } = useAuth()
   const [mode, setMode] = useState('login') // login | signup | otp
   const [pendingEmail, setPendingEmail] = useState('')
-  const [otpFromApi, setOtpFromApi] = useState('') // shown in dev mode
+  const [otpFromApi,  setOtpFromApi]  = useState('') // shown when no real SMTP
+  const [previewUrl,  setPreviewUrl]  = useState('') // Ethereal preview link
   const [otpInput, setOtpInput] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -80,6 +81,7 @@ export default function AuthPage() {
     setLoading(false)
     if (result.error) return setError(result.error)
     setOtpFromApi(result.otp || '')
+    setPreviewUrl(result.previewUrl || '')
     setPendingEmail(email)
     setMode('otp')
   }
@@ -92,6 +94,7 @@ export default function AuthPage() {
     setLoading(false)
     if (result.error) return setError(result.error)
     setOtpFromApi(result.otp || '')
+    setPreviewUrl(result.previewUrl || '')
     setPendingEmail(email)
     setMode('otp')
   }
@@ -110,6 +113,7 @@ export default function AuthPage() {
     setLoading(false)
     if (result.error) return setError(result.error)
     setOtpFromApi(result.otp || '')
+    setPreviewUrl(result.previewUrl || '')
     setOtpInput('')
     setError('')
   }
@@ -177,16 +181,37 @@ export default function AuthPage() {
           <>
             <div style={{ background: 'var(--so-blue-soft)', border: '1px solid rgba(71,150,227,0.2)', borderRadius: 10, padding: '12px 14px', marginBottom: 20, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
               📧 OTP sent to <strong>{pendingEmail}</strong>
-              {otpFromApi ? (
-                <>
-                  <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-tertiary)' }}>Dev mode — OTP returned in API response</div>
-                  <div style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 8, padding: '6px 12px' }}>
-                    <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Your OTP:</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 800, color: 'var(--so-blue)', letterSpacing: 4 }}>{otpFromApi}</span>
+
+              {/* Real SMTP delivered — check inbox */}
+              {!otpFromApi && !previewUrl && (
+                <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-tertiary)' }}>
+                  Check your inbox for the 6-digit code. It may take a moment.
+                </div>
+              )}
+
+              {/* Ethereal test email — show preview link */}
+              {previewUrl && (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 6 }}>
+                    Email sent to test inbox — click below to view it:
                   </div>
-                </>
-              ) : (
-                <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-tertiary)' }}>Check your inbox for the 6-digit code</div>
+                  <a href={previewUrl} target="_blank" rel="noopener noreferrer" style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    fontSize: 12, fontWeight: 600, color: 'var(--so-blue)',
+                    background: 'var(--bg-card)', border: '1px solid rgba(71,150,227,0.3)',
+                    borderRadius: 8, padding: '6px 12px', textDecoration: 'none',
+                  }}>
+                    📬 View OTP Email
+                  </a>
+                </div>
+              )}
+
+              {/* OTP in response (no SMTP at all) */}
+              {otpFromApi && !previewUrl && (
+                <div style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 8, padding: '6px 12px' }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Your OTP:</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 800, color: 'var(--so-blue)', letterSpacing: 4 }}>{otpFromApi}</span>
+                </div>
               )}
             </div>
 
