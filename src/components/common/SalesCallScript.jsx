@@ -146,7 +146,7 @@ export default function SalesCallScript({ onClose }) {
         </div>
 
         {/* ── Scrollable body ────────────────────────────────────────── */}
-        <div className="modal-body" style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="modal-body" style={{ overflowY: 'auto', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
 
           {STEPS.map(s => (
             <div key={s.step} style={{ border: '1px solid var(--border-color)', borderRadius: 12, overflow: 'hidden', background: 'var(--bg-card)', boxShadow: 'var(--shadow-xs)' }}>
