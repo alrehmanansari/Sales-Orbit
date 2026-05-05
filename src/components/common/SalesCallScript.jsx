@@ -101,7 +101,7 @@ export default function SalesCallScript({ onClose }) {
 
   return (
     <div className="modal-overlay" style={{ zIndex: 1300 }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="modal" style={{ maxWidth: 860, width: '100%', maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="modal" style={{ maxWidth: 860, width: '100%' }}>
 
         {/* ── Modal header ──────────────────────────────────────────── */}
         <div className="modal-header" style={{
@@ -126,7 +126,7 @@ export default function SalesCallScript({ onClose }) {
         </div>
 
         {/* ── Scrollable body ────────────────────────────────────────── */}
-        <div className="modal-body" style={{ overflowY: 'auto', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
           {STEPS.map(s => (
             <div key={s.step} style={{ border: '1px solid var(--border-color)', borderRadius: 12, overflow: 'hidden', background: 'var(--bg-card)', boxShadow: 'var(--shadow-xs)' }}>
