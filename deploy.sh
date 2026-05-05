@@ -1,6 +1,6 @@
 #!/bin/bash
 # SalesOrbit — production deploy / update script
-# Run on the VPS after first-time setup is complete (see DEPLOYMENT.md).
+# Run on the VPS after first-time setup is complete.
 # Usage: ./deploy.sh
 
 set -e
@@ -8,9 +8,10 @@ set -e
 APP_DIR="/var/www/salesorbit"
 LOG_DIR="/var/log/salesorbit"
 
-GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
 ok()   { echo -e "${GREEN}✓ $1${NC}"; }
 info() { echo -e "${YELLOW}→ $1${NC}"; }
+err()  { echo -e "${RED}✗ $1${NC}"; }
 
 echo ""
 echo "╔══════════════════════════════════╗"
@@ -20,12 +21,12 @@ echo ""
 
 cd "$APP_DIR"
 
-# ── Pull latest code ─────────────────────────────────────────────────────────
+# ── Pull latest code ──────────────────────────────────────────────────────────
 info "Pulling latest code from main..."
 git pull origin main
 ok "Code updated"
 
-# ── Backend dependencies ──────────────────────────────────────────────────────
+# ── Backend dependencies (production only — no devDeps needed at runtime) ─────
 info "Installing backend dependencies..."
 cd backend
 npm install --omit=dev
@@ -33,8 +34,10 @@ cd ..
 ok "Backend dependencies installed"
 
 # ── Frontend build ────────────────────────────────────────────────────────────
-info "Installing frontend dependencies..."
-npm install --omit=dev
+# NOTE: must use full `npm install` (NOT --omit=dev) because vite and
+# @vitejs/plugin-react are devDependencies required at build time.
+info "Installing frontend dependencies (including build tools)..."
+npm install
 info "Building frontend..."
 npm run build
 ok "Frontend built → dist/"
@@ -52,11 +55,12 @@ ok "Backend restarted"
 
 # ── Health check ──────────────────────────────────────────────────────────────
 info "Checking health endpoint..."
-sleep 2
+sleep 3
 if curl -sf http://localhost:5001/health > /dev/null; then
   ok "Backend is healthy"
 else
-  echo "⚠  Health check failed — check: pm2 logs salesorbit"
+  err "Health check failed — checking PM2 logs..."
+  pm2 logs salesorbit --lines 20 --nostream || true
   exit 1
 fi
 
