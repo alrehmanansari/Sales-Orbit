@@ -169,7 +169,8 @@ export default function Sidebar({ page, onNav, onLogout, isMobile, isOpen, onClo
       <nav style={{ flex: 1, padding: isCollapsed ? '12px 8px' : '8px 8px', overflowY: 'auto' }}>
 
         {NAV.map(item => {
-          const active = page === item.id
+          const active     = page === item.id
+          const badgeCount = null
 
           return (
             <React.Fragment key={item.id}>
