@@ -95,10 +95,6 @@ function LangTab({ label, active, onClick }) {
 
 export default function SalesCallScript({ onClose }) {
   const [lang, setLang] = useState('Both')
-  const [open, setOpen] = useState(() => STEPS.reduce((a, s) => ({ ...a, [s.step]: true }), {}))
-  const toggle = step => setOpen(p => ({ ...p, [step]: !p[step] }))
-  const allOpen = Object.values(open).every(Boolean)
-  const toggleAll = () => setOpen(STEPS.reduce((a, s) => ({ ...a, [s.step]: !allOpen }), {}))
 
   const showEN = lang === 'English' || lang === 'Both'
   const showUR = lang === 'Urdu'    || lang === 'Both'
@@ -112,7 +108,6 @@ export default function SalesCallScript({ onClose }) {
           background: 'linear-gradient(135deg,rgba(71,150,227,0.07),rgba(145,119,199,0.07))',
           flexShrink: 0, gap: 12, justifyContent: 'flex-start',
         }}>
-          {/* Title */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.4px', textTransform: 'uppercase', background: 'var(--so-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 3 }}>
               SUNRATE · BD Sales Guide
@@ -120,28 +115,13 @@ export default function SalesCallScript({ onClose }) {
             <h3 style={{ margin: 0 }}>Sales Call Script &nbsp;·&nbsp; 9 Steps · ~12–15 min</h3>
           </div>
 
-          {/* Controls — language switcher + collapse toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <div style={{ display: 'flex', gap: 2, background: 'var(--bg-tertiary)', borderRadius: 22, padding: 3, border: '1px solid var(--border-color)' }}>
-              {['English','Urdu','Both'].map(l => (
-                <LangTab key={l} label={l} active={lang === l} onClick={() => setLang(l)} />
-              ))}
-            </div>
-
-            <button onClick={toggleAll} style={{
-              padding: '5px 12px', borderRadius: 20, border: '1px solid var(--border-color)',
-              background: 'var(--bg-card)', color: 'var(--text-secondary)',
-              fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font)', transition: 'all 0.15s',
-              whiteSpace: 'nowrap',
-            }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--so-blue)'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
-            >
-              {allOpen ? 'Collapse All' : 'Expand All'}
-            </button>
+          {/* Language switcher */}
+          <div style={{ display: 'flex', gap: 2, background: 'var(--bg-tertiary)', borderRadius: 22, padding: 3, border: '1px solid var(--border-color)', flexShrink: 0 }}>
+            {['English','Urdu','Both'].map(l => (
+              <LangTab key={l} label={l} active={lang === l} onClick={() => setLang(l)} />
+            ))}
           </div>
 
-          {/* Close — separate, always at far right */}
           <button className="btn-icon" onClick={onClose} style={{ fontSize: 16, flexShrink: 0 }}>✕</button>
         </div>
 
@@ -151,19 +131,13 @@ export default function SalesCallScript({ onClose }) {
           {STEPS.map(s => (
             <div key={s.step} style={{ border: '1px solid var(--border-color)', borderRadius: 12, overflow: 'hidden', background: 'var(--bg-card)', boxShadow: 'var(--shadow-xs)' }}>
 
-              {/* Step header */}
-              <div
-                onClick={() => toggle(s.step)}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '11px 16px', cursor: 'pointer', userSelect: 'none',
-                  background: open[s.step]
-                    ? 'linear-gradient(90deg, rgba(71,150,227,0.07), transparent)'
-                    : 'transparent',
-                  borderBottom: open[s.step] ? '1px solid var(--border-color)' : 'none',
-                  transition: 'background 0.15s',
-                }}
-              >
+              {/* Step header — always visible, no toggle */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '11px 16px',
+                background: 'linear-gradient(90deg, rgba(71,150,227,0.07), transparent)',
+                borderBottom: '1px solid var(--border-color)',
+              }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0, background: 'var(--so-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', boxShadow: '0 2px 8px rgba(71,150,227,0.3)' }}>
                     {s.step}
@@ -173,22 +147,15 @@ export default function SalesCallScript({ onClose }) {
                     <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 1 }}>Step {s.step} of {STEPS.length}</div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {s.target && (
-                    <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--so-blue)', background: 'var(--so-blue-soft)', padding: '2px 9px', borderRadius: 20 }}>
-                      ⏱ {s.target}
-                    </span>
-                  )}
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                    style={{ transition: 'transform 0.2s', transform: open[s.step] ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
-                </div>
+                {s.target && (
+                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--so-blue)', background: 'var(--so-blue-soft)', padding: '2px 9px', borderRadius: 20 }}>
+                    ⏱ {s.target}
+                  </span>
+                )}
               </div>
 
-              {/* Step body */}
-              {open[s.step] && (
-                <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Step body — always shown */}
+              <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
                   {/* Script blocks */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -266,7 +233,6 @@ export default function SalesCallScript({ onClose }) {
                     </div>
                   )}
                 </div>
-              )}
             </div>
           ))}
 
