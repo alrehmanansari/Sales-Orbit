@@ -342,7 +342,7 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, fontSize: 12 }}>
                   <span style={{ fontWeight: 600, color }}>{f.stage}</span>
                   <span style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
-                    {f.count} deals · Vol {formatCurrency(f.volume)} · Rev {formatCurrency(f.revenue)}
+                    {f.count} deals · Vol {formatCurrency(f.volume)} · TC {formatCurrency(f.revenue)}
                   </span>
                 </div>
                 <div style={{ height: 28, background: 'var(--border-color)', borderRadius: 8, overflow: 'hidden', position: 'relative' }}>

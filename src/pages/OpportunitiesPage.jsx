@@ -64,7 +64,7 @@ export default function OpportunitiesPage() {
             {activeCount} active &nbsp;·&nbsp;
             <span style={{ color: 'var(--so-blue)', fontWeight: 600 }}>{formatCurrency(totalVolume)}/mo volume</span>
             &nbsp;·&nbsp;
-            <span style={{ color: 'var(--green)', fontWeight: 600 }}>{formatCurrency(totalRevenue)}/mo revenue</span>
+            <span style={{ color: 'var(--green)', fontWeight: 600 }}>{formatCurrency(totalRevenue)}/mo TC</span>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -94,7 +94,7 @@ export default function OpportunitiesPage() {
         <select value={sort} onChange={e => setSort(e.target.value)}>
           <option value="newest">Newest First</option>
           <option value="oldest">Oldest First</option>
-          <option value="revenue_desc">Highest Revenue</option>
+          <option value="revenue_desc">Highest TC</option>
           <option value="company">Company A–Z</option>
         </select>
         {(search || filterStage || filterNOB || filterOwner) && (
@@ -112,14 +112,16 @@ export default function OpportunitiesPage() {
             <button key={stage}
               onClick={() => setFilterStage(filterStage === stage ? '' : stage)}
               style={{
+                width: 148, flexShrink: 0,
                 background: filterStage === stage ? 'var(--so-blue-soft)' : 'var(--bg-card)',
-                border: `1px solid ${filterStage === stage ? 'var(--so-blue)' : 'var(--border-color)'}`,
-                borderRadius: 'var(--radius)', padding: '6px 12px', cursor: 'pointer',
-                flexShrink: 0, textAlign: 'left'
+                border: `1.5px solid ${filterStage === stage ? 'var(--so-blue)' : 'var(--border-color)'}`,
+                borderRadius: 12, padding: '10px 14px', cursor: 'pointer',
+                textAlign: 'left', transition: 'all 0.15s',
+                boxShadow: filterStage === stage ? '0 2px 12px rgba(71,150,227,0.15)' : 'var(--shadow-xs)',
               }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: filterStage === stage ? 'var(--so-blue)' : 'var(--text-primary)' }}>{count}</div>
-              <div style={{ fontSize: 9, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{stage}</div>
-              <div style={{ fontSize: 10, color: 'var(--green)', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>{formatCurrency(rev)}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: filterStage === stage ? 'var(--so-blue)' : 'var(--text-primary)', lineHeight: 1.1, marginBottom: 3 }}>{count}</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: filterStage === stage ? 'var(--so-blue)' : 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}>{stage}</div>
+              <div style={{ fontSize: 12, color: 'var(--green)', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{formatCurrency(rev)}</div>
             </button>
           )
         })}
@@ -143,7 +145,7 @@ export default function OpportunitiesPage() {
                   <th>Phone</th>
                   <th>Stage</th>
                   <th>Monthly Vol.</th>
-                  <th>Monthly Rev.</th>
+                  <th>Monthly TC</th>
                   <th>Priority</th>
                   <th>Close Date</th>
                   <th>Owner</th>
@@ -222,7 +224,7 @@ export default function OpportunitiesPage() {
             Total Monthly Volume: <strong style={{ color: 'var(--so-blue)', fontFamily: 'var(--font-mono)' }}>{formatCurrency(totalVolume)}</strong>
           </span>
           <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
-            Total Monthly Revenue: <strong style={{ color: 'var(--green)', fontFamily: 'var(--font-mono)' }}>{formatCurrency(totalRevenue)}</strong>
+            Total Monthly TC: <strong style={{ color: 'var(--green)', fontFamily: 'var(--font-mono)' }}>{formatCurrency(totalRevenue)}</strong>
           </span>
         </div>
       </div>

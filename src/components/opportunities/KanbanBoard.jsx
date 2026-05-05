@@ -77,7 +77,7 @@ export default function KanbanBoard({ onOpenDetail }) {
             </div>
 
             <div style={{ padding: '6px 10px 4px', borderBottom: '1px solid var(--border-subtle)' }}>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>MRR: </span>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>TC: </span>
               <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(col.total)}</span>
             </div>
 

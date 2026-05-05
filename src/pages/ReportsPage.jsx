@@ -324,7 +324,7 @@ export default function ReportsPage() {
                       <th>Opportunity</th>
                       <th>Stage</th>
                       <th>Monthly Volume</th>
-                      <th>Monthly Revenue</th>
+                      <th>Monthly TC</th>
                       <th>Nature of Business</th>
                     </tr>
                   </thead>

@@ -152,7 +152,7 @@ export default function ConvertLeadForm({ lead, onClose, onDone }) {
             <FF label="Expected Monthly Volume (USD)">
               <input type="number" value={form.expectedMonthlyVolume} onChange={e => set('expectedMonthlyVolume', e.target.value)} placeholder="e.g. 100000" />
             </FF>
-            <FF label="Expected Monthly Revenue (USD)">
+            <FF label="Expected Monthly TC (USD)">
               <input type="number" value={form.expectedMonthlyRevenue} onChange={e => set('expectedMonthlyRevenue', e.target.value)} placeholder="e.g. 5000" />
             </FF>
             <FF label="Expected Close Date" error={errors.expectedCloseDate} required>

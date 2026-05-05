@@ -18,6 +18,8 @@ function NavIcon({ id, size = 16 }) {
       return <svg {...p}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><polyline points="2 20 22 20"/></svg>
     case 'customReports':
       return <svg {...p}><polyline points="22 12 18 12 15 20 9 4 6 12 2 12"/></svg>
+    case 'actionItems':
+      return <svg {...p}><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
     case 'salesScript':
       return <svg {...p}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.11h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
     case 'takeNotes':
@@ -28,9 +30,10 @@ function NavIcon({ id, size = 16 }) {
 }
 
 const NAV = [
-  { id: 'dashboard',     label: 'Dashboard',         badge: null },
-  { id: 'leads',         label: 'Leads',             badge: 'leads' },
-  { id: 'opportunities', label: 'Opportunities',     badge: 'opps' },
+  { id: 'actionItems',   label: 'Action Items',      badge: null },
+  { id: 'dashboard',     label: 'Dashboard',         badge: null, dividerBefore: true },
+  { id: 'leads',         label: 'Leads',             badge: null },
+  { id: 'opportunities', label: 'Opportunities',     badge: null },
   { id: 'pipeline',      label: 'Pipeline',          badge: null },
   { id: 'reports',       label: 'Reports',           badge: null },
   { id: 'customReports', label: 'Custom Reporting',  badge: null },

@@ -68,7 +68,7 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
             <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4, color: 'var(--text-primary)' }}>{opp.opportunityName}</div>
             <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--text-secondary)' }}>
               <span>Stage: <strong>{opp.stage}</strong></span>
-              <span>MRR: <strong style={{ color: 'var(--so-blue)' }}>{formatCurrency(opp.expectedMonthlyRevenue)}</strong></span>
+              <span>TC: <strong style={{ color: 'var(--so-blue)' }}>{formatCurrency(opp.expectedMonthlyRevenue)}</strong></span>
               <span>Close: {formatDate(opp.expectedCloseDate)}</span>
             </div>
           </div>

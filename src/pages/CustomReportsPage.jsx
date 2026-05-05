@@ -39,7 +39,7 @@ const OPP_COLS = [
   { key: 'opportunityName',       label: 'Opportunity',       def: true  },
   { key: 'stage',                 label: 'Stage',             def: true  },
   { key: 'expectedMonthlyVolume', label: 'Monthly Volume',    def: true  },
-  { key: 'expectedMonthlyRevenue',label: 'Monthly Revenue',   def: true  },
+  { key: 'expectedMonthlyRevenue',label: 'Monthly TC',   def: true  },
   { key: 'priority',              label: 'Priority',          def: true  },
   { key: 'expectedCloseDate',     label: 'Close Date',        def: true  },
   { key: 'leadOwner',             label: 'Owner',             def: true  },
@@ -53,7 +53,7 @@ const OPP_COLS = [
 const REPORT_TYPES = [
   { id: 'leads',         label: 'Leads Report',              icon: '◈', desc: 'Lead volume, sources, status & conversion analysis' },
   { id: 'pipeline',      label: 'Pipeline Report',           icon: '⋮⋮', desc: 'Stage funnel, deal values & win/loss breakdown' },
-  { id: 'opportunities', label: 'Opportunities Analysis',    icon: '◆', desc: 'Revenue analysis, NOB breakdown & deal insights' },
+  { id: 'opportunities', label: 'Opportunities Analysis',    icon: '◆', desc: 'TC analysis, NOB breakdown & deal insights' },
 ]
 
 const Tip = ({ active, payload, label }) => {
@@ -282,15 +282,15 @@ export default function CustomReportsPage() {
         summary: [
           { label: 'Total Opportunities', value: filtered.length,         raw: filtered.length },
           { label: 'Total Monthly Volume', value: formatCurrency(totalVol), raw: totalVol },
-          { label: 'Total Monthly Revenue',value: formatCurrency(totalRev), raw: totalRev },
+          { label: 'Total Monthly TC',value: formatCurrency(totalRev), raw: totalRev },
           { label: 'Won + Active',          value: won,                    raw: won   },
           { label: 'Lost',                  value: lost,                   raw: lost  },
         ],
         charts: [
           { title: 'Stage Distribution',   data: Object.entries(stageMap).map(([name, value]) => ({ name, value })) },
-          { title: 'Revenue by Stage',     data: stageRevData.map(d => ({ name: d.stage, revenue: d.revenue, count: d.count })) },
+          { title: 'TC by Stage',     data: stageRevData.map(d => ({ name: d.stage, revenue: d.revenue, count: d.count })) },
           { title: 'Nature of Business',   data: Object.entries(nobMap).map(([name, value]) => ({ name, value })) },
-          { title: 'Revenue by Owner',     data: Object.entries(ownerMap).map(([name, value]) => ({ name, revenue: value })).sort((a, b) => b.revenue - a.revenue) },
+          { title: 'TC by Owner',     data: Object.entries(ownerMap).map(([name, value]) => ({ name, revenue: value })).sort((a, b) => b.revenue - a.revenue) },
         ],
         tableData: filtered.map(o => {
           const row = {}

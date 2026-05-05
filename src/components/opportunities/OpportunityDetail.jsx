@@ -43,7 +43,7 @@ export default function OpportunityDetail({ opp, onClose, onEdit }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 16 }}>
           {[
             { label: 'Monthly Volume', value: formatCurrency(opp.expectedMonthlyVolume), color: 'var(--text-primary)' },
-            { label: 'Monthly Revenue', value: formatCurrency(opp.expectedMonthlyRevenue), color: 'var(--accent)' },
+            { label: 'Monthly TC', value: formatCurrency(opp.expectedMonthlyRevenue), color: 'var(--accent)' },
             { label: 'Days in Pipeline', value: daysInPipeline, color: 'var(--blue)' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 12px', textAlign: 'center' }}>

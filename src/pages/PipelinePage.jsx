@@ -81,7 +81,7 @@ export default function PipelinePage() {
             <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--so-blue)' }}>{formatCurrency(totalVolume)}</span>
             &nbsp;vol &nbsp;·&nbsp;
             <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--green)' }}>{formatCurrency(totalRevenue)}</span>
-            &nbsp;rev
+            &nbsp;TC
           </div>
         </div>
 
@@ -112,6 +112,56 @@ export default function PipelinePage() {
           <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>+ New Opportunity</button>
         </div>
       </div>
+
+      {/* ── BD Breakdown Table ───────────────────────────────────────── */}
+      {(() => {
+        const bdUsers = (state.users || []).filter(u => u.isActive !== false && u.role === 'Rep')
+        if (!bdUsers.length) return null
+        const stages = OPPORTUNITY_STAGES
+        const TH = { fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.7px', color: 'var(--text-tertiary)', padding: '7px 10px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', textAlign: 'center', whiteSpace: 'nowrap' }
+        const TD = { fontSize: 12, padding: '7px 10px', borderBottom: '0.5px solid var(--border-color)', textAlign: 'center', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }
+        return (
+          <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)', flexShrink: 0, overflowX: 'auto' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-hint)', marginBottom: 8 }}>BD Performance Breakdown</div>
+            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, border: '1px solid var(--border-color)', borderRadius: 10, overflow: 'hidden', minWidth: 600 }}>
+              <thead>
+                <tr>
+                  <th style={{ ...TH, textAlign: 'left' }}>BD</th>
+                  {stages.map(s => <th key={s} style={TH}>{s}</th>)}
+                  <th style={{ ...TH, color: 'var(--so-blue)' }}>Total Vol</th>
+                  <th style={{ ...TH, color: 'var(--green)' }}>Total TC</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bdUsers.map((u, i) => {
+                  const stageCounts = stages.map(s => allOpps.filter(o => o.leadOwner === u.name && o.stage === s).length)
+                  const uVol = allOpps.filter(o => o.leadOwner === u.name).reduce((s, o) => s + (o.expectedMonthlyVolume || 0), 0)
+                  const uTC  = allOpps.filter(o => o.leadOwner === u.name).reduce((s, o) => s + (o.expectedMonthlyRevenue || 0), 0)
+                  return (
+                    <tr key={u.userId} style={{ background: i % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-secondary)' }}>
+                      <td style={{ ...TD, textAlign: 'left', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font)' }}>{u.name}</td>
+                      {stageCounts.map((cnt, si) => (
+                        <td key={si} style={{ ...TD, color: cnt > 0 ? 'var(--text-primary)' : 'var(--text-hint)', fontWeight: cnt > 0 ? 700 : 400 }}>{cnt || '—'}</td>
+                      ))}
+                      <td style={{ ...TD, color: 'var(--so-blue)', fontWeight: 700 }}>{uVol > 0 ? formatCurrency(uVol) : '—'}</td>
+                      <td style={{ ...TD, color: 'var(--green)', fontWeight: 700 }}>{uTC > 0 ? formatCurrency(uTC) : '—'}</td>
+                    </tr>
+                  )
+                })}
+                <tr style={{ background: 'var(--bg-tertiary)' }}>
+                  <td style={{ ...TD, textAlign: 'left', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font)', fontSize: 11, borderTop: '1px solid var(--border-color)' }}>Total</td>
+                  {stages.map(s => {
+                    const cnt = allOpps.filter(o => o.stage === s).length
+                    return <td key={s} style={{ ...TD, fontWeight: 800, color: cnt > 0 ? 'var(--text-primary)' : 'var(--text-hint)', borderTop: '1px solid var(--border-color)' }}>{cnt || '—'}</td>
+                  })}
+                  <td style={{ ...TD, fontWeight: 800, color: 'var(--so-blue)', borderTop: '1px solid var(--border-color)' }}>{formatCurrency(allOpps.reduce((s, o) => s + (o.expectedMonthlyVolume || 0), 0))}</td>
+                  <td style={{ ...TD, fontWeight: 800, color: 'var(--green)', borderTop: '1px solid var(--border-color)' }}>{formatCurrency(allOpps.reduce((s, o) => s + (o.expectedMonthlyRevenue || 0), 0))}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )
+      })()}
 
       {/* ── Split layout ─────────────────────────────────────────────── */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
@@ -189,7 +239,7 @@ export default function PipelinePage() {
                 )}
                 {stageRevenue > 0 && (
                   <div>
-                    <div style={{ fontSize: 9, color: 'var(--text-hint)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Revenue / mo</div>
+                    <div style={{ fontSize: 9, color: 'var(--text-hint)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>TC / mo</div>
                     <div style={{ fontSize: 14, fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--green)' }}>{formatCurrency(stageRevenue)}</div>
                   </div>
                 )}
@@ -218,7 +268,7 @@ export default function PipelinePage() {
                     { label: 'Phone',        align: 'left'  },
                     { label: 'Email',        align: 'left'  },
                     { label: 'Age',          align: 'right' },
-                    { label: 'Revenue/mo',   align: 'right' },
+                    { label: 'TC/mo',   align: 'right' },
                     { label: 'Volume/mo',    align: 'right' },
                     { label: 'Close Date',   align: 'right' },
                     { label: 'Owner',        align: 'left'  },
