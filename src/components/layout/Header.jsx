@@ -8,10 +8,15 @@ export default function Header({ page, onNav, theme, toggleTheme, colorScheme, i
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [open, setOpen] = useState(false)
+  const [themeOpen, setThemeOpen] = useState(false)
   const ref = useRef()
+  const themeRef = useRef()
 
   useEffect(() => {
-    const handler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    const handler = e => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+      if (themeRef.current && !themeRef.current.contains(e.target)) setThemeOpen(false)
+    }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
@@ -103,25 +108,83 @@ export default function Header({ page, onNav, theme, toggleTheme, colorScheme, i
           </div>
         )}
 
-        {/* Color scheme palette */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 24, background: 'var(--bg-tertiary)', border: '1.5px solid var(--border-strong-color)' }}>
-          {COLOR_SCHEMES.map(s => (
-            <button
-              key={s.id}
-              title={s.label}
-              onClick={() => setColorScheme(s.id)}
-              style={{
-                width: 16, height: 16, borderRadius: '50%',
-                background: s.color,
-                border: colorScheme === s.id ? '2px solid var(--text-primary)' : '2px solid transparent',
-                outline: colorScheme === s.id ? `2px solid ${s.color}` : 'none',
-                outlineOffset: 1,
-                cursor: 'pointer', padding: 0, flexShrink: 0,
-                transition: 'all 160ms ease',
-                boxShadow: colorScheme === s.id ? `0 0 0 2px ${s.color}40` : 'none',
-              }}
-            />
-          ))}
+        {/* Theme picker — shows active theme, dropdown for the rest */}
+        <div ref={themeRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setThemeOpen(o => !o)}
+            title="Change theme"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              padding: '5px 11px 5px 8px', borderRadius: 24,
+              background: 'var(--bg-tertiary)',
+              border: `1.5px solid ${themeOpen ? 'var(--so-blue)' : 'var(--border-strong-color)'}`,
+              cursor: 'pointer', transition: 'all 180ms ease',
+              boxShadow: 'var(--shadow-xs)',
+            }}
+            onMouseEnter={e => { if (!themeOpen) e.currentTarget.style.borderColor = 'var(--so-blue)' }}
+            onMouseLeave={e => { if (!themeOpen) e.currentTarget.style.borderColor = 'var(--border-strong-color)' }}
+          >
+            {/* Active colour dot */}
+            <span style={{
+              width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
+              background: COLOR_SCHEMES.find(s => s.id === colorScheme)?.color ?? '#4796E3',
+              boxShadow: `0 0 0 2px ${COLOR_SCHEMES.find(s => s.id === colorScheme)?.color ?? '#4796E3'}30`,
+            }} />
+            {!isMobile && (
+              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: 'var(--font)' }}>
+                {COLOR_SCHEMES.find(s => s.id === colorScheme)?.label ?? 'Theme'}
+              </span>
+            )}
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)"
+              strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              style={{ transition: 'transform 180ms ease', transform: themeOpen ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+
+          {themeOpen && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 600,
+              background: 'var(--bg-card)', border: '1px solid var(--border-strong-color)',
+              borderRadius: 14, padding: '6px', minWidth: 170,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)',
+              animation: 'fadeUp 0.15s cubic-bezier(0.4,0,0.2,1) both',
+            }}>
+              <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--text-hint)', padding: '4px 10px 6px' }}>
+                Colour Theme
+              </div>
+              {COLOR_SCHEMES.map(s => {
+                const isActive = s.id === colorScheme
+                return (
+                  <button key={s.id} onClick={() => { setColorScheme(s.id); setThemeOpen(false) }}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '7px 10px', borderRadius: 9, border: 'none',
+                      background: isActive ? 'var(--so-blue-soft)' : 'transparent',
+                      cursor: 'pointer', fontFamily: 'var(--font)',
+                      transition: 'background 130ms ease',
+                    }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--bg-tertiary)' }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <span style={{
+                      width: 14, height: 14, borderRadius: '50%', flexShrink: 0,
+                      background: s.color,
+                      boxShadow: isActive ? `0 0 0 2px var(--bg-card), 0 0 0 3.5px ${s.color}` : 'none',
+                    }} />
+                    <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--so-blue)' : 'var(--text-primary)', flex: 1, textAlign: 'left' }}>
+                      {s.label}
+                    </span>
+                    {isActive && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--so-blue)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* Light / Dark toggle */}
