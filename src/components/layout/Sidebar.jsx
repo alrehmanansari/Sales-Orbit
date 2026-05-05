@@ -24,21 +24,24 @@ function NavIcon({ id, size = 16 }) {
       return <svg {...p}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.11h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
     case 'takeNotes':
       return <svg {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    case 'businessCases':
+      return <svg {...p}><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
     default:
       return <svg {...p}><circle cx="12" cy="12" r="9"/></svg>
   }
 }
 
 const NAV = [
-  { id: 'actionItems',   label: 'Action Items',      badge: null },
-  { id: 'dashboard',     label: 'Dashboard',         badge: null, dividerBefore: true },
-  { id: 'leads',         label: 'Leads',             badge: null },
-  { id: 'opportunities', label: 'Opportunities',     badge: null },
-  { id: 'pipeline',      label: 'Pipeline',          badge: null },
-  { id: 'reports',       label: 'Reports',           badge: null },
-  { id: 'customReports', label: 'Custom Reporting',  badge: null },
-  { id: 'salesScript',   label: 'Sales Call Script', badge: null, dividerBefore: true },
-  { id: 'takeNotes',     label: 'Take Notes',        badge: null },
+  { id: 'actionItems',   label: 'Action Items',           section: 'KEY METRICS' },
+  { id: 'dashboard',     label: 'Dashboard'               },
+  { id: 'leads',         label: 'Leads'                   },
+  { id: 'opportunities', label: 'Opportunities'           },
+  { id: 'pipeline',      label: 'Pipeline'                },
+  { id: 'reports',       label: 'Reports',                section: 'ANALYTICS'   },
+  { id: 'customReports', label: 'Custom Reporting'        },
+  { id: 'salesScript',   label: 'Sales Call Script',      section: 'SALES LIBRARY' },
+  { id: 'businessCases', label: 'Business Cases'          },
+  { id: 'takeNotes',     label: 'Take Notes',             section: 'WORKSPACE'   },
 ]
 
 const StarLogo = () => (
@@ -163,26 +166,35 @@ export default function Sidebar({ page, onNav, onLogout, isMobile, isOpen, onClo
       )}
 
       {/* ── Nav ──────────────────────────────────────────── */}
-      <nav style={{ flex: 1, padding: isCollapsed ? '12px 8px' : '10px 8px', overflowY: 'auto' }}>
-        {!isCollapsed && (
-          <div style={{ fontSize: 9, color: 'var(--text-hint)', fontWeight: 700, letterSpacing: '1.8px', textTransform: 'uppercase', padding: '6px 12px 10px' }}>
-            Main Menu
-          </div>
-        )}
+      <nav style={{ flex: 1, padding: isCollapsed ? '12px 8px' : '8px 8px', overflowY: 'auto' }}>
 
         {NAV.map(item => {
-          const active     = page === item.id
-          const badgeCount = item.badge ? badges[item.badge] : null
+          const active = page === item.id
 
           return (
             <React.Fragment key={item.id}>
-              {item.dividerBefore && (
-                <div style={{ height: '0.5px', background: 'var(--border-color)', margin: isCollapsed ? '8px 4px' : '8px 10px', opacity: 0.7 }} />
+              {/* Section label */}
+              {item.section && !isCollapsed && (
+                <div style={{
+                  padding: '14px 12px 5px',
+                  fontSize: 8, fontWeight: 800,
+                  letterSpacing: '1.6px', textTransform: 'uppercase',
+                  color: 'var(--text-hint)',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                }}>
+                  <div style={{ flex: 1, height: '0.5px', background: 'var(--border-color)', opacity: 0.6 }} />
+                  <span>{item.section}</span>
+                  <div style={{ flex: 1, height: '0.5px', background: 'var(--border-color)', opacity: 0.6 }} />
+                </div>
+              )}
+              {item.section && isCollapsed && (
+                <div style={{ height: '0.5px', background: 'var(--border-color)', margin: '8px 4px', opacity: 0.5 }} />
               )}
 
               <button
                 onClick={() => onNav(item.id)}
                 title={isCollapsed ? item.label : undefined}
+
                 style={{
                   width: '100%',
                   display: 'flex',
@@ -271,6 +283,28 @@ export default function Sidebar({ page, onNav, onLogout, isMobile, isOpen, onClo
                 {overdueCount} overdue follow-up{overdueCount > 1 ? 's' : ''}
               </span>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── SUNRATE branding ────────────────────────────────── */}
+      {!isCollapsed && (
+        <div style={{
+          padding: '8px 16px',
+          borderTop: '0.5px solid var(--border-color)',
+          display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
+          background: 'linear-gradient(90deg, rgba(71,150,227,0.04), rgba(145,119,199,0.04))',
+        }}>
+          <div style={{ width: 16, height: 16, borderRadius: 4, background: 'var(--so-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="10" height="10" viewBox="0 0 80 80" fill="none">
+              <path d="M40 4 C40 4 41.6 22 47 35 C53 49 68 40 76 40 C68 40 53 31 47 45 C41.6 58 40 76 40 76 C40 76 38.4 58 33 45 C27 31 12 40 4 40 C12 40 27 49 33 35 C38.4 22 40 4 40 4Z" fill="#fff"/>
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1px', background: 'var(--so-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              SUNRATE
+            </div>
+            <div style={{ fontSize: 8, color: 'var(--text-hint)', letterSpacing: '0.3px' }}>BD Sales Platform</div>
           </div>
         </div>
       )}

@@ -13,6 +13,7 @@ import CustomReportsPage from './pages/CustomReportsPage'
 import SalesScriptPage from './pages/SalesScriptPage'
 import TakeNotesPage from './pages/TakeNotesPage'
 import ActionItemsPage from './pages/ActionItemsPage'
+import BusinessCasesPage from './pages/BusinessCasesPage'
 import AuthPage from './pages/AuthPage'
 import { useTheme } from './hooks/useTheme'
 
@@ -92,6 +93,7 @@ function AppContent() {
     reports:       <ReportsPage />,
     customReports: <CustomReportsPage />,
     actionItems:   <ActionItemsPage />,
+    businessCases: <BusinessCasesPage />,
     salesScript:   <SalesScriptPage />,
     takeNotes:     <TakeNotesPage />,
   }

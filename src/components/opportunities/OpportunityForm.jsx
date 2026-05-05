@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useCRM } from '../../store/CRMContext'
-import { COMPETITORS, VERTICALS, NATURE_OF_BUSINESS, PRIORITIES, TEAM_MEMBERS } from '../../data/constants'
+import { COMPETITORS, VERTICALS, NATURE_OF_BUSINESS, PRIORITIES } from '../../data/constants'
 import { Modal } from '../common/Modal'
 
 function FF({ label, required, error, span, children }) {
@@ -36,7 +36,6 @@ export default function OpportunityForm({ onClose, editOpp }) {
     const e = {}
     if (!form.opportunityName.trim()) e.opportunityName = 'Required'
     if (!form.companyName.trim()) e.companyName = 'Required'
-    if (!form.leadOwner) e.leadOwner = 'Required'
     if (!form.expectedCloseDate) e.expectedCloseDate = 'Required'
     setErrors(e)
     return !Object.keys(e).length
@@ -104,10 +103,12 @@ export default function OpportunityForm({ onClose, editOpp }) {
           <FF label="Decision Maker">
             <input value={form.decisionMaker} onChange={e => set('decisionMaker', e.target.value)} />
           </FF>
-          <FF label="Lead Owner" error={errors.leadOwner} required>
+          <FF label="Lead Owner">
             <select value={form.leadOwner} onChange={e => set('leadOwner', e.target.value)}>
-              <option value="">Assign to…</option>
-              {TEAM_MEMBERS.map(m => <option key={m} value={m}>{m}</option>)}
+              <option value="">Assign to… (optional)</option>
+              {(state.users || []).filter(u => u.isActive !== false).map(u => (
+                <option key={u.userId || u.name} value={u.name}>{u.name}</option>
+              ))}
             </select>
           </FF>
           <FF label="Priority">
