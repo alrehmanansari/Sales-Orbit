@@ -5,7 +5,8 @@
 
 set -e
 
-APP_DIR="/var/www/salesorbit"
+# Auto-detect app directory: use the folder this script lives in
+APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 LOG_DIR="/var/log/salesorbit"
 
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'

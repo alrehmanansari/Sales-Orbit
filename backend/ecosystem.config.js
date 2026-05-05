@@ -8,7 +8,7 @@ module.exports = {
     {
       name:             'salesorbit',
       script:           './server.js',
-      cwd:              '/var/www/salesorbit/backend',
+      cwd:              __dirname,
 
       instances:        1,          // increase to 'max' for multi-core if needed
       exec_mode:        'fork',
