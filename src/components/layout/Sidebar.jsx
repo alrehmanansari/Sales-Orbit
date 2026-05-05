@@ -287,7 +287,7 @@ export default function Sidebar({ page, onNav, onLogout, isMobile, isOpen, onClo
         </div>
       )}
 
-      {/* ── SUNRATE branding ────────────────────────────────── */}
+      {/* ── SalesOrbit branding ──────────────────────────────── */}
       {!isCollapsed && (
         <div style={{
           padding: '8px 16px',
@@ -301,8 +301,8 @@ export default function Sidebar({ page, onNav, onLogout, isMobile, isOpen, onClo
             </svg>
           </div>
           <div>
-            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1px', background: 'var(--so-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              SUNRATE
+            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.3px', background: 'var(--so-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              SalesOrbit
             </div>
             <div style={{ fontSize: 8, color: 'var(--text-hint)', letterSpacing: '0.3px' }}>BD Sales Platform</div>
           </div>
