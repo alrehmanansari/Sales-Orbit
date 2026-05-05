@@ -5,10 +5,10 @@ const STORAGE_KEY = 'so-theme'
 export const COLOR_SCHEMES = [
   { id: 'default', label: 'Default',  color: '#4796E3' },
   { id: 'ocean',   label: 'Ocean',    color: '#0288D1' },
-  { id: 'forest',  label: 'Forest',   color: '#388E3C' },
-  { id: 'sunset',  label: 'Sunset',   color: '#E65100' },
   { id: 'slate',   label: 'Slate',    color: '#546E7A' },
-  { id: 'rose',    label: 'Rose',     color: '#C2185B' },
+  { id: 'ivory',   label: 'Ivory',    color: '#8B7355' },
+  { id: 'sand',    label: 'Sand',     color: '#B8960C' },
+  { id: 'taupe',   label: 'Taupe',    color: '#7D6E63' },
 ]
 
 function parseTheme(raw) {

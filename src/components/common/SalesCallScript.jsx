@@ -105,7 +105,7 @@ export default function SalesCallScript({ onClose }) {
 
   return (
     <div className="modal-overlay" style={{ zIndex: 1300 }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="modal" style={{ maxWidth: 860, width: '100%', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="modal" style={{ maxWidth: 860, width: '100%', maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
         {/* ── Modal header ──────────────────────────────────────────── */}
         <div className="modal-header" style={{

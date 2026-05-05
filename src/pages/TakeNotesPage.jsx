@@ -1,98 +1,85 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useCRM } from '../store/CRMContext'
 
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'January','February','March','April','May','June',
+  'July','August','September','October','November','December'
 ]
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
 
-function dateKey(year, month, day) {
-  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+function pad(n) { return String(n).padStart(2,'0') }
+function toKey(y, m, d) { return `${y}-${pad(m+1)}-${pad(d)}` }
+function todayKey() {
+  const t = new Date()
+  return toKey(t.getFullYear(), t.getMonth(), t.getDate())
 }
-
-function formatDisplayDate(key) {
-  if (!key) return ''
-  const [y, m, d] = key.split('-')
-  const date = new Date(+y, +m - 1, +d)
-  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+function parseKey(key) {
+  const [y,m,d] = key.split('-').map(Number)
+  return new Date(y, m-1, d)
 }
-
-function getDaysInMonth(year, month) {
-  return new Date(year, month + 1, 0).getDate()
+function formatLong(key) {
+  return parseKey(key).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' })
 }
+function daysInMonth(y,m) { return new Date(y,m+1,0).getDate() }
+function firstDow(y,m) { const d = new Date(y,m,1).getDay(); return d===0?6:d-1 }
 
-function getFirstDayOfWeek(year, month) {
-  // Monday = 0
-  const dow = new Date(year, month, 1).getDay()
-  return dow === 0 ? 6 : dow - 1
-}
+/* ── Mini calendar for the sidebar ── */
+function MiniCalendar({ year, month, notes, selected, onSelect, onChangeMonth }) {
+  const total = daysInMonth(year, month)
+  const offset = firstDow(year, month)
+  const cells = Array(offset).fill(null)
+  for (let d=1;d<=total;d++) cells.push(d)
+  const today = todayKey()
 
-function MonthGrid({ year, month, notes, selectedDate, onSelect, today }) {
-  const totalDays = getDaysInMonth(year, month)
-  const startOffset = getFirstDayOfWeek(year, month)
-  const cells = []
-
-  for (let i = 0; i < startOffset; i++) cells.push(null)
-  for (let d = 1; d <= totalDays; d++) cells.push(d)
-
-  const todayKey = today
   return (
     <div>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, letterSpacing: '-0.1px' }}>
-        {MONTH_NAMES[month]}
+      {/* Month nav */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+        <button onClick={()=>onChangeMonth(-1)} style={navBtn}>‹</button>
+        <span style={{ fontSize:13, fontWeight:700, color:'var(--text-primary)' }}>
+          {MONTH_NAMES[month]} {year}
+        </span>
+        <button onClick={()=>onChangeMonth(1)} style={navBtn}>›</button>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
-        {DAY_LABELS.map(d => (
-          <div key={d} style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-tertiary)', textAlign: 'center', letterSpacing: '0.5px', paddingBottom: 4 }}>
-            {d}
+
+      {/* Day labels */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:1, marginBottom:3 }}>
+        {DAY_SHORT.map(d=>(
+          <div key={d} style={{ fontSize:9, fontWeight:700, color:'var(--text-hint)', textAlign:'center', padding:'2px 0', letterSpacing:'0.3px' }}>
+            {d[0]}
           </div>
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
-        {cells.map((day, i) => {
-          if (!day) return <div key={`e-${i}`} />
-          const key = dateKey(year, month, day)
-          const hasNote = !!notes[key]
-          const isSelected = key === selectedDate
-          const isToday = key === todayKey
-          const isWeekend = ((i) % 7) >= 5
 
+      {/* Day grid */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2 }}>
+        {cells.map((day,i) => {
+          if (!day) return <div key={`e${i}`} />
+          const key = toKey(year, month, day)
+          const isSel = key === selected
+          const isToday = key === today
+          const hasNote = !!notes[key]
           return (
-            <button
-              key={key}
-              onClick={() => onSelect(key)}
-              style={{
-                width: '100%', aspectRatio: '1', minHeight: 28,
-                borderRadius: 6, border: 'none', cursor: 'pointer',
-                fontFamily: 'var(--font)', fontSize: 11, fontWeight: isToday ? 700 : 500,
-                position: 'relative',
-                background: isSelected
-                  ? 'var(--so-blue)'
-                  : isToday
-                    ? 'var(--so-blue-soft)'
-                    : 'transparent',
-                color: isSelected
-                  ? '#fff'
-                  : isToday
-                    ? 'var(--so-blue)'
-                    : isWeekend
-                      ? 'var(--text-tertiary)'
-                      : 'var(--text-secondary)',
-                outline: isToday && !isSelected ? '1.5px solid var(--so-blue)' : 'none',
-                transition: 'all 140ms ease',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--so-blue-soft)' }}
-              onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = isToday ? 'var(--so-blue-soft)' : 'transparent' }}
+            <button key={key} onClick={()=>onSelect(key)} style={{
+              border:'none', borderRadius:6, cursor:'pointer',
+              fontFamily:'var(--font)', fontSize:11, fontWeight: isToday?700:500,
+              padding:'5px 0', position:'relative', transition:'all 130ms ease',
+              background: isSel ? 'var(--so-blue)' : isToday ? 'var(--so-blue-soft)' : 'transparent',
+              color: isSel ? '#fff' : isToday ? 'var(--so-blue)' : 'var(--text-secondary)',
+              outline: isToday && !isSel ? '1.5px solid var(--so-blue)' : 'none',
+              outlineOffset: -1,
+            }}
+              onMouseEnter={e=>{ if(!isSel) e.currentTarget.style.background='var(--so-blue-soft)' }}
+              onMouseLeave={e=>{ if(!isSel) e.currentTarget.style.background= isToday?'var(--so-blue-soft)':'transparent' }}
             >
               {day}
               {hasNote && (
                 <span style={{
-                  position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)',
-                  width: 4, height: 4, borderRadius: '50%',
-                  background: isSelected ? 'rgba(255,255,255,0.8)' : 'var(--so-purple)',
-                }} />
+                  position:'absolute', bottom:2, left:'50%', transform:'translateX(-50%)',
+                  width:3, height:3, borderRadius:'50%',
+                  background: isSel ? 'rgba(255,255,255,0.8)' : 'var(--so-purple)',
+                  display:'block',
+                }}/>
               )}
             </button>
           )
@@ -102,232 +89,345 @@ function MonthGrid({ year, month, notes, selectedDate, onSelect, today }) {
   )
 }
 
+const navBtn = {
+  width:24, height:24, borderRadius:6, border:'1px solid var(--border-strong-color)',
+  background:'var(--bg-card)', cursor:'pointer', display:'flex', alignItems:'center',
+  justifyContent:'center', fontSize:14, color:'var(--text-secondary)', transition:'all 130ms ease',
+}
+
+/* ── Rich text toolbar button ── */
+function TB({ title, label, onCmd, active }) {
+  return (
+    <button
+      title={title}
+      onMouseDown={e => { e.preventDefault(); onCmd() }}
+      style={{
+        width:28, height:28, border:'none', borderRadius:5, cursor:'pointer',
+        fontFamily:'var(--font)', fontSize: typeof label==='string' && label.length===1 ? 13 : 11,
+        fontWeight:600, transition:'all 120ms ease',
+        background: active ? 'var(--so-blue-soft)' : 'transparent',
+        color: active ? 'var(--so-blue)' : 'var(--text-secondary)',
+        display:'flex', alignItems:'center', justifyContent:'center',
+      }}
+      onMouseEnter={e=>{ if(!active) { e.currentTarget.style.background='var(--bg-tertiary)'; e.currentTarget.style.color='var(--text-primary)' }}}
+      onMouseLeave={e=>{ if(!active) { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='var(--text-secondary)' }}}
+    >{label}</button>
+  )
+}
+
+/* ── Notebook-lines background ── */
+const notebookBg = {
+  backgroundImage: `repeating-linear-gradient(
+    transparent, transparent calc(1.8em - 1px),
+    rgba(125,110,99,0.07) calc(1.8em - 1px),
+    rgba(125,110,99,0.07) 1.8em
+  )`,
+  backgroundAttachment: 'local',
+}
+
 export default function TakeNotesPage() {
   const { state } = useCRM()
   const user = state.currentUser
-  const [year, setYear] = useState(new Date().getFullYear())
+  const [year, setYear] = useState(() => new Date().getFullYear())
+  const [calMonth, setCalMonth] = useState(() => new Date().getMonth())
+  const [calYear, setCalYear] = useState(() => new Date().getFullYear())
+  const [selected, setSelected] = useState(() => todayKey())
   const [notes, setNotes] = useState({})
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const t = new Date()
-    return dateKey(t.getFullYear(), t.getMonth(), t.getDate())
-  })
-  const [draft, setDraft] = useState('')
-  const [saved, setSaved] = useState(false)
+  const [savedAt, setSavedAt] = useState(null)
+  const editorRef = useRef(null)
+  const saveTimer = useRef(null)
 
-  const storageKey = `so_diary_${user?.email || 'default'}_${year}`
+  const storageKey = `so_diary_${user?.email||'default'}_${year}`
 
-  const todayKey = (() => {
-    const t = new Date()
-    return dateKey(t.getFullYear(), t.getMonth(), t.getDate())
-  })()
-
-  // Load notes for the current year
+  /* Load notes on year change */
   useEffect(() => {
     try {
       const raw = localStorage.getItem(storageKey)
       setNotes(raw ? JSON.parse(raw) : {})
-    } catch {
-      setNotes({})
-    }
+    } catch { setNotes({}) }
   }, [storageKey])
 
-  // Sync draft to selected date
+  /* Sync editor when selected date changes */
   useEffect(() => {
-    setDraft(notes[selectedDate] || '')
-    setSaved(false)
-  }, [selectedDate, notes])
+    if (!editorRef.current) return
+    editorRef.current.innerHTML = notes[selected] || ''
+    editorRef.current.focus()
+    setSavedAt(null)
+  }, [selected]) // eslint-disable-line
+
+  /* Debounced auto-save */
+  const autosave = useCallback(() => {
+    if (!editorRef.current) return
+    const html = editorRef.current.innerHTML
+    const isEmpty = !html || html.replace(/<[^>]*>/g,'').trim() === ''
+    setNotes(prev => {
+      const next = { ...prev }
+      if (isEmpty) delete next[selected]
+      else next[selected] = html
+      localStorage.setItem(storageKey, JSON.stringify(next))
+      return next
+    })
+    setSavedAt(new Date())
+  }, [selected, storageKey])
+
+  function handleInput() {
+    clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(autosave, 600)
+  }
 
   function selectDate(key) {
-    setSelectedDate(key)
+    clearTimeout(saveTimer.current)
+    autosave()
+    // Year jump if needed
+    const [y] = key.split('-').map(Number)
+    if (y !== year) setYear(y)
+    setSelected(key)
   }
 
-  function saveNote() {
-    const updated = { ...notes }
-    const text = draft.trim()
-    if (text) {
-      updated[selectedDate] = text
-    } else {
-      delete updated[selectedDate]
-    }
-    setNotes(updated)
-    localStorage.setItem(storageKey, JSON.stringify(updated))
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  function deleteNote() {
+    if (!editorRef.current) return
+    editorRef.current.innerHTML = ''
+    setNotes(prev => {
+      const next = { ...prev }
+      delete next[selected]
+      localStorage.setItem(storageKey, JSON.stringify(next))
+      return next
+    })
+    setSavedAt(null)
   }
 
-  function clearNote() {
-    const updated = { ...notes }
-    delete updated[selectedDate]
-    setNotes(updated)
-    setDraft('')
-    localStorage.setItem(storageKey, JSON.stringify(updated))
+  function changeCalMonth(dir) {
+    setCalMonth(m => {
+      let nm = m + dir
+      if (nm < 0) { setCalYear(y=>y-1); return 11 }
+      if (nm > 11) { setCalYear(y=>y+1); return 0 }
+      return nm
+    })
+  }
+
+  function exec(cmd, val=null) {
+    document.execCommand(cmd, false, val)
+    editorRef.current?.focus()
+    handleInput()
+  }
+
+  /* Check current format state */
+  function fmt(cmd) {
+    try { return document.queryCommandState(cmd) } catch { return false }
   }
 
   const noteCount = Object.keys(notes).length
+  const selHasNote = !!notes[selected]
+  const selectedYear = parseInt(selected.split('-')[0])
+
+  /* Sorted entries for the list */
+  const allEntries = Object.entries(notes).sort((a,b) => b[0].localeCompare(a[0]))
 
   return (
     <div className="page">
       {/* ── Page header ── */}
-      <div className="page-header" style={{ flexWrap: 'wrap', gap: 12 }}>
+      <div className="page-header" style={{ gap:12, flexWrap:'wrap' }}>
         <div>
-          <h2 style={{ margin: 0 }}>Take Notes</h2>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-            Personal Diary — {noteCount > 0 ? `${noteCount} entr${noteCount === 1 ? 'y' : 'ies'}` : 'No entries yet'} · {year}
+          <h2 style={{ margin:0 }}>Take Notes</h2>
+          <div style={{ fontSize:11, color:'var(--text-tertiary)', marginTop:2 }}>
+            Personal Diary · {noteCount > 0 ? `${noteCount} entr${noteCount===1?'y':'ies'}` : 'No entries yet'} · {year}
           </div>
         </div>
 
-        {/* Year navigation */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button
-            onClick={() => setYear(y => y - 1)}
-            style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border-strong-color)', background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, transition: 'all 150ms ease' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--so-blue)'; e.currentTarget.style.color = 'var(--so-blue)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-strong-color)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
-          >‹</button>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', minWidth: 48, textAlign: 'center', letterSpacing: '-0.3px' }}>{year}</div>
-          <button
-            onClick={() => setYear(y => y + 1)}
-            style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border-strong-color)', background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, transition: 'all 150ms ease' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--so-blue)'; e.currentTarget.style.color = 'var(--so-blue)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-strong-color)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
-          >›</button>
-
-          <button
-            onClick={() => { setYear(new Date().getFullYear()); selectDate(todayKey) }}
-            style={{ marginLeft: 4, padding: '5px 12px', borderRadius: 20, border: '1px solid var(--border-strong-color)', background: 'var(--bg-card)', cursor: 'pointer', fontFamily: 'var(--font)', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', transition: 'all 150ms ease' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--so-blue)'; e.currentTarget.style.color = 'var(--so-blue)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-strong-color)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <button onClick={()=>{ const t=todayKey(); const [y]=t.split('-').map(Number); setYear(y); setCalYear(y); setCalMonth(new Date().getMonth()); selectDate(t) }}
+            style={{ padding:'5px 14px', borderRadius:20, border:'1px solid var(--border-strong-color)', background:'var(--bg-card)', cursor:'pointer', fontFamily:'var(--font)', fontSize:12, fontWeight:600, color:'var(--text-secondary)', transition:'all 140ms' }}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--so-blue)';e.currentTarget.style.color='var(--so-blue)'}}
+            onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border-strong-color)';e.currentTarget.style.color='var(--text-secondary)'}}
           >Today</button>
+
+          <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 10px', borderRadius:20, border:'1px solid var(--border-strong-color)', background:'var(--bg-card)' }}>
+            <button onClick={()=>setYear(y=>y-1)} style={{ ...navBtn, border:'none', background:'transparent', width:20, height:20 }}>‹</button>
+            <span style={{ fontSize:13, fontWeight:700, color:'var(--text-primary)', minWidth:36, textAlign:'center' }}>{year}</span>
+            <button onClick={()=>setYear(y=>y+1)} style={{ ...navBtn, border:'none', background:'transparent', width:20, height:20 }}>›</button>
+          </div>
         </div>
       </div>
 
       {/* ── Body ── */}
-      <div className="page-body" style={{ padding: '20px 24px' }}>
-        <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', minHeight: 0 }}>
+      <div className="page-body" style={{ padding:0, display:'flex', minHeight:0, height:'100%' }}>
 
-          {/* ── Left: Calendar year grid ── */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
-              {MONTH_NAMES.map((_, mi) => (
-                <div key={mi} style={{
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 12, padding: '14px 12px',
-                  boxShadow: 'var(--shadow-xs)',
-                  transition: 'box-shadow 200ms ease',
-                }}>
-                  <MonthGrid
-                    year={year}
-                    month={mi}
-                    notes={notes}
-                    selectedDate={selectedDate}
-                    onSelect={selectDate}
-                    today={todayKey}
-                  />
-                </div>
-              ))}
-            </div>
+        {/* ── LEFT SIDEBAR ── */}
+        <div style={{
+          width:260, flexShrink:0, display:'flex', flexDirection:'column',
+          borderRight:'1px solid var(--border-color)',
+          background:'var(--bg-secondary)',
+          overflowY:'auto',
+        }}>
+          {/* Mini calendar */}
+          <div style={{ padding:'16px 14px 12px', borderBottom:'1px solid var(--border-color)' }}>
+            <MiniCalendar
+              year={calYear} month={calMonth}
+              notes={notes} selected={selected}
+              onSelect={selectDate}
+              onChangeMonth={changeCalMonth}
+            />
           </div>
 
-          {/* ── Right: Note editor ── */}
-          <div style={{ width: 300, flexShrink: 0, position: 'sticky', top: 0 }}>
-            <div style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 14, overflow: 'hidden',
-              boxShadow: 'var(--shadow-sm)',
-            }}>
-              {/* Editor header */}
-              <div style={{
-                padding: '14px 16px 12px',
-                borderBottom: '1px solid var(--border-color)',
-                background: 'linear-gradient(135deg, rgba(71,150,227,0.06), rgba(145,119,199,0.04))',
-              }}>
-                <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.4px', textTransform: 'uppercase', background: 'var(--so-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 4 }}>
-                  Daily Note
-                </div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3 }}>
-                  {formatDisplayDate(selectedDate)}
-                </div>
-                {notes[selectedDate] && (
-                  <div style={{ fontSize: 10, color: 'var(--so-purple)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--so-purple)', display: 'inline-block' }} />
-                    Note saved
-                  </div>
-                )}
+          {/* All notes list */}
+          <div style={{ flex:1, padding:'12px 10px', overflowY:'auto' }}>
+            {allEntries.length === 0 ? (
+              <div style={{ fontSize:11, color:'var(--text-hint)', textAlign:'center', padding:'20px 0', lineHeight:1.6 }}>
+                No notes yet.<br/>Click a date to start writing.
               </div>
-
-              {/* Textarea */}
-              <div style={{ padding: '14px 16px' }}>
-                <textarea
-                  value={draft}
-                  onChange={e => { setDraft(e.target.value); setSaved(false) }}
-                  placeholder={`Write your note for ${MONTH_NAMES[selectedDate ? parseInt(selectedDate.split('-')[1]) - 1 : 0]}…\n\nIdeas, observations, meeting notes, personal reminders…`}
-                  style={{
-                    width: '100%', minHeight: 220, resize: 'vertical',
-                    fontSize: 13, lineHeight: 1.75,
-                    border: '1.5px solid var(--border-strong-color)',
-                    borderRadius: 10, padding: '12px 14px',
-                    background: 'var(--bg-secondary)',
-                    color: 'var(--text-primary)',
-                    fontFamily: 'var(--font)',
-                  }}
-                />
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4, marginBottom: 10 }}>
-                  <span style={{ fontSize: 10, color: 'var(--text-hint)' }}>{draft.length} chars</span>
-                  {saved && <span style={{ fontSize: 10, color: '#1E8E3E', fontWeight: 600 }}>Saved</span>}
+            ) : (
+              <>
+                <div style={{ fontSize:9, fontWeight:700, letterSpacing:'1.2px', textTransform:'uppercase', color:'var(--text-hint)', marginBottom:8, paddingLeft:4 }}>
+                  All Entries
                 </div>
+                {allEntries.map(([key, html]) => {
+                  const isSel = key === selected
+                  const preview = html.replace(/<[^>]*>/g,'').trim().slice(0,60)
+                  const d = parseKey(key)
+                  const label = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
+                  return (
+                    <div key={key} onClick={()=>selectDate(key)}
+                      style={{
+                        padding:'9px 10px', borderRadius:9, cursor:'pointer', marginBottom:4,
+                        border:`1.5px solid ${isSel?'var(--so-blue)':'transparent'}`,
+                        background: isSel ? 'var(--so-blue-soft)' : 'var(--bg-card)',
+                        boxShadow: isSel ? 'none' : 'var(--shadow-xs)',
+                        transition:'all 130ms ease',
+                      }}
+                      onMouseEnter={e=>{ if(!isSel) e.currentTarget.style.background='var(--bg-tertiary)' }}
+                      onMouseLeave={e=>{ if(!isSel) e.currentTarget.style.background='var(--bg-card)' }}
+                    >
+                      <div style={{ fontSize:11, fontWeight:700, color: isSel?'var(--so-blue)':'var(--text-primary)', marginBottom:2 }}>{label}</div>
+                      <div style={{ fontSize:10, color:'var(--text-tertiary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', lineHeight:1.4 }}>
+                        {preview || '(empty)'}
+                      </div>
+                    </div>
+                  )
+                })}
+              </>
+            )}
+          </div>
+        </div>
 
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    onClick={clearNote}
-                    disabled={!draft && !notes[selectedDate]}
-                    className="btn btn-ghost btn-sm"
-                    style={{ flex: 1 }}
-                  >Clear</button>
-                  <button
-                    onClick={saveNote}
-                    className="btn btn-primary btn-sm"
-                    style={{ flex: 2 }}
-                  >Save Note</button>
-                </div>
-              </div>
+        {/* ── MAIN: Notebook page ── */}
+        <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--bg-primary)' }}>
 
-              {/* Entry summary */}
-              {noteCount > 0 && (
-                <div style={{ padding: '10px 16px 14px', borderTop: '1px solid var(--border-color)' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-tertiary)', marginBottom: 8 }}>
-                    Recent Entries
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 140, overflowY: 'auto' }}>
-                    {Object.entries(notes)
-                      .sort((a, b) => b[0].localeCompare(a[0]))
-                      .slice(0, 5)
-                      .map(([key, text]) => (
-                        <div
-                          key={key}
-                          onClick={() => selectDate(key)}
-                          style={{
-                            padding: '7px 10px', borderRadius: 8, cursor: 'pointer',
-                            border: `1px solid ${key === selectedDate ? 'var(--so-blue)' : 'var(--border-color)'}`,
-                            background: key === selectedDate ? 'var(--so-blue-soft)' : 'var(--bg-tertiary)',
-                            transition: 'all 140ms ease',
-                          }}
-                        >
-                          <div style={{ fontSize: 10, fontWeight: 700, color: key === selectedDate ? 'var(--so-blue)' : 'var(--text-secondary)', marginBottom: 2 }}>
-                            {new Date(key + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </div>
-                          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {text}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
+          {/* Date header */}
+          <div style={{
+            padding:'16px 28px 14px',
+            borderBottom:'1px solid var(--border-color)',
+            background:'var(--bg-secondary)',
+            flexShrink:0,
+          }}>
+            <div style={{ fontSize:9, fontWeight:800, letterSpacing:'1.4px', textTransform:'uppercase', background:'var(--so-gradient)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text', marginBottom:4 }}>
+              Daily Note — {year}
+            </div>
+            <div style={{ fontSize:20, fontWeight:700, color:'var(--text-primary)', letterSpacing:'-0.4px', lineHeight:1.2 }}>
+              {formatLong(selected)}
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:12, marginTop:6 }}>
+              {savedAt && (
+                <span style={{ fontSize:10, color:'var(--text-tertiary)' }}>
+                  Saved {savedAt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true})}
+                </span>
+              )}
+              {selHasNote && !savedAt && (
+                <span style={{ fontSize:10, color:'var(--so-purple)', display:'flex', alignItems:'center', gap:4 }}>
+                  <span style={{ width:5, height:5, borderRadius:'50%', background:'var(--so-purple)', display:'inline-block' }}/>
+                  Has note
+                </span>
               )}
             </div>
           </div>
 
+          {/* Toolbar */}
+          <div style={{
+            display:'flex', alignItems:'center', gap:1, flexWrap:'wrap',
+            padding:'8px 16px', borderBottom:'1px solid var(--border-color)',
+            background:'var(--bg-secondary)', flexShrink:0,
+          }}>
+            <TB title="Bold" label={<b>B</b>} onCmd={()=>exec('bold')} active={fmt('bold')} />
+            <TB title="Italic" label={<i>I</i>} onCmd={()=>exec('italic')} active={fmt('italic')} />
+            <TB title="Underline" label={<u>U</u>} onCmd={()=>exec('underline')} active={fmt('underline')} />
+            <TB title="Strikethrough" label={<s>S</s>} onCmd={()=>exec('strikeThrough')} active={fmt('strikeThrough')} />
+            <div style={{ width:1, height:18, background:'var(--border-strong-color)', margin:'0 4px' }}/>
+            <TB title="Heading 1" label="H1" onCmd={()=>exec('formatBlock','H1')} />
+            <TB title="Heading 2" label="H2" onCmd={()=>exec('formatBlock','H2')} />
+            <TB title="Normal text" label="¶" onCmd={()=>exec('formatBlock','P')} />
+            <div style={{ width:1, height:18, background:'var(--border-strong-color)', margin:'0 4px' }}/>
+            <TB title="Bullet list" label="•" onCmd={()=>exec('insertUnorderedList')} active={fmt('insertUnorderedList')} />
+            <TB title="Numbered list" label="1." onCmd={()=>exec('insertOrderedList')} active={fmt('insertOrderedList')} />
+            <TB title="Indent" label="→" onCmd={()=>exec('indent')} />
+            <TB title="Outdent" label="←" onCmd={()=>exec('outdent')} />
+            <div style={{ width:1, height:18, background:'var(--border-strong-color)', margin:'0 4px' }}/>
+            <TB title="Align left" label={
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><rect x="0" y="1" width="16" height="2"/><rect x="0" y="5" width="12" height="2"/><rect x="0" y="9" width="16" height="2"/><rect x="0" y="13" width="10" height="2"/></svg>
+            } onCmd={()=>exec('justifyLeft')} />
+            <TB title="Center" label={
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><rect x="0" y="1" width="16" height="2"/><rect x="2" y="5" width="12" height="2"/><rect x="0" y="9" width="16" height="2"/><rect x="3" y="13" width="10" height="2"/></svg>
+            } onCmd={()=>exec('justifyCenter')} />
+            <TB title="Align right" label={
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><rect x="0" y="1" width="16" height="2"/><rect x="4" y="5" width="12" height="2"/><rect x="0" y="9" width="16" height="2"/><rect x="6" y="13" width="10" height="2"/></svg>
+            } onCmd={()=>exec('justifyRight')} />
+            <div style={{ flex:1 }}/>
+            {selHasNote && (
+              <button onClick={deleteNote}
+                style={{ display:'flex', alignItems:'center', gap:5, padding:'4px 12px', borderRadius:18, border:'1.5px solid rgba(217,48,37,0.3)', background:'rgba(217,48,37,0.06)', cursor:'pointer', fontFamily:'var(--font)', fontSize:11, fontWeight:600, color:'#D93025', transition:'all 140ms ease' }}
+                onMouseEnter={e=>{e.currentTarget.style.background='rgba(217,48,37,0.12)';e.currentTarget.style.borderColor='rgba(217,48,37,0.5)'}}
+                onMouseLeave={e=>{e.currentTarget.style.background='rgba(217,48,37,0.06)';e.currentTarget.style.borderColor='rgba(217,48,37,0.3)'}}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                </svg>
+                Delete Note
+              </button>
+            )}
+          </div>
+
+          {/* Notebook writing area */}
+          <div style={{ flex:1, overflowY:'auto', padding:'24px 40px' }}>
+            <div
+              ref={editorRef}
+              contentEditable
+              suppressContentEditableWarning
+              onInput={handleInput}
+              onKeyDown={e => {
+                if (e.key==='Tab') { e.preventDefault(); exec('insertHTML','&nbsp;&nbsp;&nbsp;&nbsp;') }
+              }}
+              style={{
+                minHeight:'calc(100vh - 280px)',
+                outline:'none',
+                fontFamily:'var(--font)',
+                fontSize:15,
+                lineHeight:'1.8em',
+                color:'var(--text-primary)',
+                caretColor:'var(--so-blue)',
+                ...notebookBg,
+              }}
+              data-placeholder={`Start writing your note for ${formatLong(selected)}…`}
+            />
+            <style>{`
+              [contenteditable]:empty:before {
+                content: attr(data-placeholder);
+                color: var(--text-hint);
+                pointer-events: none;
+                display: block;
+              }
+              [contenteditable] h1 {
+                font-size: 22px; font-weight: 700; color: var(--text-primary);
+                margin: 0.8em 0 0.3em; letter-spacing: -0.4px;
+              }
+              [contenteditable] h2 {
+                font-size: 17px; font-weight: 700; color: var(--text-primary);
+                margin: 0.6em 0 0.2em;
+              }
+              [contenteditable] ul, [contenteditable] ol {
+                padding-left: 24px; margin: 4px 0;
+              }
+              [contenteditable] li { margin: 2px 0; }
+              [contenteditable] p { margin: 0; }
+            `}</style>
+          </div>
         </div>
       </div>
     </div>
