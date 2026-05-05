@@ -203,7 +203,7 @@ export default function LeadForm({ onClose, editLead }) {
             <select value={form.leadOwner} onChange={e => set('leadOwner', e.target.value)}>
               <option value="">Assign to… (optional)</option>
               {activeUsers.length > 0
-                ? activeUsers.map(u => <option key={u.userId || u.name} value={u.name}>{u.name}{u.designation ? ` — ${u.designation}` : ''}</option>)
+                ? activeUsers.map(u => <option key={u.userId || u.name} value={u.name}>{u.name}</option>)
                 : <option value={state.currentUser.name}>{state.currentUser.name}</option>
               }
             </select>

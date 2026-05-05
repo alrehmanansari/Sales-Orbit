@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useKPI, QUARTERS, KPI_WEIGHTS, calcScore } from '../../store/KPIContext'
 import { useAuth } from '../../store/AuthContext'
-import { TEAM_MEMBERS, MANAGER_DESIGNATIONS } from '../../data/constants'
+import { useCRM } from '../../store/CRMContext'
+import { MANAGER_DESIGNATIONS } from '../../data/constants'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, Cell, LabelList
@@ -129,8 +130,14 @@ const Tip = ({ active, payload, label }) => {
 export default function KPISection() {
   const { data, updateKPI } = useKPI()
   const { currentUser } = useAuth()
+  const { state } = useCRM()
   const [quarter, setQuarter] = useState('Q2')
   const [view, setView] = useState('my')
+
+  /* Signed-up BD users (Reps) — excludes managers */
+  const bdUsers = (state.users || [])
+    .filter(u => u.isActive !== false && u.role === 'Rep')
+    .map(u => u.name)
 
   const isManager = MANAGER_DESIGNATIONS.includes(currentUser?.designation) || currentUser?.role === 'Manager'
   const userName  = currentUser?.name || ''
@@ -143,8 +150,8 @@ export default function KPISection() {
 
   const myScore = calcScore(myQ)
 
-  /* Team chart data */
-  const teamChart = TEAM_MEMBERS.map((name, i) => {
+  /* Team chart data — signed-up BDs only */
+  const teamChart = bdUsers.map((name, i) => {
     const q = isYearly ? yearlyQ(data, name) : (data.kpiData[name]?.[quarter] || {})
     return { name: name.split(' ')[0], score: calcScore(q), color: BRAND[i % BRAND.length] }
   })
@@ -257,13 +264,13 @@ export default function KPISection() {
                           </tr>
                         </thead>
                         <tbody>
-                          {TEAM_MEMBERS.map((name, i) => {
+                          {bdUsers.map((name, i) => {
                             const q      = isYearly ? yearlyQ(data, name) : (data.kpiData[name]?.[quarter] || {})
                             const target = q[row.targetKey] || 0
                             const ach    = q[row.achKey]    || 0
                             const p      = pct(ach, target)
                             return (
-                              <tr key={name} style={{ borderBottom: i < TEAM_MEMBERS.length - 1 ? '0.5px solid var(--border-color)' : 'none' }}>
+                              <tr key={name} style={{ borderBottom: i < bdUsers.length - 1 ? '0.5px solid var(--border-color)' : 'none' }}>
                                 <td style={{ padding: '6px 14px', fontSize: 12, fontWeight: 600 }}>{name.split(' ')[0]}</td>
                                 <td style={{ padding: '4px 4px' }}>
                                   <EditCell value={target} isMoney={row.isMoney} readOnly={isYearly}
@@ -307,8 +314,8 @@ export default function KPISection() {
               {view === 'team' && isManager && (
                 <>
                   {KPI_ROWS.map(row => {
-                    const totTarget = TEAM_MEMBERS.reduce((s, n) => { const q = isYearly ? yearlyQ(data, n) : (data.kpiData[n]?.[quarter] || {}); return s + (q[row.targetKey] || 0) }, 0)
-                    const totAch    = TEAM_MEMBERS.reduce((s, n) => { const q = isYearly ? yearlyQ(data, n) : (data.kpiData[n]?.[quarter] || {}); return s + (q[row.achKey]    || 0) }, 0)
+                    const totTarget = bdUsers.reduce((s, n) => { const q = isYearly ? yearlyQ(data, n) : (data.kpiData[n]?.[quarter] || {}); return s + (q[row.targetKey] || 0) }, 0)
+                    const totAch    = bdUsers.reduce((s, n) => { const q = isYearly ? yearlyQ(data, n) : (data.kpiData[n]?.[quarter] || {}); return s + (q[row.achKey]    || 0) }, 0)
                     return <AchBar key={row.key} label={row.label} ach={totAch} target={totTarget || 1} weight={row.weight} isMoney={row.isMoney} />
                   })}
                 </>
