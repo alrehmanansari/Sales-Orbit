@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react'
+import ReactDOM from 'react-dom'
 import { useCRM } from '../../store/CRMContext'
-import { LEAD_SOURCES, VERTICALS, NATURE_OF_BUSINESS, PRIORITIES, TEAM_MEMBERS, CITIES } from '../../data/constants'
+import { LEAD_SOURCES, VERTICALS, NATURE_OF_BUSINESS, PRIORITIES, CITIES } from '../../data/constants'
 import { Modal } from '../common/Modal'
 import SalesCallScript from '../common/SalesCallScript'
 
@@ -26,11 +27,8 @@ export default function LeadForm({ onClose, editLead }) {
   const [errors, setErrors] = useState({})
   const [dupWarning, setDupWarning] = useState(null)
   const [showScript, setShowScript] = useState(false)
-  const [cityQuery, setCityQuery] = useState(form.city || '')
-  const [showCitySugg, setShowCitySugg] = useState(false)
-  const cityRef = useRef()
 
-  const citySuggestions = CITIES.filter(c => c.toLowerCase().includes(cityQuery.toLowerCase()) && c !== cityQuery).slice(0, 5)
+  const activeUsers = (state.users || []).filter(u => u.isActive !== false)
 
   function set(k, v) {
     setForm(p => ({ ...p, [k]: v }))
@@ -53,7 +51,6 @@ export default function LeadForm({ onClose, editLead }) {
     if (!form.leadSource) e.leadSource = 'Required'
     if (!form.vertical) e.vertical = 'Required'
     if (!form.natureOfBusiness) e.natureOfBusiness = 'Required'
-    if (!form.leadOwner) e.leadOwner = 'Required'
     if (!form.priority) e.priority = 'Required'
     if (form.leadSource === 'Others' && !form.leadSourceOther.trim()) e.leadSourceOther = 'Please specify'
     setErrors(e)
@@ -107,7 +104,10 @@ export default function LeadForm({ onClose, editLead }) {
 
   return (
     <>
-    {showScript && <SalesCallScript onClose={() => setShowScript(false)} />}
+    {showScript && ReactDOM.createPortal(
+      <SalesCallScript onClose={() => setShowScript(false)} />,
+      document.body
+    )}
     <Modal size="xl" onClose={onClose}
       title={editLead ? 'Edit Lead' : 'Add New Lead'}
       headerAction={
@@ -159,22 +159,10 @@ export default function LeadForm({ onClose, editLead }) {
             <input value={form.website} onChange={e => set('website', e.target.value)} placeholder="company.com" />
           </FF>
           <FF label="City">
-            <div className="autocomplete-wrap" ref={cityRef}>
-              <input
-                value={cityQuery}
-                onChange={e => { setCityQuery(e.target.value); set('city', e.target.value); setShowCitySugg(true) }}
-                onFocus={() => setShowCitySugg(true)}
-                onBlur={() => setTimeout(() => setShowCitySugg(false), 150)}
-                placeholder="Start typing city…"
-              />
-              {showCitySugg && citySuggestions.length > 0 && (
-                <div className="autocomplete-dropdown">
-                  {citySuggestions.map(c => (
-                    <div key={c} className="autocomplete-item" onMouseDown={() => { setCityQuery(c); set('city', c); setShowCitySugg(false) }}>{c}</div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <select value={form.city} onChange={e => set('city', e.target.value)}>
+              <option value="">Select city…</option>
+              {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
           </FF>
         </div>
 
@@ -211,10 +199,13 @@ export default function LeadForm({ onClose, editLead }) {
 
         {/* Row 4: Lead Owner | Priority */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12, marginBottom: 12 }}>
-          <FF label="Lead Owner" error={errors.leadOwner} required>
+          <FF label="Lead Owner">
             <select value={form.leadOwner} onChange={e => set('leadOwner', e.target.value)}>
-              <option value="">Assign to…</option>
-              {TEAM_MEMBERS.map(m => <option key={m} value={m}>{m}</option>)}
+              <option value="">Assign to… (optional)</option>
+              {activeUsers.length > 0
+                ? activeUsers.map(u => <option key={u.userId || u.name} value={u.name}>{u.name}{u.designation ? ` — ${u.designation}` : ''}</option>)
+                : <option value={state.currentUser.name}>{state.currentUser.name}</option>
+              }
             </select>
           </FF>
           <div className="form-group">

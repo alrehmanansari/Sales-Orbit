@@ -59,12 +59,25 @@ export const COMPETITORS = [
 ]
 
 export const CITIES = [
-  'New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix',
-  'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose',
-  'London', 'Dubai', 'Singapore', 'Mumbai', 'Delhi',
-  'Karachi', 'Lahore', 'Islamabad', 'Toronto', 'Sydney',
-  'Berlin', 'Paris', 'Amsterdam', 'Tokyo', 'Shanghai',
-  'Hong Kong', 'São Paulo', 'Mexico City', 'Riyadh', 'Cairo'
+  'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad',
+  'Multan', 'Hyderabad', 'Quetta', 'Peshawar', 'Sialkot',
+  'Gujranwala', 'Bahawalpur', 'Sargodha', 'Sheikhupura', 'Jhang',
+  'Dera Ghazi Khan', 'Gujrat', 'Sahiwal', 'Wah Cantonment', 'Mardan',
+  'Mingora', 'Kasur', 'Rahim Yar Khan', 'Nawabshah', 'Mirpur Khas',
+  'Okara', 'Chiniot', 'Kamoke', 'Mandi Bahauddin', 'Larkana',
+  'Hafizabad', 'Jhelum', 'Sadiqabad', 'Burewala', 'Chakwal',
+  'Daska', 'Vehari', 'Kohat', 'Muzaffarabad', 'Abbottabad',
+  'Nowshera', 'Bannu', 'Dera Ismail Khan', 'Swabi', 'Mansehra',
+  'Haripur', 'Sukkur', 'Shikarpur', 'Khairpur', 'Jacobabad',
+  'Landi Kotal', 'Attock', 'Taxila', 'Khanewal', 'Pakpattan',
+  'Toba Tek Singh', 'Layyah', 'Muzaffargarh', 'Lodhran', 'Narowal',
+  'Mianwali', 'Bhakkar', 'Leiah', 'Rajanpur', 'Khushab',
+  'Nankana Sahib', 'Sambrial', 'Wazirabad', 'Ferozewala', 'Jaranwala',
+  'Charsadda', 'Buner', 'Malakand', 'Batkhela', 'Timergara',
+  'Turbat', 'Khuzdar', 'Chaman', 'Hub', 'Gwadar',
+  'Zhob', 'Loralai', 'Mastung', 'Kalat', 'Nushki',
+  'Nawababad', 'Mirpur (AJK)', 'Rawalakot', 'Bagh (AJK)', 'Kotli',
+  'Gilgit', 'Skardu', 'Chilas', 'Ghanche', 'Hunza'
 ]
 
 export const STAGE_COLORS = {

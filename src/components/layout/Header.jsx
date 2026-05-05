@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useCRM } from '../../store/CRMContext'
 import { searchFilter } from '../../utils/helpers'
+import { COLOR_SCHEMES } from '../../hooks/useTheme'
 
-export default function Header({ page, onNav, theme, toggleTheme, isMobile, onMenuToggle }) {
+export default function Header({ page, onNav, theme, toggleTheme, colorScheme, isDark, setColorScheme, isMobile, onMenuToggle }) {
   const { state } = useCRM()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
@@ -96,11 +97,34 @@ export default function Header({ page, onNav, theme, toggleTheme, isMobile, onMe
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', letterSpacing: '-0.2px' }}>
-          {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+        {!isMobile && (
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', letterSpacing: '-0.2px' }}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+          </div>
+        )}
+
+        {/* Color scheme palette */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 24, background: 'var(--bg-tertiary)', border: '1.5px solid var(--border-strong-color)' }}>
+          {COLOR_SCHEMES.map(s => (
+            <button
+              key={s.id}
+              title={s.label}
+              onClick={() => setColorScheme(s.id)}
+              style={{
+                width: 16, height: 16, borderRadius: '50%',
+                background: s.color,
+                border: colorScheme === s.id ? '2px solid var(--text-primary)' : '2px solid transparent',
+                outline: colorScheme === s.id ? `2px solid ${s.color}` : 'none',
+                outlineOffset: 1,
+                cursor: 'pointer', padding: 0, flexShrink: 0,
+                transition: 'all 160ms ease',
+                boxShadow: colorScheme === s.id ? `0 0 0 2px ${s.color}40` : 'none',
+              }}
+            />
+          ))}
         </div>
 
-        {/* Theme toggle */}
+        {/* Light / Dark toggle */}
         <button
           onClick={toggleTheme}
           style={{
@@ -116,8 +140,8 @@ export default function Header({ page, onNav, theme, toggleTheme, isMobile, onMe
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--so-blue)'; e.currentTarget.style.color = 'var(--so-blue)'; e.currentTarget.style.background = 'var(--so-blue-soft)' }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-strong-color)'; e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'var(--bg-tertiary)' }}
         >
-          <span style={{ fontSize: 13 }}>{theme === 'dark' ? '☀' : '☾'}</span>
-          <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+          <span style={{ fontSize: 13 }}>{isDark ? '☀' : '☾'}</span>
+          {!isMobile && <span>{isDark ? 'Light' : 'Dark'}</span>}
         </button>
       </div>
     </header>

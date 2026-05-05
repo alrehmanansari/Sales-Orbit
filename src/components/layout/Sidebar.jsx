@@ -20,6 +20,8 @@ function NavIcon({ id, size = 16 }) {
       return <svg {...p}><polyline points="22 12 18 12 15 20 9 4 6 12 2 12"/></svg>
     case 'salesScript':
       return <svg {...p}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.11h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+    case 'takeNotes':
+      return <svg {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
     default:
       return <svg {...p}><circle cx="12" cy="12" r="9"/></svg>
   }
@@ -33,6 +35,7 @@ const NAV = [
   { id: 'reports',       label: 'Reports',           badge: null },
   { id: 'customReports', label: 'Custom Reporting',  badge: null },
   { id: 'salesScript',   label: 'Sales Call Script', badge: null, dividerBefore: true },
+  { id: 'takeNotes',     label: 'Take Notes',        badge: null },
 ]
 
 const StarLogo = () => (

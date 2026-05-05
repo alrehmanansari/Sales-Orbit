@@ -69,7 +69,7 @@ exports.list = async (req, res, next) => {
 // POST /api/v1/leads
 exports.create = async (req, res, next) => {
   try {
-    const { error, value } = leadSchema.validate(req.body);
+    const { error, value } = leadSchema.validate(req.body, { allowUnknown: true });
     if (error) return badRequest(res, error.details[0].message);
 
     const leadId = genLeadId();
@@ -120,7 +120,7 @@ exports.get = async (req, res, next) => {
 // PUT /api/v1/leads/:id
 exports.update = async (req, res, next) => {
   try {
-    const { error, value } = leadSchema.validate(req.body);
+    const { error, value } = leadSchema.validate(req.body, { allowUnknown: true });
     if (error) return badRequest(res, error.details[0].message);
 
     const [existing] = await pool.query('SELECT id FROM leads WHERE lead_id = ?', [req.params.id]);

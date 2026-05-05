@@ -11,6 +11,7 @@ import PipelinePage from './pages/PipelinePage'
 import ReportsPage from './pages/ReportsPage'
 import CustomReportsPage from './pages/CustomReportsPage'
 import SalesScriptPage from './pages/SalesScriptPage'
+import TakeNotesPage from './pages/TakeNotesPage'
 import AuthPage from './pages/AuthPage'
 import { useTheme } from './hooks/useTheme'
 
@@ -74,7 +75,7 @@ function BackendError({ message }) {
 function AppContent() {
   const [page, setPage] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { theme, toggleTheme } = useTheme()
+  const { theme, toggleTheme, colorScheme, isDark, setColorScheme } = useTheme()
   const { logout } = useAuth()
   const { crmLoading, crmError } = useCRM()
   const isMobile = useIsMobile()
@@ -89,7 +90,8 @@ function AppContent() {
     pipeline:      <PipelinePage />,
     reports:       <ReportsPage />,
     customReports: <CustomReportsPage />,
-    salesScript:   <SalesScriptPage />
+    salesScript:   <SalesScriptPage />,
+    takeNotes:     <TakeNotesPage />,
   }
 
   function navigate(id) {
@@ -125,6 +127,9 @@ function AppContent() {
           onNav={navigate}
           theme={theme}
           toggleTheme={toggleTheme}
+          colorScheme={colorScheme}
+          isDark={isDark}
+          setColorScheme={setColorScheme}
           isMobile={isMobile}
           onMenuToggle={() => setSidebarOpen(o => !o)}
         />
