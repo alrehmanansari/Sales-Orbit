@@ -45,7 +45,7 @@ exports.list = async (req, res, next) => {
 // POST /api/v1/activities
 exports.create = async (req, res, next) => {
   try {
-    const { error, value } = activitySchema.validate(req.body);
+    const { error, value } = activitySchema.validate(req.body, { allowUnknown: true });
     if (error) return badRequest(res, error.details[0].message);
 
     const activityId = genActId();

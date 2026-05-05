@@ -110,15 +110,27 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
         {tab === 'activity' && <ActivityTimeline activities={state.activities} entityId={lead.id} />}
         {tab === 'audit' && (
           <div>
-            {state.auditLog.filter(a => a.entityId === lead.id).length === 0
-              ? <div style={{ color: 'var(--text-tertiary)', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>No audit entries.</div>
-              : state.auditLog.filter(a => a.entityId === lead.id).map((entry, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 10, padding: '6px 0', borderBottom: '0.5px solid var(--border-color)', alignItems: 'center' }}>
-                    <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)', flexShrink: 0 }}>{formatDateTime(entry.at)}</span>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--so-blue)' }}>{entry.action}</span>
-                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>by {entry.user}</span>
-                  </div>
-                ))
+            {activities.length === 0
+              ? <div style={{ color: 'var(--text-tertiary)', fontSize: 13, padding: '20px 0', textAlign: 'center' }}>No activity logged yet.</div>
+              : [...activities].sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime)).map((act, i) => {
+                  const ICONS = { Call: '📞', Email: '✉️', Meeting: '🤝', WhatsApp: '💬', Note: '📝' }
+                  const label = act.type === 'Call' && act.callOutcome
+                    ? `${act.callType || 'Call'} — ${act.callOutcome}`
+                    : act.type
+                  return (
+                    <div key={act.id} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: '0.5px solid var(--border-color)', alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>{ICONS[act.type] || '📋'}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--so-blue)' }}>{label}</span>
+                          <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)' }}>{formatDateTime(act.dateTime)}</span>
+                        </div>
+                        {act.notes && <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2, lineHeight: 1.5 }}>{act.notes}</div>}
+                        <div style={{ fontSize: 10, color: 'var(--text-hint)', marginTop: 2 }}>by {act.loggedBy}</div>
+                      </div>
+                    </div>
+                  )
+                })
             }
           </div>
         )}
