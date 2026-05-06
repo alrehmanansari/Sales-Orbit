@@ -11,14 +11,6 @@ const WA_ICON = (
 )
 
 function StoryCard({ company, phone, vol, tc, accent = '#4796E3', label, labelColor = '#4796E3', daysLabel, isDark }) {
-  const cardBg = isDark
-    ? `radial-gradient(ellipse at 20% 30%, rgba(71,150,227,0.20), transparent 62%),
-       radial-gradient(ellipse at 80% 72%, rgba(145,119,199,0.16), transparent 58%),
-       #131318`
-    : `radial-gradient(ellipse at 20% 30%, rgba(71,150,227,0.16), transparent 62%),
-       radial-gradient(ellipse at 80% 72%, rgba(145,119,199,0.13), transparent 58%),
-       #F8F9FA`
-
   const cardBorder = isDark
     ? `1px solid rgba(255,255,255,0.07)`
     : `1px solid rgba(0,0,0,0.07)`
@@ -42,7 +34,7 @@ function StoryCard({ company, phone, vol, tc, accent = '#4796E3', label, labelCo
     <div style={{
       width: 162, flexShrink: 0,
       borderRadius: 18,
-      background: cardBg,
+      background: 'var(--bg-card)',
       border: cardBorder,
       boxShadow: shadowBase,
       overflow: 'hidden', position: 'relative',
@@ -71,7 +63,9 @@ function StoryCard({ company, phone, vol, tc, accent = '#4796E3', label, labelCo
 
         {/* Company name */}
         <div style={{
-          fontSize: 13.5, fontWeight: 700, color: textPrimary,
+          fontSize: 13.5, fontWeight: 700,
+          background: 'var(--so-gradient)',
+          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           lineHeight: 1.3, letterSpacing: '-0.2px',
           marginBottom: 10, minHeight: 36,
           display: '-webkit-box', WebkitLineClamp: 2,
