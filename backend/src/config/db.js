@@ -59,7 +59,7 @@ function makeSQLitePool(dbPath) {
       .forEach(stmt => { try { db.prepare(stmt).run(); } catch {} });
   }
 
-  // Deactivate test / unwanted accounts
+  // Deactivate test / unwanted accounts (case-insensitive)
   try {
     db.prepare(`UPDATE users SET is_active = 0 WHERE
       email LIKE '%@test.com'
@@ -67,7 +67,8 @@ function makeSQLitePool(dbPath) {
       OR email LIKE 'fixtest%'
       OR email LIKE 'prod_%@test%'
       OR email LIKE 'eth%@test%'
-      OR first_name IN ('Awais', 'Test', 'Fix', 'Prod', 'Eth', 'Email', 'SMTP', 'Gmail', 'John')
+      OR LOWER(first_name) IN ('awais','test','fix','prod','eth','email','smtp','gmail','john')
+      OR LOWER(last_name)  = 'test'
     `).run();
   } catch {}
 
