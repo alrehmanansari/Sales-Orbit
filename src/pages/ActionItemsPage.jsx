@@ -43,9 +43,6 @@ function StoryCard({ company, phone, vol, tc, accent = '#4796E3', label, labelCo
     onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = shadowHover }}
     onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = shadowBase }}
     >
-      {/* Top accent strip */}
-      <div style={{ height: 2.5, background: `linear-gradient(90deg, ${accent}, ${accent}66)` }} />
-
       <div style={{ padding: '12px 13px 13px' }}>
         {/* Section label badge */}
         <div style={{
@@ -133,7 +130,7 @@ function Section({ title, icon, count, accent, children, emptyMsg }) {
           {emptyMsg}
         </div>
       ) : (
-        <div style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 8, paddingTop: 2 }}>
+        <div style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 20, paddingTop: 2 }}>
           {children}
         </div>
       )}
