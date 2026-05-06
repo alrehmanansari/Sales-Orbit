@@ -141,14 +141,14 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
           HEADER WRAPPER
       ────────────────────────────────────────────────── */}
       <header style={{
-        flexShrink: 0, padding: '10px 20px',
+        flexShrink: 0, padding: '14px 24px',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: isDark
           ? 'radial-gradient(circle at 15% 50%, rgba(71,150,227,0.18) 0%, transparent 55%), radial-gradient(circle at 85% 50%, rgba(145,119,199,0.15) 0%, transparent 50%), radial-gradient(circle at 50% 140%, rgba(202,102,115,0.12) 0%, transparent 40%), #0C0C0F'
           : 'radial-gradient(circle at 15% 50%, rgba(71,150,227,0.22) 0%, transparent 55%), radial-gradient(circle at 85% 50%, rgba(145,119,199,0.18) 0%, transparent 50%), radial-gradient(circle at 50% 140%, rgba(202,102,115,0.14) 0%, transparent 40%), #F8F9FA',
         borderBottom: isDark ? '0.5px solid rgba(255,255,255,0.06)' : '0.5px solid rgba(0,0,0,0.06)',
         position: 'sticky', top: 0, zIndex: 100,
-        minHeight: 72,
+        minHeight: 90,
       }}>
 
         {/* ── Glassmorphic nav pill (full width, max 1400px) ── */}
@@ -157,7 +157,7 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
           backdropFilter: 'blur(20px) saturate(200%)',
           WebkitBackdropFilter: 'blur(20px) saturate(200%)',
           borderRadius: 999,
-          padding: '7px 10px 7px 14px',
+          padding: '10px 12px 10px 18px',
           display: 'flex', alignItems: 'center', gap: 8,
           width: '100%', maxWidth: 1400,
           transition: 'all 0.3s ease',
@@ -202,7 +202,7 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
                     onClick={() => go(item.id)}
                     style={{
                       position: 'relative', zIndex: 1,
-                      padding: '7px 13px', border: 'none', background: 'transparent',
+                      padding: '9px 15px', border: 'none', background: 'transparent',
                       fontFamily: 'var(--font)', fontSize: 13,
                       fontWeight: isActive ? 600 : 500,
                       color: isActive ? 'var(--so-purple)' : 'var(--text-secondary)',
@@ -236,7 +236,7 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
                       onClick={() => setOpenGroup(isOpen ? null : group.id)}
                       style={{
                         position: 'relative', zIndex: 1,
-                        padding: '7px 13px', border: 'none', background: 'transparent',
+                        padding: '9px 15px', border: 'none', background: 'transparent',
                         fontFamily: 'var(--font)', fontSize: 13,
                         fontWeight: gActive ? 600 : 500,
                         color: gActive ? 'var(--so-purple)' : isOpen ? 'var(--text-primary)' : 'var(--text-secondary)',
