@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import { useCRM } from '../store/CRMContext'
+import { useTheme } from '../hooks/useTheme'
 import { formatCurrency } from '../utils/helpers'
 
 const WA_ICON = (
@@ -9,50 +10,56 @@ const WA_ICON = (
   </svg>
 )
 
-/* Gradient palettes for cards — cycles through these */
-const GRADIENTS = [
-  'linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-  'linear-gradient(145deg, #1a1a2e 0%, #2d1b69 50%, #11052c 100%)',
-  'linear-gradient(145deg, #0d2137 0%, #1b4371 50%, #0a1628 100%)',
-  'linear-gradient(145deg, #1c1c2e 0%, #2a1f5e 50%, #162032 100%)',
-  'linear-gradient(145deg, #16213e 0%, #0f3460 50%, #533483 100%)',
-]
-
-function StoryCard({ company, phone, vol, tc, accent = '#4796E3', gradient, label, labelColor = '#4796E3', daysLabel }) {
-  const waHref = phone ? `https://wa.me/${phone.replace(/\D/g, '')}` : null
-  const bg = gradient || GRADIENTS[0]
+function StoryCard({ company, phone, vol, tc, accent = '#4796E3', label, labelColor = '#4796E3', daysLabel, isDark }) {
+  const glassBg    = isDark ? `rgba(20,20,30,0.52)` : `rgba(255,255,255,0.48)`
+  const glassBorder = isDark ? `1px solid ${accent}30` : `1px solid ${accent}28`
+  const volColor   = isDark ? '#60B4FF' : 'var(--so-blue)'
+  const tcColor    = isDark ? '#4ADE80' : 'var(--green)'
+  const textPrimary   = isDark ? '#EAEAF0' : 'var(--text-primary)'
+  const textSecondary = isDark ? 'rgba(255,255,255,0.45)' : 'var(--text-tertiary)'
+  const dividerColor  = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
+  const waColor       = isDark ? '#4ADE80' : 'var(--green)'
+  const noPhoneColor  = isDark ? 'rgba(255,255,255,0.22)' : 'var(--text-hint)'
 
   return (
     <div style={{
-      width: 200, flexShrink: 0,
+      width: 162, flexShrink: 0,
       borderRadius: 18,
-      background: bg,
-      boxShadow: '0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.14)',
+      background: glassBg,
+      backdropFilter: 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+      border: glassBorder,
+      boxShadow: isDark
+        ? `0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px ${accent}18, inset 0 1px 0 rgba(255,255,255,0.06)`
+        : `0 4px 20px ${accent}14, 0 1px 0 rgba(255,255,255,0.7) inset`,
       overflow: 'hidden', position: 'relative',
-      border: '1px solid rgba(255,255,255,0.06)',
-    }}>
+      transition: 'transform 220ms cubic-bezier(0.34,1.56,0.64,1), box-shadow 240ms ease',
+    }}
+    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = isDark ? `0 14px 36px rgba(0,0,0,0.55), 0 0 0 1px ${accent}30` : `0 8px 28px ${accent}22, 0 1px 0 rgba(255,255,255,0.8) inset` }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = isDark ? `0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px ${accent}18, inset 0 1px 0 rgba(255,255,255,0.06)` : `0 4px 20px ${accent}14, 0 1px 0 rgba(255,255,255,0.7) inset` }}
+    >
       {/* Top accent strip */}
-      <div style={{ height: 3, background: `linear-gradient(90deg, ${accent}, ${accent}88)` }} />
+      <div style={{ height: 2.5, background: `linear-gradient(90deg, ${accent}, ${accent}66)` }} />
 
-      <div style={{ padding: '14px 15px 15px' }}>
+      <div style={{ padding: '12px 13px 13px' }}>
         {/* Section label badge */}
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 5,
-          padding: '3px 9px', borderRadius: 20,
-          background: `${labelColor}22`,
-          border: `1px solid ${labelColor}44`,
-          marginBottom: 10,
+          padding: '2px 8px', borderRadius: 20,
+          background: `${labelColor}18`,
+          border: `1px solid ${labelColor}35`,
+          marginBottom: 9,
         }}>
-          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.8px', textTransform: 'uppercase', color: labelColor }}>
+          <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '0.8px', textTransform: 'uppercase', color: labelColor }}>
             {label}
           </span>
         </div>
 
         {/* Company name */}
         <div style={{
-          fontSize: 15, fontWeight: 800, color: '#FFFFFF',
-          lineHeight: 1.25, letterSpacing: '-0.3px',
-          marginBottom: 12, minHeight: 38,
+          fontSize: 13.5, fontWeight: 700, color: textPrimary,
+          lineHeight: 1.3, letterSpacing: '-0.2px',
+          marginBottom: 10, minHeight: 36,
           display: '-webkit-box', WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical', overflow: 'hidden',
         }}>
@@ -60,31 +67,31 @@ function StoryCard({ company, phone, vol, tc, accent = '#4796E3', gradient, labe
         </div>
 
         {/* Divider */}
-        <div style={{ height: '0.5px', background: 'rgba(255,255,255,0.10)', marginBottom: 10 }} />
+        <div style={{ height: '0.5px', background: dividerColor, marginBottom: 9 }} />
 
         {/* Stats */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Vol</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#60B4FF', fontFamily: 'var(--font-mono)' }}>{vol ?? '—'}</span>
+            <span style={{ fontSize: 9.5, fontWeight: 600, color: textSecondary, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Vol</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: volColor, fontFamily: 'var(--font-mono)' }}>{vol ?? '—'}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>TC</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#4ADE80', fontFamily: 'var(--font-mono)' }}>{tc ?? '—'}</span>
+            <span style={{ fontSize: 9.5, fontWeight: 600, color: textSecondary, textTransform: 'uppercase', letterSpacing: '0.6px' }}>TC</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: tcColor, fontFamily: 'var(--font-mono)' }}>{tc ?? '—'}</span>
           </div>
         </div>
 
-        {/* WhatsApp number — plain display, no button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+        {/* WhatsApp number */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
           {WA_ICON}
-          <span style={{ fontSize: 11, fontWeight: 500, color: phone ? '#4ADE80' : 'rgba(255,255,255,0.22)', fontFamily: 'var(--font-mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 10.5, fontWeight: 500, color: phone ? waColor : noPhoneColor, fontFamily: 'var(--font-mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {phone || 'No number'}
           </span>
         </div>
 
         {/* Days indicator */}
         {daysLabel && (
-          <div style={{ marginTop: 8, fontSize: 10, color: 'rgba(255,255,255,0.35)', textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
+          <div style={{ marginTop: 7, fontSize: 9.5, color: textSecondary, textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
             {daysLabel}
           </div>
         )}
@@ -128,6 +135,7 @@ function Section({ title, icon, count, accent, children, emptyMsg }) {
 
 export default function ActionItemsPage() {
   const { state } = useCRM()
+  const { isDark } = useTheme()
   const now = new Date()
   const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000)
   const todayStr = now.toISOString().slice(0, 10)
@@ -200,7 +208,7 @@ export default function ActionItemsPage() {
           emptyMsg="All leads have been contacted in the last 7 days.">
           {untouchedLeads.map((lead, i) => (
             <StoryCard key={lead.id}
-              gradient={GRADIENTS[i % GRADIENTS.length]}
+              isDark={isDark}
               accent="#4796E3" label="Untouched Lead" labelColor="#60B4FF"
               company={lead.companyName}
               phone={lead.phone}
@@ -219,7 +227,7 @@ export default function ActionItemsPage() {
           emptyMsg="No opportunities have been stuck in a stage for more than 7 days.">
           {stuckOpps.map((opp, i) => (
             <StoryCard key={opp.id}
-              gradient={GRADIENTS[(i + 1) % GRADIENTS.length]}
+              isDark={isDark}
               accent="#9177C7" label={opp.stage} labelColor="#B49EE8"
               company={opp.companyName}
               phone={opp.phone}
@@ -238,7 +246,7 @@ export default function ActionItemsPage() {
           emptyMsg="No follow-ups scheduled for today.">
           {followUpOpps.map((opp, i) => (
             <StoryCard key={opp.id}
-              gradient={GRADIENTS[(i + 2) % GRADIENTS.length]}
+              isDark={isDark}
               accent="#CA6673" label="Follow-up Today" labelColor="#E8909B"
               company={opp.companyName}
               phone={opp.phone}

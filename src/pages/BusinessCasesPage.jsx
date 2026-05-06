@@ -183,26 +183,54 @@ export default function BusinessCasesPage() {
           <div style={{ flex: 1, height: '0.5px', background: 'var(--border-color)' }} />
         </div>
 
-        {/* Tab bar — one line, horizontal scroll */}
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 20, paddingBottom: 2 }}>
-          {CASES.map(c => {
+        {/* Entity type segmented selector */}
+        <div style={{
+          display: 'flex', marginBottom: 20, overflowX: 'auto',
+          border: '1px solid var(--border-strong-color)', borderRadius: 14,
+          background: 'var(--bg-tertiary)', padding: 4, gap: 0,
+        }}>
+          {CASES.map((c, idx) => {
             const isActive = c.id === activeTab
             return (
-              <button key={c.id} onClick={() => setActiveTab(c.id)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 7,
-                  padding: '8px 16px', borderRadius: 24, cursor: 'pointer',
-                  fontFamily: 'var(--font)', fontSize: 12, fontWeight: isActive ? 700 : 500,
-                  border: `1.5px solid ${isActive ? c.accent : 'var(--border-strong-color)'}`,
-                  background: isActive ? `${c.accent}14` : 'var(--bg-card)',
-                  color: isActive ? c.accent : 'var(--text-secondary)',
-                  transition: 'all 150ms ease',
-                  boxShadow: isActive ? `0 2px 10px ${c.accent}20` : 'var(--shadow-xs)',
-                }}>
-                <span style={{ fontSize: 14 }}>{c.icon}</span>
-                {c.label}
-                {c.badge && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 10, background: `${c.accent}22`, color: c.accent, letterSpacing: '0.3px' }}>{c.badge}</span>}
-              </button>
+              <React.Fragment key={c.id}>
+                {idx > 0 && !isActive && CASES[idx - 1].id !== activeTab && (
+                  <div style={{ width: '0.5px', background: 'var(--border-strong-color)', alignSelf: 'stretch', margin: '4px 0', flexShrink: 0 }} />
+                )}
+                <button onClick={() => setActiveTab(c.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
+                    padding: '8px 14px', borderRadius: 10, cursor: 'pointer',
+                    fontFamily: 'var(--font)', fontSize: 12, fontWeight: isActive ? 700 : 500,
+                    border: isActive ? `1px solid ${c.accent}30` : '1px solid transparent',
+                    background: isActive ? `var(--bg-card)` : 'transparent',
+                    color: isActive ? c.accent : 'var(--text-secondary)',
+                    transition: 'all 160ms ease',
+                    boxShadow: isActive ? `0 2px 10px ${c.accent}18, var(--shadow-sm)` : 'none',
+                    position: 'relative',
+                  }}
+                  onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.color = 'var(--text-primary)' } }}
+                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
+                >
+                  <span style={{
+                    width: 26, height: 26, borderRadius: 8, flexShrink: 0,
+                    background: isActive ? `${c.accent}18` : 'var(--bg-secondary)',
+                    border: isActive ? `1px solid ${c.accent}25` : '1px solid var(--border-color)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, transition: 'all 160ms ease',
+                  }}>{c.icon}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ whiteSpace: 'nowrap' }}>{c.label}</div>
+                    {c.badge && (
+                      <div style={{ fontSize: 8.5, fontWeight: 700, color: c.accent, letterSpacing: '0.3px', opacity: 0.85, marginTop: 1 }}>
+                        {c.badge}
+                      </div>
+                    )}
+                  </div>
+                  {isActive && (
+                    <div style={{ position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)', width: 20, height: 2, borderRadius: 2, background: c.accent, opacity: 0.7 }} />
+                  )}
+                </button>
+              </React.Fragment>
             )
           })}
         </div>

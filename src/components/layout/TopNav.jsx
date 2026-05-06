@@ -132,8 +132,8 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
      RENDER
   ───────────────────────────────────────────────────────── */
   const glassStyle = isDark
-    ? { background: 'rgba(18,18,24,0.72)', border: '1px solid rgba(255,255,255,0.09)', boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(145,119,199,0.12), 0 0 40px -16px rgba(145,119,199,0.35)' }
-    : { background: 'rgba(255,255,255,0.75)', border: '1px solid rgba(255,255,255,0.65)', boxShadow: '0 8px 28px -8px rgba(31,38,135,0.14), 0 1px 0 rgba(255,255,255,0.7) inset' }
+    ? { background: 'rgba(18,18,24,0.55)', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(145,119,199,0.14), 0 0 40px -16px rgba(145,119,199,0.35), inset 0 1px 0 rgba(255,255,255,0.05)' }
+    : { background: 'rgba(255,255,255,0.52)', border: '1px solid rgba(255,255,255,0.70)', boxShadow: '0 8px 28px -8px rgba(31,38,135,0.16), 0 1px 0 rgba(255,255,255,0.8) inset' }
 
   return (
     <>
@@ -143,10 +143,10 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
       <header style={{
         flexShrink: 0, padding: '10px 20px',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'var(--bg-secondary)',
-        borderBottom: '0.5px solid var(--border-color)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        background: isDark
+          ? 'radial-gradient(circle at 15% 50%, rgba(71,150,227,0.18) 0%, transparent 55%), radial-gradient(circle at 85% 50%, rgba(145,119,199,0.15) 0%, transparent 50%), radial-gradient(circle at 50% 140%, rgba(202,102,115,0.12) 0%, transparent 40%), #0C0C0F'
+          : 'radial-gradient(circle at 15% 50%, rgba(71,150,227,0.22) 0%, transparent 55%), radial-gradient(circle at 85% 50%, rgba(145,119,199,0.18) 0%, transparent 50%), radial-gradient(circle at 50% 140%, rgba(202,102,115,0.14) 0%, transparent 40%), #F8F9FA',
+        borderBottom: isDark ? '0.5px solid rgba(255,255,255,0.06)' : '0.5px solid rgba(0,0,0,0.06)',
         position: 'sticky', top: 0, zIndex: 100,
         minHeight: 72,
       }}>
@@ -180,7 +180,7 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
 
           {/* FLAT NAV ITEMS with sliding pill */}
           {!isMobile && (
-            <div ref={navItemsRef} style={{ display: 'flex', alignItems: 'center', position: 'relative', flex: 1 }}>
+            <div ref={navItemsRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', flex: 1 }}>
               {/* Sliding active pill */}
               <span aria-hidden style={{
                 position: 'absolute', top: 0, height: '100%', borderRadius: 999, zIndex: 0,
@@ -294,9 +294,6 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
               })}
             </div>
           )}
-
-          {/* SPACER */}
-          <div style={{ flex: 1 }} />
 
           {/* RIGHT CONTROLS */}
           {/* Date */}
