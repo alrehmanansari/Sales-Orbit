@@ -160,10 +160,14 @@ export default function KPISection() {
   const tableRef = useRef()
   const chartRef  = useRef()
 
-  // Exclude only Head of MENA (no KPI targets); all other roles incl. Head of Sales can add KPIs
-  const allUsers = (state.users || [])
+  // Build KPI user list: all active users except Head of MENA
+  // Always include the current logged-in user so they can edit their own row
+  const baseUsers = (state.users || [])
     .filter(u => u.isActive !== false && u.designation !== 'Head of MENA')
     .map(u => u.name)
+  const allUsers = (currentUser?.name && !baseUsers.includes(currentUser.name))
+    ? [...baseUsers, currentUser.name]
+    : baseUsers
   const isYearly = quarter === 'Yearly'
 
   const KPI_ROWS = [
