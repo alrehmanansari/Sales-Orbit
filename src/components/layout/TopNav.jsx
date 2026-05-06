@@ -143,35 +143,36 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
           HEADER WRAPPER
       ────────────────────────────────────────────────── */}
       <header style={{
-        flexShrink: 0, padding: '8px 16px',
+        flexShrink: 0, padding: '10px 20px',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'var(--bg-secondary)',
         borderBottom: '0.5px solid var(--border-color)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
         position: 'sticky', top: 0, zIndex: 100,
+        minHeight: 72,
       }}>
 
-        {/* ── Glassmorphic nav pill (full width, max 1100px) ── */}
+        {/* ── Glassmorphic nav pill (full width, max 1400px) ── */}
         <div style={{
           ...glassStyle,
           backdropFilter: 'blur(20px) saturate(200%)',
           WebkitBackdropFilter: 'blur(20px) saturate(200%)',
           borderRadius: 999,
-          padding: '5px 8px 5px 10px',
-          display: 'flex', alignItems: 'center', gap: 6,
-          width: '100%', maxWidth: 1100,
+          padding: '7px 10px 7px 14px',
+          display: 'flex', alignItems: 'center', gap: 8,
+          width: '100%', maxWidth: 1400,
           transition: 'all 0.3s ease',
         }}>
 
           {/* LOGO */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, paddingRight: 4 }}>
-            <svg width="24" height="24" viewBox="0 0 80 80" fill="none" style={{ animation: 'fanSpin 3.5s linear infinite' }}>
+            <svg width="28" height="28" viewBox="0 0 80 80" fill="none" style={{ animation: 'fanSpin 3.5s linear infinite' }}>
               <defs><linearGradient id="nav-lg" x1="40" y1="4" x2="40" y2="76" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#4796E3"/><stop offset="45%" stopColor="#9177C7"/><stop offset="100%" stopColor="#CA6673"/></linearGradient></defs>
               <path d="M40 4 C40 4 41.6 22 47 35 C53 49 68 40 76 40 C68 40 53 31 47 45 C41.6 58 40 76 40 76 C40 76 38.4 58 33 45 C27 31 12 40 4 40 C12 40 27 49 33 35 C38.4 22 40 4 40 4Z" fill="url(#nav-lg)"/>
             </svg>
             {!isMobile && (
-              <span style={{ fontFamily: 'var(--font)', fontSize: 15, fontWeight: 600, letterSpacing: '-0.3px', whiteSpace: 'nowrap' }}>
+              <span style={{ fontFamily: 'var(--font)', fontSize: 17, fontWeight: 600, letterSpacing: '-0.4px', whiteSpace: 'nowrap' }}>
                 <span style={{ background: 'linear-gradient(90deg,#4796E3,#9177C7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Sales </span>
                 <span style={{ background: 'linear-gradient(90deg,#9177C7,#CA6673)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Orbit</span>
               </span>

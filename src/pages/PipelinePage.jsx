@@ -175,10 +175,13 @@ export default function PipelinePage() {
       })()}
 
       {/* ── Separator ─────────────────────────────────────────────────── */}
-      <div style={{ height: '0.5px', background: 'linear-gradient(90deg, transparent, var(--border-strong-color) 20%, var(--border-strong-color) 80%, transparent)', flexShrink: 0 }} />
+      <div style={{ height: '0.5px', background: 'linear-gradient(90deg, transparent, var(--border-strong-color) 20%, var(--border-strong-color) 80%, transparent)', flexShrink: 0, margin: '4px 0' }} />
 
-      {/* ── Stage tabs (horizontal) ───────────────────────────────────── */}
+      {/* ── Opportunities Details label + Stage tabs ──────────────────── */}
       <div style={{ padding: '10px 20px 0', background: 'var(--bg-secondary)', flexShrink: 0, borderBottom: '1px solid var(--border-color)' }}>
+        <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.6px', textTransform: 'uppercase', background: 'var(--so-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 8 }}>
+          Opportunities Details
+        </div>
         <div style={{ display: 'flex', gap: 2, overflowX: 'auto', paddingBottom: 0 }}>
           {OPPORTUNITY_STAGES.map(stage => {
             const count    = allOpps.filter(o => o.stage === stage).length

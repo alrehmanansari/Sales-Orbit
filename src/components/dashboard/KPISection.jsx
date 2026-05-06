@@ -160,10 +160,9 @@ export default function KPISection() {
   const tableRef = useRef()
   const chartRef  = useRef()
 
-  // Show Reps + Head of Sales only; exclude Head of MENA / Country Manager (no KPI targets)
-  const KPI_DESIGNATIONS_EXCLUDED = ['Head of MENA', 'Country Manager']
+  // Exclude only Head of MENA (no KPI targets); all other roles incl. Head of Sales can add KPIs
   const allUsers = (state.users || [])
-    .filter(u => u.isActive !== false && !KPI_DESIGNATIONS_EXCLUDED.includes(u.designation))
+    .filter(u => u.isActive !== false && u.designation !== 'Head of MENA')
     .map(u => u.name)
   const isYearly = quarter === 'Yearly'
 
