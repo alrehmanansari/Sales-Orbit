@@ -164,13 +164,13 @@ export default function BusinessCasesPage() {
             <span>Core Principles</span>
             <div style={{ flex: 1, height: '0.5px', background: 'var(--border-color)' }} />
           </div>
-          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
             {PRINCIPLES.map(p => (
-              <div key={p.n} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '14px 16px', display: 'flex', gap: 12, boxShadow: 'var(--shadow-xs)', minWidth: 260, flexShrink: 0 }}>
-                <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--so-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{p.n}</div>
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 5, lineHeight: 1.3 }}>{p.title}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{p.body}</div>
+              <div key={p.n} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 10, padding: '10px 13px', display: 'flex', alignItems: 'flex-start', gap: 9, boxShadow: 'var(--shadow-xs)', minWidth: 190, maxWidth: 220, flexShrink: 0 }}>
+                <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--so-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: '#fff', flexShrink: 0, marginTop: 1 }}>{p.n}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3, lineHeight: 1.3 }}>{p.title}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>{p.body}</div>
                 </div>
               </div>
             ))}
@@ -183,8 +183,8 @@ export default function BusinessCasesPage() {
           <div style={{ flex: 1, height: '0.5px', background: 'var(--border-color)' }} />
         </div>
 
-        {/* Tab bar */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+        {/* Tab bar — one line, horizontal scroll */}
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 20, paddingBottom: 2 }}>
           {CASES.map(c => {
             const isActive = c.id === activeTab
             return (

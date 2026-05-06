@@ -74,30 +74,13 @@ function StoryCard({ company, phone, vol, tc, accent = '#4796E3', gradient, labe
           </div>
         </div>
 
-        {/* WhatsApp */}
-        {waHref ? (
-          <a href={waHref} target="_blank" rel="noopener noreferrer"
-            onClick={e => e.stopPropagation()}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '7px 10px', borderRadius: 10,
-              background: 'rgba(37,211,102,0.12)',
-              border: '1px solid rgba(37,211,102,0.25)',
-              textDecoration: 'none', transition: 'background 0.15s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(37,211,102,0.22)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(37,211,102,0.12)'}
-          >
-            {WA_ICON}
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#4ADE80', fontFamily: 'var(--font-mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {phone}
-            </span>
-          </a>
-        ) : (
-          <div style={{ padding: '7px 10px', borderRadius: 10, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>No number</span>
-          </div>
-        )}
+        {/* WhatsApp number — plain display, no button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+          {WA_ICON}
+          <span style={{ fontSize: 11, fontWeight: 500, color: phone ? '#4ADE80' : 'rgba(255,255,255,0.22)', fontFamily: 'var(--font-mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {phone || 'No number'}
+          </span>
+        </div>
 
         {/* Days indicator */}
         {daysLabel && (

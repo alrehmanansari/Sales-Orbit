@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useCRM } from '../store/CRMContext'
+import { formatCurrency } from '../utils/helpers'
 
 const MONTH_NAMES = [
   'January','February','March','April','May','June',
@@ -218,10 +219,71 @@ export default function TakeNotesPage() {
 
   const noteCount = Object.keys(notes).length
   const selHasNote = !!notes[selected]
-  const selectedYear = parseInt(selected.split('-')[0])
 
   /* Sorted entries for the list */
   const allEntries = Object.entries(notes).sort((a,b) => b[0].localeCompare(a[0]))
+
+  /* ── @ mention ── */
+  const [mention, setMention] = useState({ open: false, query: '', results: [], rect: null })
+  const allLeads = state.leads || []
+  const allOpps  = state.opportunities || []
+
+  function handleEditorKeyUp(e) {
+    const sel = window.getSelection()
+    if (!sel.rangeCount) return
+    const range = sel.getRangeAt(0)
+    const text  = range.startContainer.textContent || ''
+    const caret = range.startOffset
+    const before = text.slice(0, caret)
+    const atIdx = before.lastIndexOf('@')
+    if (atIdx === -1) { setMention(m => ({ ...m, open: false })); return }
+    const query = before.slice(atIdx + 1)
+    if (query.length > 30 || query.includes(' ')) { setMention(m => ({ ...m, open: false })); return }
+
+    const q = query.toLowerCase()
+    const results = allLeads
+      .filter(l => l.companyName?.toLowerCase().includes(q) || l.contactPerson?.toLowerCase().includes(q))
+      .slice(0, 6)
+
+    if (!results.length && query.length > 0) { setMention(m => ({ ...m, open: false })); return }
+
+    // Position dropdown below caret
+    const r = range.getClientRects()[0] || editorRef.current.getBoundingClientRect()
+    const editorBox = editorRef.current.getBoundingClientRect()
+    setMention({ open: results.length > 0 || query.length === 0, query, results, rect: { top: r.bottom - editorBox.top + 4, left: r.left - editorBox.left } })
+  }
+
+  function insertMention(lead) {
+    // Find and delete the @query text
+    const sel = window.getSelection()
+    if (!sel.rangeCount) return
+    const range = sel.getRangeAt(0)
+    const caret = range.startOffset
+    const node  = range.startContainer
+    const text  = node.textContent || ''
+    const atIdx = text.slice(0, caret).lastIndexOf('@')
+
+    // Delete @query
+    const deleteRange = document.createRange()
+    deleteRange.setStart(node, atIdx)
+    deleteRange.setEnd(node, caret)
+    deleteRange.deleteContents()
+
+    // Get matched opportunity for vol/TC
+    const opp = allOpps.find(o => o.companyName === lead.companyName) ||
+                allOpps.find(o => o.leadId === lead.id)
+    const vol = opp ? formatCurrency(opp.expectedMonthlyVolume) : '—'
+    const tc  = opp ? formatCurrency(opp.expectedMonthlyRevenue) : '—'
+
+    // Insert formatted mention block
+    const info = `📌 ${lead.companyName} · ${lead.contactPerson || '—'} · ${lead.email || '—'} · ${lead.phone || '—'} · Vol: ${vol} · TC: ${tc}`
+    document.execCommand('insertHTML', false,
+      `<span style="background:var(--so-blue-soft);color:var(--so-blue);border-radius:5px;padding:2px 7px;font-size:12px;font-weight:600;white-space:nowrap" contenteditable="false">${info}</span>&nbsp;`
+    )
+    setMention({ open: false, query: '', results: [], rect: null })
+    editorRef.current?.focus()
+    handleInput()
+  }
 
   return (
     <div className="page">
@@ -385,14 +447,47 @@ export default function TakeNotesPage() {
           </div>
 
           {/* Notebook writing area */}
-          <div style={{ flex:1, overflowY:'auto', padding:'24px 40px' }}>
+          <div style={{ flex:1, overflowY:'auto', padding:'24px 40px', position: 'relative' }}>
+            {/* @ mention dropdown */}
+            {mention.open && mention.results.length > 0 && mention.rect && (
+              <div style={{
+                position: 'absolute', zIndex: 50,
+                top: mention.rect.top + 24, left: Math.max(0, mention.rect.left),
+                background: 'var(--bg-card)', border: '1px solid var(--so-blue)',
+                borderRadius: 12, overflow: 'hidden',
+                boxShadow: '0 8px 28px rgba(71,150,227,0.18)', minWidth: 280,
+              }}>
+                <div style={{ padding: '6px 12px 4px', fontSize: 9, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-hint)', borderBottom: '0.5px solid var(--border-color)' }}>
+                  Client — type to filter
+                </div>
+                {mention.results.map(lead => {
+                  const opp = allOpps.find(o => o.companyName === lead.companyName)
+                  return (
+                    <div key={lead.id} onMouseDown={e => { e.preventDefault(); insertMention(lead) }}
+                      style={{ padding: '9px 12px', cursor: 'pointer', borderBottom: '0.5px solid var(--border-color)', transition: 'background 130ms' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--so-blue-soft)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{lead.companyName}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                        <span>{lead.contactPerson || '—'}</span>
+                        {lead.phone && <span style={{ color: '#25D366' }}>{lead.phone}</span>}
+                        {opp && <span style={{ color: 'var(--so-blue)' }}>Vol: {formatCurrency(opp.expectedMonthlyVolume)}</span>}
+                        {opp && <span style={{ color: 'var(--green)' }}>TC: {formatCurrency(opp.expectedMonthlyRevenue)}</span>}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
             <div
               ref={editorRef}
               contentEditable
               suppressContentEditableWarning
               onInput={handleInput}
+              onKeyUp={handleEditorKeyUp}
               onKeyDown={e => {
-                if (e.key==='Tab') { e.preventDefault(); exec('insertHTML','&nbsp;&nbsp;&nbsp;&nbsp;') }
+                if (e.key === 'Escape') { setMention(m => ({ ...m, open: false })); return }
+                if (e.key === 'Tab') { e.preventDefault(); exec('insertHTML','&nbsp;&nbsp;&nbsp;&nbsp;') }
               }}
               style={{
                 minHeight:'calc(100vh - 280px)',

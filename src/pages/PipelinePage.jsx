@@ -174,49 +174,51 @@ export default function PipelinePage() {
         )
       })()}
 
-      {/* ── Split layout ─────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+      {/* ── Separator ─────────────────────────────────────────────────── */}
+      <div style={{ height: '0.5px', background: 'linear-gradient(90deg, transparent, var(--border-strong-color) 20%, var(--border-strong-color) 80%, transparent)', flexShrink: 0 }} />
 
-        {/* ── LEFT: stage list ───────────────────────────────────────── */}
-        <div style={{ width: 160, flexShrink: 0, borderRight: '1px solid var(--border-color)', background: 'var(--bg-secondary)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '8px 12px 4px', fontSize: 8, fontWeight: 800, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--text-hint)', borderBottom: '0.5px solid var(--border-color)' }}>
-            Stages
-          </div>
+      {/* ── Stage tabs (horizontal) ───────────────────────────────────── */}
+      <div style={{ padding: '10px 20px 0', background: 'var(--bg-secondary)', flexShrink: 0, borderBottom: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', gap: 2, overflowX: 'auto', paddingBottom: 0 }}>
           {OPPORTUNITY_STAGES.map(stage => {
-            const opps     = allOpps.filter(o => o.stage === stage)
+            const count    = allOpps.filter(o => o.stage === stage).length
             const isActive = activeStage === stage
             const isDim    = ['Lost','On Hold'].includes(stage)
             return (
-              <div key={stage} onClick={() => setActiveStage(stage)}
+              <button key={stage} onClick={() => setActiveStage(stage)}
                 style={{
-                  padding: '8px 12px', cursor: 'pointer',
-                  borderLeft: `2.5px solid ${isActive ? STAGE_COLORS[stage] : 'transparent'}`,
-                  background: isActive ? `linear-gradient(90deg, ${STAGE_COLORS[stage]}12, ${STAGE_COLORS[stage]}04)` : 'transparent',
-                  opacity: isDim && !isActive ? 0.6 : 1,
-                  transition: 'background 0.14s',
-                  borderBottom: '0.5px solid var(--border-color)',
+                  display: 'inline-flex', alignItems: 'center', gap: 7,
+                  padding: '8px 14px 10px', border: 'none', cursor: 'pointer',
+                  borderRadius: '10px 10px 0 0',
+                  background: isActive ? 'var(--bg-card)' : 'transparent',
+                  fontFamily: 'var(--font)', fontSize: 13,
+                  fontWeight: isActive ? 700 : 500,
+                  color: isActive ? STAGE_COLORS[stage] : 'var(--text-secondary)',
+                  opacity: isDim && !isActive ? 0.55 : 1,
+                  transition: 'all 0.15s', flexShrink: 0,
+                  borderTop: isActive ? `2px solid ${STAGE_COLORS[stage]}` : '2px solid transparent',
+                  borderLeft: isActive ? '1px solid var(--border-color)' : '1px solid transparent',
+                  borderRight: isActive ? '1px solid var(--border-color)' : '1px solid transparent',
+                  marginBottom: isActive ? -1 : 0,
+                  position: 'relative', zIndex: isActive ? 1 : 0,
                 }}
-                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--bg-tertiary)' }}
-                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
+                onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'var(--bg-tertiary)'; e.currentTarget.style.color = 'var(--text-primary)' } }}
+                onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: STAGE_COLORS[stage] }} />
-                    <span style={{ fontSize: 12, fontWeight: isActive ? 700 : 400, color: isActive ? STAGE_COLORS[stage] : 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {stage}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: 10, fontWeight: 700, minWidth: 18, textAlign: 'center', padding: '1px 5px', borderRadius: 10, flexShrink: 0, background: isActive ? `${STAGE_COLORS[stage]}20` : 'var(--bg-tertiary)', color: isActive ? STAGE_COLORS[stage] : 'var(--text-tertiary)', border: `1px solid ${isActive ? STAGE_COLORS[stage] + '40' : 'var(--border-color)'}` }}>
-                    {opps.length}
-                  </span>
-                </div>
-              </div>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: STAGE_COLORS[stage], flexShrink: 0 }} />
+                {stage}
+                <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 10, background: isActive ? `${STAGE_COLORS[stage]}18` : 'var(--bg-tertiary)', color: isActive ? STAGE_COLORS[stage] : 'var(--text-tertiary)', border: `1px solid ${isActive ? STAGE_COLORS[stage] + '30' : 'var(--border-color)'}` }}>
+                  {count}
+                </span>
+              </button>
             )
           })}
         </div>
+      </div>
 
-        {/* ── RIGHT: deals for selected stage ────────────────────────── */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+      {/* ── Deals for selected stage ──────────────────────────────────── */}
+      <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, height: '100%' }}>
 
           {/* Stage sub-header */}
           <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, flexWrap: 'wrap', gap: 8 }}>

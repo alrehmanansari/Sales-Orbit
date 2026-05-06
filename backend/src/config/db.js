@@ -59,6 +59,11 @@ function makeSQLitePool(dbPath) {
       .forEach(stmt => { try { db.prepare(stmt).run(); } catch {} });
   }
 
+  // Deactivate test accounts (email pattern @test.com or _test_ in email)
+  try {
+    db.prepare("UPDATE users SET is_active = 0 WHERE email LIKE '%@test.com' OR email LIKE '%_test_%' OR email LIKE 'fixtest%' OR email LIKE 'prod_%@test%' OR email LIKE 'eth%@test%'").run();
+  } catch {}
+
   // Migrations — add new columns to existing databases
   const oppCols = db.prepare("PRAGMA table_info(opportunities)").all().map(c => c.name);
   if (!oppCols.includes('client_id')) {

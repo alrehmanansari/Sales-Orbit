@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { AuthProvider, useAuth } from './store/AuthContext'
 import { CRMProvider, useCRM } from './store/CRMContext'
 import { KPIProvider } from './store/KPIContext'
-import Sidebar from './components/layout/Sidebar'
-import Header from './components/layout/Header'
+import TopNav from './components/layout/TopNav'
 import Dashboard from './pages/Dashboard'
 import LeadsPage from './pages/LeadsPage'
 import OpportunitiesPage from './pages/OpportunitiesPage'
@@ -76,9 +75,7 @@ function BackendError({ message }) {
 
 function AppContent() {
   const [page, setPage] = useState('dashboard')
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const { theme, toggleTheme, colorScheme, isDark, setColorScheme } = useTheme()
-  const { logout } = useAuth()
   const { crmLoading, crmError } = useCRM()
   const isMobile = useIsMobile()
 
@@ -98,49 +95,20 @@ function AppContent() {
     takeNotes:     <TakeNotesPage />,
   }
 
-  function navigate(id) {
-    setPage(id)
-    if (isMobile) setSidebarOpen(false)
-  }
-
   return (
-    <div style={{ display: 'flex', height: '100dvh', overflow: 'hidden', position: 'relative' }}>
-      {isMobile && sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 200,
-            background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)',
-            animation: 'fadeIn 0.18s ease'
-          }}
-        />
-      )}
-
-      <Sidebar
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden' }}>
+      <TopNav
         page={page}
-        onNav={navigate}
-        onLogout={logout}
+        onNav={setPage}
+        toggleTheme={toggleTheme}
+        colorScheme={colorScheme}
+        isDark={isDark}
+        setColorScheme={setColorScheme}
         isMobile={isMobile}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
       />
-
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
-        <Header
-          page={page}
-          onNav={navigate}
-          theme={theme}
-          toggleTheme={toggleTheme}
-          colorScheme={colorScheme}
-          isDark={isDark}
-          setColorScheme={setColorScheme}
-          isMobile={isMobile}
-          onMenuToggle={() => setSidebarOpen(o => !o)}
-        />
-        <main style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          {PAGES[page] || <Dashboard />}
-        </main>
-      </div>
+      <main style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        {PAGES[page] || <Dashboard />}
+      </main>
     </div>
   )
 }
