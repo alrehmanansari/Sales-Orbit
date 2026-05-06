@@ -11,32 +11,47 @@ const WA_ICON = (
 )
 
 function StoryCard({ company, phone, vol, tc, accent = '#4796E3', label, labelColor = '#4796E3', daysLabel, isDark }) {
-  const glassBg    = isDark ? `rgba(20,20,30,0.52)` : `rgba(255,255,255,0.48)`
-  const glassBorder = isDark ? `1px solid ${accent}30` : `1px solid ${accent}28`
-  const volColor   = isDark ? '#60B4FF' : 'var(--so-blue)'
-  const tcColor    = isDark ? '#4ADE80' : 'var(--green)'
-  const textPrimary   = isDark ? '#EAEAF0' : 'var(--text-primary)'
-  const textSecondary = isDark ? 'rgba(255,255,255,0.45)' : 'var(--text-tertiary)'
-  const dividerColor  = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
+  const cardBg = isDark
+    ? `radial-gradient(circle at 18% 22%, rgba(71,150,227,0.38), transparent 55%),
+       radial-gradient(circle at 82% 28%, rgba(145,119,199,0.32), transparent 55%),
+       radial-gradient(circle at 55% 92%, rgba(202,102,115,0.30), transparent 50%),
+       linear-gradient(145deg, #0a0e1c 0%, #150f1c 55%, #1a0f14 100%)`
+    : `radial-gradient(circle at 18% 22%, rgba(71,150,227,0.42), transparent 55%),
+       radial-gradient(circle at 82% 28%, rgba(145,119,199,0.36), transparent 55%),
+       radial-gradient(circle at 55% 92%, rgba(202,102,115,0.38), transparent 50%),
+       linear-gradient(135deg, #eef3fb 0%, #f6eef9 55%, #fbeff1 100%)`
+
+  const cardBorder = isDark
+    ? `1px solid rgba(255,255,255,0.09)`
+    : `1px solid rgba(255,255,255,0.72)`
+
+  const volColor      = isDark ? '#6BB5FF' : 'var(--so-blue)'
+  const tcColor       = isDark ? '#4ADE80' : 'var(--green)'
+  const textPrimary   = isDark ? '#EAEAF0' : '#1A1A2E'
+  const textSecondary = isDark ? 'rgba(255,255,255,0.42)' : 'rgba(26,26,46,0.48)'
+  const dividerColor  = isDark ? 'rgba(255,255,255,0.09)' : 'rgba(26,26,46,0.09)'
   const waColor       = isDark ? '#4ADE80' : 'var(--green)'
-  const noPhoneColor  = isDark ? 'rgba(255,255,255,0.22)' : 'var(--text-hint)'
+  const noPhoneColor  = isDark ? 'rgba(255,255,255,0.22)' : 'rgba(26,26,46,0.28)'
+
+  const shadowBase  = isDark
+    ? `0 8px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(145,119,199,0.14), inset 0 1px 0 rgba(255,255,255,0.07)`
+    : `0 8px 28px rgba(31,38,135,0.14), inset 0 1px 0 rgba(255,255,255,0.9)`
+  const shadowHover = isDark
+    ? `0 16px 40px rgba(0,0,0,0.65), 0 0 0 1px rgba(145,119,199,0.26)`
+    : `0 14px 36px rgba(31,38,135,0.20), inset 0 1px 0 rgba(255,255,255,0.95)`
 
   return (
     <div style={{
       width: 162, flexShrink: 0,
       borderRadius: 18,
-      background: glassBg,
-      backdropFilter: 'blur(20px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-      border: glassBorder,
-      boxShadow: isDark
-        ? `0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px ${accent}18, inset 0 1px 0 rgba(255,255,255,0.06)`
-        : `0 4px 20px ${accent}14, 0 1px 0 rgba(255,255,255,0.7) inset`,
+      background: cardBg,
+      border: cardBorder,
+      boxShadow: shadowBase,
       overflow: 'hidden', position: 'relative',
       transition: 'transform 220ms cubic-bezier(0.34,1.56,0.64,1), box-shadow 240ms ease',
     }}
-    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = isDark ? `0 14px 36px rgba(0,0,0,0.55), 0 0 0 1px ${accent}30` : `0 8px 28px ${accent}22, 0 1px 0 rgba(255,255,255,0.8) inset` }}
-    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = isDark ? `0 8px 28px rgba(0,0,0,0.45), 0 0 0 1px ${accent}18, inset 0 1px 0 rgba(255,255,255,0.06)` : `0 4px 20px ${accent}14, 0 1px 0 rgba(255,255,255,0.7) inset` }}
+    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = shadowHover }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = shadowBase }}
     >
       {/* Top accent strip */}
       <div style={{ height: 2.5, background: `linear-gradient(90deg, ${accent}, ${accent}66)` }} />
@@ -46,8 +61,9 @@ function StoryCard({ company, phone, vol, tc, accent = '#4796E3', label, labelCo
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 5,
           padding: '2px 8px', borderRadius: 20,
-          background: `${labelColor}18`,
-          border: `1px solid ${labelColor}35`,
+          background: isDark ? `${labelColor}22` : `${labelColor}20`,
+          border: `1px solid ${isDark ? labelColor + '40' : labelColor + '45'}`,
+          backdropFilter: 'blur(8px)',
           marginBottom: 9,
         }}>
           <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '0.8px', textTransform: 'uppercase', color: labelColor }}>
