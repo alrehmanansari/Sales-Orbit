@@ -185,7 +185,7 @@ export default function BusinessCasesPage() {
 
         {/* Entity type segmented selector */}
         <div style={{
-          display: 'flex', marginBottom: 20, overflowX: 'auto',
+          display: 'flex', flexWrap: 'wrap', marginBottom: 20,
           border: '1px solid var(--border-strong-color)', borderRadius: 14,
           background: 'var(--bg-tertiary)', padding: 4, gap: 0,
         }}>
@@ -198,7 +198,7 @@ export default function BusinessCasesPage() {
                 )}
                 <button onClick={() => setActiveTab(c.id)}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
+                    display: 'flex', alignItems: 'center', gap: 7, flex: '1 1 auto',
                     padding: '8px 14px', borderRadius: 10, cursor: 'pointer',
                     fontFamily: 'var(--font)', fontSize: 12, fontWeight: isActive ? 700 : 500,
                     border: isActive ? `1px solid ${c.accent}30` : '1px solid transparent',

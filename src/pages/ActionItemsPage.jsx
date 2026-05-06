@@ -12,33 +12,31 @@ const WA_ICON = (
 
 function StoryCard({ company, phone, vol, tc, accent = '#4796E3', label, labelColor = '#4796E3', daysLabel, isDark }) {
   const cardBg = isDark
-    ? `radial-gradient(circle at 18% 22%, rgba(71,150,227,0.38), transparent 55%),
-       radial-gradient(circle at 82% 28%, rgba(145,119,199,0.32), transparent 55%),
-       radial-gradient(circle at 55% 92%, rgba(202,102,115,0.30), transparent 50%),
-       linear-gradient(145deg, #0a0e1c 0%, #150f1c 55%, #1a0f14 100%)`
-    : `radial-gradient(circle at 18% 22%, rgba(71,150,227,0.42), transparent 55%),
-       radial-gradient(circle at 82% 28%, rgba(145,119,199,0.36), transparent 55%),
-       radial-gradient(circle at 55% 92%, rgba(202,102,115,0.38), transparent 50%),
-       linear-gradient(135deg, #eef3fb 0%, #f6eef9 55%, #fbeff1 100%)`
+    ? `radial-gradient(ellipse at 20% 30%, rgba(71,150,227,0.20), transparent 62%),
+       radial-gradient(ellipse at 80% 72%, rgba(145,119,199,0.16), transparent 58%),
+       #131318`
+    : `radial-gradient(ellipse at 20% 30%, rgba(71,150,227,0.16), transparent 62%),
+       radial-gradient(ellipse at 80% 72%, rgba(145,119,199,0.13), transparent 58%),
+       #F8F9FA`
 
   const cardBorder = isDark
-    ? `1px solid rgba(255,255,255,0.09)`
-    : `1px solid rgba(255,255,255,0.72)`
+    ? `1px solid rgba(255,255,255,0.07)`
+    : `1px solid rgba(0,0,0,0.07)`
 
   const volColor      = isDark ? '#6BB5FF' : 'var(--so-blue)'
   const tcColor       = isDark ? '#4ADE80' : 'var(--green)'
-  const textPrimary   = isDark ? '#EAEAF0' : '#1A1A2E'
-  const textSecondary = isDark ? 'rgba(255,255,255,0.42)' : 'rgba(26,26,46,0.48)'
-  const dividerColor  = isDark ? 'rgba(255,255,255,0.09)' : 'rgba(26,26,46,0.09)'
+  const textPrimary   = isDark ? '#EAEAF0' : 'var(--text-primary)'
+  const textSecondary = isDark ? 'rgba(255,255,255,0.42)' : 'var(--text-tertiary)'
+  const dividerColor  = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'
   const waColor       = isDark ? '#4ADE80' : 'var(--green)'
-  const noPhoneColor  = isDark ? 'rgba(255,255,255,0.22)' : 'rgba(26,26,46,0.28)'
+  const noPhoneColor  = isDark ? 'rgba(255,255,255,0.22)' : 'var(--text-hint)'
 
   const shadowBase  = isDark
-    ? `0 8px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(145,119,199,0.14), inset 0 1px 0 rgba(255,255,255,0.07)`
-    : `0 8px 28px rgba(31,38,135,0.14), inset 0 1px 0 rgba(255,255,255,0.9)`
+    ? `0 4px 20px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.05)`
+    : `0 2px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85)`
   const shadowHover = isDark
-    ? `0 16px 40px rgba(0,0,0,0.65), 0 0 0 1px rgba(145,119,199,0.26)`
-    : `0 14px 36px rgba(31,38,135,0.20), inset 0 1px 0 rgba(255,255,255,0.95)`
+    ? `0 10px 32px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.07)`
+    : `0 8px 24px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.95)`
 
   return (
     <div style={{

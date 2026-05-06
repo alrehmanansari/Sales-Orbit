@@ -121,7 +121,7 @@ export default function PipelinePage() {
         const TH = { fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.7px', color: 'var(--text-tertiary)', padding: '6px 10px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', textAlign: 'center', whiteSpace: 'nowrap' }
         const TD = { fontSize: 11, padding: '6px 10px', borderBottom: '0.5px solid var(--border-color)', textAlign: 'center', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }
         return (
-          <div style={{ padding: '10px 20px 0', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)', flexShrink: 0, overflowX: 'auto' }}>
+          <div style={{ padding: '10px 20px 24px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)', flexShrink: 0, overflowX: 'auto' }}>
             <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-hint)', marginBottom: 8 }}>Opportunities Progress</div>
             <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, border: '1px solid var(--border-color)', borderRadius: 10, overflow: 'hidden', minWidth: 500 }}>
               <thead>
