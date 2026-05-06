@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import { useCRM } from '../store/CRMContext'
 import { useAuth } from '../store/AuthContext'
@@ -9,8 +9,9 @@ import {
 import { formatCurrency, formatDate, daysDiff, filterByDateRange } from '../utils/helpers'
 import {
   LEAD_STATUSES, OPPORTUNITY_STAGES, VERTICALS, NATURE_OF_BUSINESS,
-  PRIORITIES, TEAM_MEMBERS
+  PRIORITIES
 } from '../data/constants'
+import { CopyImgBtn } from '../utils/copyImage'
 
 const SO = { blue: '#4796E3', purple: '#9177C7', pink: '#CA6673', green: '#1E8E3E', teal: '#129EAF', orange: '#E37400', indigo: '#5C6BC0' }
 const BRAND = [SO.blue, SO.purple, SO.pink, SO.green, SO.teal, SO.orange, SO.indigo]
@@ -51,9 +52,10 @@ const OPP_COLS = [
 ]
 
 const REPORT_TYPES = [
-  { id: 'leads',         label: 'Leads Report',              icon: '◈', desc: 'Lead volume, sources, status & conversion analysis' },
-  { id: 'pipeline',      label: 'Pipeline Report',           icon: '⋮⋮', desc: 'Stage funnel, deal values & win/loss breakdown' },
-  { id: 'opportunities', label: 'Opportunities Analysis',    icon: '◆', desc: 'TC analysis, NOB breakdown & deal insights' },
+  { id: 'leads',         label: 'Leads Report',           icon: '◈', desc: 'Lead volume, sources, status & conversion analysis' },
+  { id: 'pipeline',      label: 'Pipeline Report',        icon: '⋮⋮', desc: 'Stage funnel, deal values & win/loss breakdown' },
+  { id: 'opportunities', label: 'Opportunities Analysis', icon: '◆', desc: 'TC analysis, NOB breakdown & deal insights' },
+  { id: 'kpi',           label: 'Key Sales Metrics',      icon: '🎯', desc: 'Activity KPIs, call outcomes, follow-up rates' },
 ]
 
 const Tip = ({ active, payload, label }) => {
@@ -82,9 +84,13 @@ function SCard({ label, value, accent }) {
 }
 
 function CCard({ title, children }) {
+  const ref = useRef()
   return (
-    <div className="card">
-      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 12, paddingBottom: 10, borderBottom: '0.5px solid var(--border-color)' }}>{title}</div>
+    <div ref={ref} className="card">
+      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 12, paddingBottom: 10, borderBottom: '0.5px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <span>{title}</span>
+        <CopyImgBtn targetRef={ref} />
+      </div>
       {children}
     </div>
   )
@@ -134,6 +140,7 @@ export default function CustomReportsPage() {
   const { state } = useCRM()
   const { currentUser } = useAuth()
   const { leads, opportunities, activities } = state
+  const teamUsers = (state.users || []).filter(u => u.isActive !== false).map(u => u.name)
 
   const [savedReports, setSavedReports] = useState(loadSaved)
   const [view, setView] = useState('list')   // list | builder | preview
@@ -180,7 +187,7 @@ export default function CustomReportsPage() {
 
   function selectType(t) {
     setType(t)
-    setConfig(defaultConfig(t))
+    setConfig(t === 'kpi' ? { dateFrom: '', dateTo: '' } : defaultConfig(t))
     setPreview(null)
   }
 
@@ -258,6 +265,57 @@ export default function CustomReportsPage() {
         }),
         raw: filtered
       })
+    } else if (reportType === 'kpi') {
+      // Key Sales Metrics from activities
+      const from = cfg.dateFrom ? new Date(cfg.dateFrom) : null
+      const to   = cfg.dateTo   ? new Date(cfg.dateTo + 'T23:59:59') : null
+      const fActs = activities.filter(a => {
+        const d = new Date(a.dateTime)
+        if (from && d < from) return false
+        if (to   && d > to)   return false
+        return true
+      })
+      const calls    = fActs.filter(a => a.type === 'Call')
+      const connected = calls.filter(a => a.callOutcome?.startsWith('Connected'))
+      const interested = fActs.filter(a => a.callOutcome?.includes('Interested') && !a.callOutcome?.includes('Not'))
+      const followUps = fActs.filter(a => a.nextFollowUpDate)
+      const typeMap = {}, outcomeMap = {}, bdMap = {}
+      fActs.forEach(a => {
+        typeMap[a.type || 'Unknown'] = (typeMap[a.type || 'Unknown'] || 0) + 1
+        if (a.callOutcome) outcomeMap[a.callOutcome] = (outcomeMap[a.callOutcome] || 0) + 1
+        bdMap[a.loggedBy || 'Unknown'] = (bdMap[a.loggedBy || 'Unknown'] || 0) + 1
+      })
+      setPreview({
+        type: 'kpi', count: fActs.length,
+        summary: [
+          { label: 'Total Activities', value: fActs.length, raw: fActs.length },
+          { label: 'Total Calls',      value: calls.length, raw: calls.length },
+          { label: 'Connected',        value: connected.length, raw: connected.length },
+          { label: 'Interested',       value: interested.length, raw: interested.length },
+          { label: 'Follow-ups Set',   value: followUps.length, raw: followUps.length },
+        ],
+        charts: [
+          { title: 'Activity by Type',    data: Object.entries(typeMap).map(([name, value]) => ({ name, value })) },
+          { title: 'Call Outcomes',        data: Object.entries(outcomeMap).map(([name, value]) => ({ name, value })).sort((a,b)=>b.value-a.value) },
+          { title: 'Activity by BD',       data: Object.entries(bdMap).map(([name, value]) => ({ name, value })).sort((a,b)=>b.value-a.value) },
+          { title: 'Daily Activity Trend', data: (() => {
+            const map = {}
+            fActs.forEach(a => { const d = a.dateTime?.slice(0,10); if(d) map[d]=(map[d]||0)+1 })
+            return Object.entries(map).sort((a,b)=>a[0].localeCompare(b[0])).map(([name,value])=>({name,value}))
+          })() },
+        ],
+        tableData: fActs.map(a => ({
+          Date: a.dateTime?.slice(0,10) || '—',
+          Type: a.type, 'Call Type': a.callType || '—',
+          Outcome: a.callOutcome || '—',
+          'Logged By': a.loggedBy || '—',
+          'Follow-up': a.nextFollowUpDate || '—',
+          Notes: a.notes?.slice(0,80) || '—',
+        })),
+        raw: fActs
+      })
+      setView('preview')
+      return
     } else {
       const stageMap = {}, nobMap = {}, vertOppMap = {}, ownerMap = {}
       filtered.forEach(o => {
@@ -536,7 +594,7 @@ export default function CustomReportsPage() {
                       </div>
                       <div>
                         <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 6 }}>Owner</div>
-                        <FilterChips options={TEAM_MEMBERS} selected={config.owner || []} onChange={v => toggleMulti('owner', v)} />
+                        <FilterChips options={teamUsers} selected={config.owner || []} onChange={v => toggleMulti('owner', v)} />
                       </div>
                     </div>
                   )}
@@ -557,7 +615,7 @@ export default function CustomReportsPage() {
                       </div>
                       <div>
                         <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 6 }}>Owner</div>
-                        <FilterChips options={TEAM_MEMBERS} selected={config.owner || []} onChange={v => toggleMulti('owner', v)} />
+                        <FilterChips options={teamUsers} selected={config.owner || []} onChange={v => toggleMulti('owner', v)} />
                       </div>
                       <div>
                         <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 6 }}>Nature of Business</div>
@@ -567,28 +625,24 @@ export default function CustomReportsPage() {
                   )}
                 </div>
 
-                {/* Column selector */}
-                <div className="card">
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.7px', marginBottom: 10 }}>Columns in Export</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {colDefs.map(c => {
-                      const active = selectedCols.includes(c.key)
-                      return (
-                        <button key={c.key} onClick={() => toggleCol(c.key)}
-                          style={{
-                            padding: '3px 10px', borderRadius: 20, fontSize: 11, fontFamily: 'var(--font)',
-                            cursor: 'pointer', transition: 'all 0.15s',
-                            border: `1px solid ${active ? 'var(--so-blue)' : 'var(--border-color)'}`,
-                            background: active ? 'var(--so-blue-soft)' : 'transparent',
-                            color: active ? 'var(--so-blue)' : 'var(--text-tertiary)'
-                          }}>
-                          {c.label}
-                        </button>
-                      )
-                    })}
+                {/* Column selector — not for KPI */}
+                {type !== 'kpi' && (
+                  <div className="card">
+                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.7px', marginBottom: 10 }}>Columns in Export</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {colDefs.map(c => {
+                        const active = selectedCols.includes(c.key)
+                        return (
+                          <button key={c.key} onClick={() => toggleCol(c.key)}
+                            style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontFamily: 'var(--font)', cursor: 'pointer', transition: 'all 0.15s', border: `1px solid ${active ? 'var(--so-blue)' : 'var(--border-color)'}`, background: active ? 'var(--so-blue-soft)' : 'transparent', color: active ? 'var(--so-blue)' : 'var(--text-tertiary)' }}>
+                            {c.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <div style={{ marginTop: 8, fontSize: 10, color: 'var(--text-hint)' }}>{selectedCols.length} columns selected</div>
                   </div>
-                  <div style={{ marginTop: 8, fontSize: 10, color: 'var(--text-hint)' }}>{selectedCols.length} columns selected</div>
-                </div>
+                )}
               </div>
             )}
           </div>

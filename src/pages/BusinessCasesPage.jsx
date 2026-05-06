@@ -144,7 +144,7 @@ export default function BusinessCasesPage() {
       <div className="page-header" style={{ flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.4px', textTransform: 'uppercase', background: 'var(--so-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 4 }}>
-            SUNRATE · Compliance Guide
+            Compliance Guide
           </div>
           <h2 style={{ margin: 0 }}>Pakistan — Eligible Use Cases</h2>
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 3 }}>
@@ -164,9 +164,9 @@ export default function BusinessCasesPage() {
             <span>Core Principles</span>
             <div style={{ flex: 1, height: '0.5px', background: 'var(--border-color)' }} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
             {PRINCIPLES.map(p => (
-              <div key={p.n} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '14px 16px', display: 'flex', gap: 12, boxShadow: 'var(--shadow-xs)' }}>
+              <div key={p.n} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '14px 16px', display: 'flex', gap: 12, boxShadow: 'var(--shadow-xs)', minWidth: 260, flexShrink: 0 }}>
                 <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--so-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{p.n}</div>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 5, lineHeight: 1.3 }}>{p.title}</div>

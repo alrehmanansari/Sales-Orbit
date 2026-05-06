@@ -1016,6 +1016,74 @@ nav button { transition: background 180ms ease, color 180ms ease, border-color 1
 }
 
 /* ════════════════════════════════════════
+   RESPONSIVE — TABLET  (768–1023px)
+   ════════════════════════════════════════ */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root { --sidebar-w: 200px; }
+
+  .grid-3 { grid-template-columns: 1fr 1fr !important; }
+  .grid-4 { grid-template-columns: 1fr 1fr !important; }
+
+  .page-header { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+  .page-body   { padding: 14px 16px; }
+  .filters-bar { flex-wrap: wrap; }
+
+  .kpi-two-col { grid-template-columns: 1fr !important; }
+
+  /* Pipeline: hide email column on tablet */
+  [data-pipeline-email] { display: none; }
+}
+
+/* ════════════════════════════════════════
+   RESPONSIVE — MOBILE  (<768px)
+   ════════════════════════════════════════ */
+@media (max-width: 767px) {
+
+  /* ── Lead / Opp form multi-column → 1 col ── */
+  [style*="gridTemplateColumns: '1fr 1fr 1fr'"],
+  [style*="gridTemplateColumns: '1fr 2fr'"],
+  [style*="gridTemplateColumns: '1fr 1fr'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── KPI section ── */
+  .kpi-two-col { grid-template-columns: 1fr !important; }
+
+  /* ── Discovery panel on LeadForm hides on mobile ── */
+  .form-discovery-panel { display: none !important; }
+
+  /* ── Pipeline page: stack vertically ── */
+  [data-pipeline-layout] { flex-direction: column !important; }
+
+  /* ── Opportunities stage pills: scroll ── */
+  [data-stage-pills] { overflow-x: auto; flex-wrap: nowrap !important; }
+  [data-stage-pills] button { min-width: 120px; flex-shrink: 0; }
+
+  /* ── Tables: horizontal scroll ── */
+  .data-table th:nth-child(n+7),
+  .data-table td:nth-child(n+7) { display: none; }
+
+  /* ── Custom reports: 2-col builder → 1 col ── */
+  [data-report-builder] { grid-template-columns: 1fr !important; }
+
+  /* ── Business cases: 2-col detail → 1 col ── */
+  [data-business-cases-detail] { grid-template-columns: 1fr !important; }
+
+  /* ── Action items cards ── */
+  [data-story-cards] { gap: 10px; }
+  [data-story-card] { width: 170px !important; }
+
+  /* ── Header search shorter ── */
+  [data-header-search] { max-width: 160px !important; }
+
+  /* ── Dashboard grids ── */
+  .grid-2 { grid-template-columns: 1fr !important; }
+
+  /* ── Reports: stat cards ── */
+  .grid-4 { grid-template-columns: 1fr 1fr !important; }
+}
+
+/* ════════════════════════════════════════
    OCEAN THEME — light
    ════════════════════════════════════════ */
 [data-theme="ocean-light"] {

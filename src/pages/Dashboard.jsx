@@ -8,6 +8,7 @@ import { filterByDateRange, formatCurrency, getDailyVolume, isOverdue, daysDiff 
 import { TIME_FILTERS, ACTIVE_STAGES, TEAM_MEMBERS, MANAGER_DESIGNATIONS } from '../data/constants'
 import { useAuth } from '../store/AuthContext'
 import KPISection from '../components/dashboard/KPISection'
+import { CopyImgBtn } from '../utils/copyImage'
 
 const SO = { blue: '#4796E3', purple: '#9177C7', pink: '#CA6673', green: '#1E8E3E', teal: '#129EAF', orange: '#E37400', indigo: '#5C6BC0' }
 const BRAND = [SO.blue, SO.purple, SO.pink, SO.green, SO.teal, SO.orange, SO.indigo]
@@ -212,12 +213,14 @@ export default function Dashboard() {
   }
 
   function ChartCard({ id, title, children, gridSpan }) {
+    const cardRef = useRef()
     return (
       <DragSection id={id} dragId={dragOver} onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop}>
-        <div className="card so-hover-card" style={gridSpan === 3 ? { gridColumn: '1/-1' } : {}}>
-          <div style={{ marginBottom: 14, paddingBottom: 10, borderBottom: '0.5px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, letterSpacing: '-0.2px' }}>{title}</h3>
-            <span style={{ fontSize: 10, color: 'var(--text-hint)', cursor: 'grab' }}>⠿ drag</span>
+        <div ref={cardRef} className="card so-hover-card" style={gridSpan === 3 ? { gridColumn: '1/-1' } : {}}>
+          <div style={{ marginBottom: 14, paddingBottom: 10, borderBottom: '0.5px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, letterSpacing: '-0.2px', flex: 1 }}>{title}</h3>
+            <CopyImgBtn targetRef={cardRef} />
+            <span style={{ fontSize: 10, color: 'var(--text-hint)', cursor: 'grab', flexShrink: 0 }}>⠿</span>
           </div>
           {children}
         </div>

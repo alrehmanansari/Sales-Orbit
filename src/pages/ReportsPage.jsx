@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef } from 'react'
 import { useCRM } from '../store/CRMContext'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -6,6 +6,7 @@ import {
 } from 'recharts'
 import { filterByDateRange, formatCurrency, daysDiff, getStageVelocity, exportToCSV } from '../utils/helpers'
 import { TIME_FILTERS, STAGE_COLORS, ACTIVE_STAGES, TEAM_MEMBERS } from '../data/constants'
+import { CopyImgBtn } from '../utils/copyImage'
 
 const SO = { blue: '#4796E3', purple: '#9177C7', pink: '#CA6673', green: '#1E8E3E', teal: '#129EAF', orange: '#E37400', indigo: '#5C6BC0' }
 const BRAND = [SO.blue, SO.purple, SO.pink, SO.green, SO.teal, SO.orange]
@@ -49,9 +50,13 @@ function SCard({ label, value, sub, accent }) {
 }
 
 function CCard({ title, children }) {
+  const ref = useRef()
   return (
-    <div className="card so-hover-card">
-      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 14, paddingBottom: 10, borderBottom: '0.5px solid var(--border-color)' }}>{title}</div>
+    <div ref={ref} className="card so-hover-card">
+      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 14, paddingBottom: 10, borderBottom: '0.5px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <span>{title}</span>
+        <CopyImgBtn targetRef={ref} />
+      </div>
       {children}
     </div>
   )

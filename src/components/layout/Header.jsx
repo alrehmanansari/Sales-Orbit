@@ -50,21 +50,6 @@ export default function Header({ page, onNav, theme, toggleTheme, colorScheme, i
         >☰</button>
       )}
 
-      {/* SalesOrbit brand mark — desktop only */}
-      {!isMobile && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingRight: 10, borderRight: '0.5px solid var(--border-color)', marginRight: 4 }}>
-          <div style={{ width: 22, height: 22, borderRadius: 6, background: 'var(--so-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 6px rgba(71,150,227,0.3)', flexShrink: 0 }}>
-            <svg width="13" height="13" viewBox="0 0 80 80" fill="none">
-              <path d="M40 4 C40 4 41.6 22 47 35 C53 49 68 40 76 40 C68 40 53 31 47 45 C41.6 58 40 76 40 76 C40 76 38.4 58 33 45 C27 31 12 40 4 40 C12 40 27 49 33 35 C38.4 22 40 4 40 4Z" fill="#fff"/>
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.4px', background: 'var(--so-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', lineHeight: 1.1 }}>SalesOrbit</div>
-            <div style={{ fontSize: 8, color: 'var(--text-hint)', letterSpacing: '0.2px', lineHeight: 1.1 }}>BD Sales Platform</div>
-          </div>
-        </div>
-      )}
-
       <div style={{ flex: 1 }} />
 
       {/* Global search */}

@@ -62,6 +62,19 @@ export default function Sidebar({ page, onNav, onLogout, isMobile, isOpen, onClo
   const { state } = useCRM()
   const { leads, opportunities, activities } = state
 
+  // Action Items badge count
+  const now = new Date()
+  const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000)
+  const todayStr = now.toISOString().slice(0, 10)
+  const actionCount =
+    leads.filter(l => !['Converted','Lost'].includes(l.status) && (!l.lastActivityAt || new Date(l.lastActivityAt) < sevenDaysAgo)).length +
+    opportunities.filter(o => {
+      if (['Lost','On Hold'].includes(o.stage)) return false
+      const cur = o.stageHistory?.[o.stageHistory.length - 1]
+      return cur?.enteredAt && new Date(cur.enteredAt) < sevenDaysAgo
+    }).length +
+    new Set(activities.filter(a => a.entityType === 'opportunity' && a.nextFollowUpDate?.slice(0, 10) === todayStr).map(a => a.entityId)).size
+
   const [collapsed, setCollapsed] = useState(() =>
     !isMobile && localStorage.getItem('so-sidebar-collapsed') === 'true'
   )
@@ -170,22 +183,21 @@ export default function Sidebar({ page, onNav, onLogout, isMobile, isOpen, onClo
 
         {NAV.map(item => {
           const active     = page === item.id
-          const badgeCount = null
+          const badgeCount = item.id === 'actionItems' && actionCount > 0 ? actionCount : null
 
           return (
             <React.Fragment key={item.id}>
               {/* Section label */}
               {item.section && !isCollapsed && (
                 <div style={{
-                  padding: '14px 12px 5px',
-                  fontSize: 8, fontWeight: 800,
-                  letterSpacing: '1.6px', textTransform: 'uppercase',
-                  color: 'var(--text-hint)',
-                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '14px 12px 4px',
+                  fontSize: 9, fontWeight: 800,
+                  letterSpacing: '1px', textTransform: 'uppercase',
+                  background: 'linear-gradient(90deg, #4796E3, #9177C7)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
                 }}>
-                  <div style={{ flex: 1, height: '0.5px', background: 'var(--border-color)', opacity: 0.6 }} />
-                  <span>{item.section}</span>
-                  <div style={{ flex: 1, height: '0.5px', background: 'var(--border-color)', opacity: 0.6 }} />
+                  {item.section}
                 </div>
               )}
               {item.section && isCollapsed && (
@@ -284,28 +296,6 @@ export default function Sidebar({ page, onNav, onLogout, isMobile, isOpen, onClo
                 {overdueCount} overdue follow-up{overdueCount > 1 ? 's' : ''}
               </span>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* ── SalesOrbit branding ──────────────────────────────── */}
-      {!isCollapsed && (
-        <div style={{
-          padding: '8px 16px',
-          borderTop: '0.5px solid var(--border-color)',
-          display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
-          background: 'linear-gradient(90deg, rgba(71,150,227,0.04), rgba(145,119,199,0.04))',
-        }}>
-          <div style={{ width: 16, height: 16, borderRadius: 4, background: 'var(--so-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <svg width="10" height="10" viewBox="0 0 80 80" fill="none">
-              <path d="M40 4 C40 4 41.6 22 47 35 C53 49 68 40 76 40 C68 40 53 31 47 45 C41.6 58 40 76 40 76 C40 76 38.4 58 33 45 C27 31 12 40 4 40 C12 40 27 49 33 35 C38.4 22 40 4 40 4Z" fill="#fff"/>
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.3px', background: 'var(--so-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              SalesOrbit
-            </div>
-            <div style={{ fontSize: 8, color: 'var(--text-hint)', letterSpacing: '0.3px' }}>BD Sales Platform</div>
           </div>
         </div>
       )}

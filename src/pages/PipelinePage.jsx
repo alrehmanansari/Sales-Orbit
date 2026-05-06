@@ -113,49 +113,60 @@ export default function PipelinePage() {
         </div>
       </div>
 
-      {/* ── BD Breakdown Table ───────────────────────────────────────── */}
+      {/* ── Opportunities Progress Table ─────────────────────────────── */}
       {(() => {
-        const bdUsers = (state.users || []).filter(u => u.isActive !== false && u.role === 'Rep')
-        if (!bdUsers.length) return null
+        const allTeamUsers = (state.users || []).filter(u => u.isActive !== false)
+        if (!allTeamUsers.length) return null
         const stages = OPPORTUNITY_STAGES
-        const TH = { fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.7px', color: 'var(--text-tertiary)', padding: '7px 10px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', textAlign: 'center', whiteSpace: 'nowrap' }
-        const TD = { fontSize: 12, padding: '7px 10px', borderBottom: '0.5px solid var(--border-color)', textAlign: 'center', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }
+        const TH = { fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.7px', color: 'var(--text-tertiary)', padding: '6px 10px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', textAlign: 'center', whiteSpace: 'nowrap' }
+        const TD = { fontSize: 11, padding: '6px 10px', borderBottom: '0.5px solid var(--border-color)', textAlign: 'center', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }
         return (
-          <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)', flexShrink: 0, overflowX: 'auto' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-hint)', marginBottom: 8 }}>BD Performance Breakdown</div>
-            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, border: '1px solid var(--border-color)', borderRadius: 10, overflow: 'hidden', minWidth: 600 }}>
+          <div style={{ padding: '10px 20px 0', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)', flexShrink: 0, overflowX: 'auto' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-hint)', marginBottom: 8 }}>Opportunities Progress</div>
+            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, border: '1px solid var(--border-color)', borderRadius: 10, overflow: 'hidden', minWidth: 500 }}>
               <thead>
                 <tr>
                   <th style={{ ...TH, textAlign: 'left' }}>BD</th>
                   {stages.map(s => <th key={s} style={TH}>{s}</th>)}
-                  <th style={{ ...TH, color: 'var(--so-blue)' }}>Total Vol</th>
-                  <th style={{ ...TH, color: 'var(--green)' }}>Total TC</th>
                 </tr>
               </thead>
               <tbody>
-                {bdUsers.map((u, i) => {
-                  const stageCounts = stages.map(s => allOpps.filter(o => o.leadOwner === u.name && o.stage === s).length)
-                  const uVol = allOpps.filter(o => o.leadOwner === u.name).reduce((s, o) => s + (o.expectedMonthlyVolume || 0), 0)
-                  const uTC  = allOpps.filter(o => o.leadOwner === u.name).reduce((s, o) => s + (o.expectedMonthlyRevenue || 0), 0)
+                {allTeamUsers.map((u, i) => {
+                  const counts = stages.map(s => allOpps.filter(o => o.leadOwner === u.name && o.stage === s).length)
+                  const hasAny = counts.some(c => c > 0)
+                  if (!hasAny) return null
                   return (
                     <tr key={u.userId} style={{ background: i % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-secondary)' }}>
-                      <td style={{ ...TD, textAlign: 'left', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font)' }}>{u.name}</td>
-                      {stageCounts.map((cnt, si) => (
+                      <td style={{ ...TD, textAlign: 'left', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font)', fontSize: 12 }}>{u.name}</td>
+                      {counts.map((cnt, si) => (
                         <td key={si} style={{ ...TD, color: cnt > 0 ? 'var(--text-primary)' : 'var(--text-hint)', fontWeight: cnt > 0 ? 700 : 400 }}>{cnt || '—'}</td>
                       ))}
-                      <td style={{ ...TD, color: 'var(--so-blue)', fontWeight: 700 }}>{uVol > 0 ? formatCurrency(uVol) : '—'}</td>
-                      <td style={{ ...TD, color: 'var(--green)', fontWeight: 700 }}>{uTC > 0 ? formatCurrency(uTC) : '—'}</td>
                     </tr>
                   )
                 })}
-                <tr style={{ background: 'var(--bg-tertiary)' }}>
-                  <td style={{ ...TD, textAlign: 'left', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font)', fontSize: 11, borderTop: '1px solid var(--border-color)' }}>Total</td>
+                {/* Totals row */}
+                <tr style={{ background: 'var(--bg-tertiary)', borderTop: '2px solid var(--border-strong-color)' }}>
+                  <td style={{ ...TD, textAlign: 'left', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font)', fontSize: 11, borderTop: '1px solid var(--border-strong-color)' }}>Total</td>
                   {stages.map(s => {
                     const cnt = allOpps.filter(o => o.stage === s).length
-                    return <td key={s} style={{ ...TD, fontWeight: 800, color: cnt > 0 ? 'var(--text-primary)' : 'var(--text-hint)', borderTop: '1px solid var(--border-color)' }}>{cnt || '—'}</td>
+                    return <td key={s} style={{ ...TD, fontWeight: 800, color: cnt > 0 ? 'var(--so-blue)' : 'var(--text-hint)', borderTop: '1px solid var(--border-strong-color)' }}>{cnt || '—'}</td>
                   })}
-                  <td style={{ ...TD, fontWeight: 800, color: 'var(--so-blue)', borderTop: '1px solid var(--border-color)' }}>{formatCurrency(allOpps.reduce((s, o) => s + (o.expectedMonthlyVolume || 0), 0))}</td>
-                  <td style={{ ...TD, fontWeight: 800, color: 'var(--green)', borderTop: '1px solid var(--border-color)' }}>{formatCurrency(allOpps.reduce((s, o) => s + (o.expectedMonthlyRevenue || 0), 0))}</td>
+                </tr>
+                {/* Vol row */}
+                <tr style={{ background: 'var(--bg-tertiary)' }}>
+                  <td style={{ ...TD, textAlign: 'left', fontWeight: 700, color: 'var(--so-blue)', fontFamily: 'var(--font)', fontSize: 11 }}>Total Vol</td>
+                  {stages.map(s => {
+                    const v = allOpps.filter(o => o.stage === s).reduce((a, o) => a + (o.expectedMonthlyVolume || 0), 0)
+                    return <td key={s} style={{ ...TD, fontWeight: 700, color: v > 0 ? 'var(--so-blue)' : 'var(--text-hint)' }}>{v > 0 ? formatCurrency(v) : '—'}</td>
+                  })}
+                </tr>
+                {/* TC row */}
+                <tr style={{ background: 'var(--bg-tertiary)' }}>
+                  <td style={{ ...TD, textAlign: 'left', fontWeight: 700, color: 'var(--green)', fontFamily: 'var(--font)', fontSize: 11 }}>Total TC</td>
+                  {stages.map(s => {
+                    const v = allOpps.filter(o => o.stage === s).reduce((a, o) => a + (o.expectedMonthlyRevenue || 0), 0)
+                    return <td key={s} style={{ ...TD, fontWeight: 700, color: v > 0 ? 'var(--green)' : 'var(--text-hint)' }}>{v > 0 ? formatCurrency(v) : '—'}</td>
+                  })}
                 </tr>
               </tbody>
             </table>
@@ -167,44 +178,35 @@ export default function PipelinePage() {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
         {/* ── LEFT: stage list ───────────────────────────────────────── */}
-        <div style={{ width: 200, flexShrink: 0, borderRight: '1px solid var(--border-color)', background: 'var(--bg-secondary)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '10px 14px 6px', fontSize: 9, fontWeight: 700, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--text-hint)' }}>
+        <div style={{ width: 160, flexShrink: 0, borderRight: '1px solid var(--border-color)', background: 'var(--bg-secondary)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '8px 12px 4px', fontSize: 8, fontWeight: 800, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--text-hint)', borderBottom: '0.5px solid var(--border-color)' }}>
             Stages
           </div>
-
           {OPPORTUNITY_STAGES.map(stage => {
             const opps     = allOpps.filter(o => o.stage === stage)
             const isActive = activeStage === stage
             const isDim    = ['Lost','On Hold'].includes(stage)
             return (
-              <div
-                key={stage}
-                onClick={() => setActiveStage(stage)}
+              <div key={stage} onClick={() => setActiveStage(stage)}
                 style={{
-                  padding: '12px 16px', cursor: 'pointer',
-                  borderLeft: `3px solid ${isActive ? STAGE_COLORS[stage] : 'transparent'}`,
-                  background: isActive ? `linear-gradient(90deg, ${STAGE_COLORS[stage]}14, ${STAGE_COLORS[stage]}06)` : 'transparent',
-                  opacity: isDim && !isActive ? 0.65 : 1,
+                  padding: '8px 12px', cursor: 'pointer',
+                  borderLeft: `2.5px solid ${isActive ? STAGE_COLORS[stage] : 'transparent'}`,
+                  background: isActive ? `linear-gradient(90deg, ${STAGE_COLORS[stage]}12, ${STAGE_COLORS[stage]}04)` : 'transparent',
+                  opacity: isDim && !isActive ? 0.6 : 1,
                   transition: 'background 0.14s',
                   borderBottom: '0.5px solid var(--border-color)',
                 }}
                 onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--bg-tertiary)' }}
                 onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: STAGE_COLORS[stage] }} />
-                    <span style={{ fontSize: 13, fontWeight: isActive ? 700 : 500, color: isActive ? STAGE_COLORS[stage] : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: STAGE_COLORS[stage] }} />
+                    <span style={{ fontSize: 12, fontWeight: isActive ? 700 : 400, color: isActive ? STAGE_COLORS[stage] : 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {stage}
                     </span>
                   </div>
-                  <span style={{
-                    fontSize: 11, fontWeight: 700, minWidth: 20, textAlign: 'center',
-                    padding: '1px 7px', borderRadius: 20, flexShrink: 0,
-                    background: isActive ? `${STAGE_COLORS[stage]}22` : 'var(--bg-tertiary)',
-                    color: isActive ? STAGE_COLORS[stage] : 'var(--text-tertiary)',
-                    border: isActive ? `1px solid ${STAGE_COLORS[stage]}44` : '1px solid var(--border-color)',
-                  }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, minWidth: 18, textAlign: 'center', padding: '1px 5px', borderRadius: 10, flexShrink: 0, background: isActive ? `${STAGE_COLORS[stage]}20` : 'var(--bg-tertiary)', color: isActive ? STAGE_COLORS[stage] : 'var(--text-tertiary)', border: `1px solid ${isActive ? STAGE_COLORS[stage] + '40' : 'var(--border-color)'}` }}>
                     {opps.length}
                   </span>
                 </div>
@@ -361,6 +363,14 @@ export default function PipelinePage() {
                   )
                 })}
               </>
+            )}
+            {/* Stage totals footer */}
+            {stageOpps.length > 0 && (
+              <div style={{ padding: '10px 20px', borderTop: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', display: 'flex', gap: 24, alignItems: 'center', flexShrink: 0, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}><strong style={{ color: 'var(--text-primary)' }}>{stageOpps.length}</strong> opportunities</span>
+                {stageVolume > 0 && <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Vol <strong style={{ color: 'var(--so-blue)', fontFamily: 'var(--font-mono)' }}>{formatCurrency(stageVolume)}</strong></span>}
+                {stageRevenue > 0 && <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>TC <strong style={{ color: 'var(--green)', fontFamily: 'var(--font-mono)' }}>{formatCurrency(stageRevenue)}</strong></span>}
+              </div>
             )}
           </div>
         </div>

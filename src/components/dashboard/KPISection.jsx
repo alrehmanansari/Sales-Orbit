@@ -2,10 +2,6 @@ import React, { useState, useRef, useCallback } from 'react'
 import { useKPI, QUARTERS, KPI_WEIGHTS, calcScore } from '../../store/KPIContext'
 import { useAuth } from '../../store/AuthContext'
 import { useCRM } from '../../store/CRMContext'
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
-  CartesianGrid, Tooltip, Cell, LabelList
-} from 'recharts'
 
 const SO = { blue: '#4796E3', purple: '#9177C7', pink: '#CA6673', green: '#1E8E3E', orange: '#E37400' }
 const BRAND = [SO.blue, SO.purple, SO.pink, SO.green, SO.orange]
@@ -141,18 +137,17 @@ async function copyAsImage(el) {
   } catch (e) { console.error('Copy failed:', e) }
 }
 
-function CopyBtn({ targetRef, label = 'Copy' }) {
+function CopyBtn({ targetRef }) {
   return (
     <button onClick={() => targetRef.current && copyAsImage(targetRef.current)}
       title="Copy as HD image"
-      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 8, border: '1px solid var(--border-strong-color)', background: 'var(--bg-tertiary)', cursor: 'pointer', fontFamily: 'var(--font)', fontSize: 11, color: 'var(--text-tertiary)', transition: 'all 140ms ease' }}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border-strong-color)', background: 'var(--bg-tertiary)', cursor: 'pointer', color: 'var(--text-tertiary)', transition: 'all 140ms ease', flexShrink: 0 }}
       onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--so-blue)'; e.currentTarget.style.color = 'var(--so-blue)'; e.currentTarget.style.background = 'var(--so-blue-soft)' }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-strong-color)'; e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.background = 'var(--bg-tertiary)' }}
     >
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
       </svg>
-      {label}
     </button>
   )
 }
@@ -165,19 +160,14 @@ export default function KPISection() {
   const tableRef = useRef()
   const chartRef  = useRef()
 
-  const bdUsers = (state.users || []).filter(u => u.isActive !== false && u.role === 'Rep').map(u => u.name)
-  const allUsers = [...bdUsers]
+  // Include ALL active users (Reps + Managers) so Head of Sales can log achievements too
+  const allUsers = (state.users || []).filter(u => u.isActive !== false).map(u => u.name)
   const isYearly = quarter === 'Yearly'
 
   const KPI_ROWS = [
     { key: 'tc', label: 'TC',               targetKey: 'tcTarget', achKey: 'tcAch', weight: KPI_WEIGHTS.tc, isMoney: true,  color: SO.blue   },
     { key: 'ac', label: 'Activated Clients', targetKey: 'acTarget', achKey: 'acAch', weight: KPI_WEIGHTS.ac, isMoney: false, color: SO.purple },
   ]
-
-  const teamChart = allUsers.map((name, i) => {
-    const q = isYearly ? yearlyQ(data, name) : (data.kpiData[name]?.[quarter] || {})
-    return { name: name.split(' ')[0], score: calcScore(q), color: BRAND[i % BRAND.length] }
-  })
 
   const TH  = { padding: '8px 12px', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.8px', borderBottom: '1px solid var(--border-color)', textAlign: 'right', background: 'linear-gradient(to bottom, var(--bg-secondary), var(--bg-tertiary))' }
   const THL = { ...TH, textAlign: 'left' }
@@ -321,24 +311,6 @@ export default function KPISection() {
                   })}
                 </div>
 
-                {/* Bar chart */}
-                {teamChart.length > 0 && (
-                  <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 12, padding: '16px 18px', boxShadow: 'var(--shadow-xs)' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-tertiary)', marginBottom: 12 }}>Overall Score by BD</div>
-                    <ResponsiveContainer width="100%" height={160}>
-                      <BarChart data={teamChart} barSize={28} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-                        <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-secondary)', fontFamily: 'var(--font)' }} axisLine={false} tickLine={false} />
-                        <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: 'var(--text-tertiary)' }} axisLine={false} tickLine={false} tickFormatter={v => `${v}%`} />
-                        <Tooltip content={<Tip />} />
-                        <Bar dataKey="score" name="Score" radius={[5, 5, 0, 0]}>
-                          {teamChart.map((e, i) => <Cell key={i} fill={e.color} fillOpacity={0.85} />)}
-                          <LabelList dataKey="score" position="top" formatter={v => `${v}%`} style={{ fontSize: 10, fontWeight: 700, fill: 'var(--text-secondary)' }} />
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
               </div>
             </div>
           </div>
