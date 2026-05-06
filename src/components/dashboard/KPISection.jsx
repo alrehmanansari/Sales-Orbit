@@ -160,8 +160,11 @@ export default function KPISection() {
   const tableRef = useRef()
   const chartRef  = useRef()
 
-  // Include ALL active users (Reps + Managers) so Head of Sales can log achievements too
-  const allUsers = (state.users || []).filter(u => u.isActive !== false).map(u => u.name)
+  // Show Reps + Head of Sales only; exclude Head of MENA / Country Manager (no KPI targets)
+  const KPI_DESIGNATIONS_EXCLUDED = ['Head of MENA', 'Country Manager']
+  const allUsers = (state.users || [])
+    .filter(u => u.isActive !== false && !KPI_DESIGNATIONS_EXCLUDED.includes(u.designation))
+    .map(u => u.name)
   const isYearly = quarter === 'Yearly'
 
   const KPI_ROWS = [

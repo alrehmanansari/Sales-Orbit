@@ -59,9 +59,16 @@ function makeSQLitePool(dbPath) {
       .forEach(stmt => { try { db.prepare(stmt).run(); } catch {} });
   }
 
-  // Deactivate test accounts (email pattern @test.com or _test_ in email)
+  // Deactivate test / unwanted accounts
   try {
-    db.prepare("UPDATE users SET is_active = 0 WHERE email LIKE '%@test.com' OR email LIKE '%_test_%' OR email LIKE 'fixtest%' OR email LIKE 'prod_%@test%' OR email LIKE 'eth%@test%'").run();
+    db.prepare(`UPDATE users SET is_active = 0 WHERE
+      email LIKE '%@test.com'
+      OR email LIKE '%_test_%'
+      OR email LIKE 'fixtest%'
+      OR email LIKE 'prod_%@test%'
+      OR email LIKE 'eth%@test%'
+      OR first_name IN ('Awais', 'Test', 'Fix', 'Prod', 'Eth', 'Email', 'SMTP', 'Gmail', 'John')
+    `).run();
   } catch {}
 
   // Ensure Alina Shabbir's account is active (pinned activation)
