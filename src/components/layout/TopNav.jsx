@@ -35,6 +35,26 @@ const GROUPS = [
   },
 ]
 
+/* Module-level — stable reference so React never unmounts it between renders */
+function IconBtn({ onClick, title, active, children }) {
+  return (
+    <button onClick={onClick} title={title}
+      style={{
+        width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+        border: `1.5px solid ${active ? 'var(--so-blue)' : 'var(--border-strong-color)'}`,
+        background: active ? 'var(--so-blue-soft)' : 'transparent',
+        cursor: 'pointer', color: active ? 'var(--so-blue)' : 'var(--text-secondary)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'all 160ms ease',
+      }}
+      onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = 'var(--so-blue)'; e.currentTarget.style.color = 'var(--so-blue)' } }}
+      onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'var(--border-strong-color)'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
+    >
+      {children}
+    </button>
+  )
+}
+
 export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, setColorScheme, isMobile }) {
   const { state } = useCRM()
   const { currentUser, logout } = useAuth()
@@ -109,28 +129,6 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
   const isGroupActive = (g) => g.items.some(i => i.id === page)
 
   /* ─────────────────────────────────────────────────────────
-     ICON BUTTON HELPER
-  ───────────────────────────────────────────────────────── */
-  function IconBtn({ onClick, title, active, children, style: extraStyle }) {
-    return (
-      <button onClick={onClick} title={title}
-        style={{
-          width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-          border: `1.5px solid ${active ? 'var(--so-blue)' : 'var(--border-strong-color)'}`,
-          background: active ? 'var(--so-blue-soft)' : 'transparent',
-          cursor: 'pointer', color: active ? 'var(--so-blue)' : 'var(--text-secondary)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'all 160ms ease', ...extraStyle,
-        }}
-        onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = 'var(--so-blue)'; e.currentTarget.style.color = 'var(--so-blue)' } }}
-        onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'var(--border-strong-color)'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
-      >
-        {children}
-      </button>
-    )
-  }
-
-  /* ─────────────────────────────────────────────────────────
      RENDER
   ───────────────────────────────────────────────────────── */
   const glassStyle = isDark
@@ -171,12 +169,10 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
               <defs><linearGradient id="nav-lg" x1="40" y1="4" x2="40" y2="76" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#4796E3"/><stop offset="45%" stopColor="#9177C7"/><stop offset="100%" stopColor="#CA6673"/></linearGradient></defs>
               <path d="M40 4 C40 4 41.6 22 47 35 C53 49 68 40 76 40 C68 40 53 31 47 45 C41.6 58 40 76 40 76 C40 76 38.4 58 33 45 C27 31 12 40 4 40 C12 40 27 49 33 35 C38.4 22 40 4 40 4Z" fill="url(#nav-lg)"/>
             </svg>
-            {!isMobile && (
-              <span style={{ fontFamily: 'var(--font)', fontSize: 17, fontWeight: 600, letterSpacing: '-0.4px', whiteSpace: 'nowrap' }}>
-                <span style={{ background: 'linear-gradient(90deg,#4796E3,#9177C7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Sales </span>
-                <span style={{ background: 'linear-gradient(90deg,#9177C7,#CA6673)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Orbit</span>
-              </span>
-            )}
+            <span style={{ fontFamily: 'var(--font)', fontSize: isMobile ? 15 : 17, fontWeight: 600, letterSpacing: '-0.4px', whiteSpace: 'nowrap' }}>
+              <span style={{ background: 'linear-gradient(90deg,#4796E3,#9177C7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Sales </span>
+              <span style={{ background: 'linear-gradient(90deg,#9177C7,#CA6673)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Orbit</span>
+            </span>
           </div>
 
           {/* DIVIDER */}

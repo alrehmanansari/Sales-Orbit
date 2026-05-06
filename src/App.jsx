@@ -74,7 +74,7 @@ function BackendError({ message }) {
 }
 
 function AppContent() {
-  const [page, setPage] = useState('dashboard')
+  const [page, setPage] = useState('actionItems')
   const { theme, toggleTheme, colorScheme, isDark, setColorScheme } = useTheme()
   const { crmLoading, crmError } = useCRM()
   const isMobile = useIsMobile()
