@@ -1,13 +1,18 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useCRM } from '../store/CRMContext'
+import { useAuth } from '../store/AuthContext'
 import { StageBadge, PriorityBadge } from '../components/common/Badge'
 import OpportunityForm from '../components/opportunities/OpportunityForm'
 import OpportunityDetail from '../components/opportunities/OpportunityDetail'
 import { formatDate, formatCurrency, searchFilter, exportToCSV, daysDiff } from '../utils/helpers'
 import { OPPORTUNITY_STAGES, NATURE_OF_BUSINESS, TEAM_MEMBERS } from '../data/constants'
 
-export default function OpportunitiesPage() {
+const DELETE_DESIGNATIONS = ['Head of Sales', 'Head of MENA', 'Country Manager']
+
+export default function OpportunitiesPage({ openOppId, onOpenClear }) {
   const { state, dispatch } = useCRM()
+  const { currentUser } = useAuth()
+  const canDelete = DELETE_DESIGNATIONS.includes(currentUser?.designation)
   const [search, setSearch] = useState('')
   const [filterStage, setFilterStage] = useState('')
   const [filterNOB, setFilterNOB] = useState('')
@@ -53,6 +58,14 @@ export default function OpportunitiesPage() {
   function deleteOpp(id) {
     if (confirm('Delete this opportunity?')) dispatch({ type: 'DELETE_OPPORTUNITY', id })
   }
+
+  useEffect(() => {
+    if (openOppId && state.opportunities.length) {
+      const opp = state.opportunities.find(o => o.id === openOppId)
+      if (opp) setSelected(opp)
+      onOpenClear?.()
+    }
+  }, [openOppId, state.opportunities])
 
   return (
     <div className="page">
@@ -199,12 +212,14 @@ export default function OpportunitiesPage() {
                             onMouseEnter={e => { e.currentTarget.style.background = 'var(--so-blue-soft)'; e.currentTarget.style.color = 'var(--so-blue)' }}
                             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)' }}
                           >✏</button>
-                          <button
-                            onClick={() => deleteOpp(opp.id)}
-                            style={{ padding: '3px 8px', borderRadius: 6, border: 'none', background: 'transparent', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: 11, transition: 'all 0.15s' }}
-                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(217,48,37,0.08)'; e.currentTarget.style.color = '#D93025' }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)' }}
-                          >🗑</button>
+                          {canDelete && (
+                            <button
+                              onClick={() => deleteOpp(opp.id)}
+                              style={{ padding: '3px 8px', borderRadius: 6, border: 'none', background: 'transparent', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: 11, transition: 'all 0.15s' }}
+                              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(217,48,37,0.08)'; e.currentTarget.style.color = '#D93025' }}
+                              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)' }}
+                            >🗑</button>
+                          )}
                         </div>
                       </td>
                     </tr>

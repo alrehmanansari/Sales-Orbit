@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useCRM } from '../store/CRMContext'
+import { useAuth } from '../store/AuthContext'
 import { PriorityBadge, StatusBadge } from '../components/common/Badge'
 import LeadForm from '../components/leads/LeadForm'
 import LeadDetail from '../components/leads/LeadDetail'
@@ -15,8 +16,12 @@ const SORT_OPTIONS = [
 ]
 const PRIORITY_ORDER = { Hot: 0, Warm: 1, Cold: 2 }
 
-export default function LeadsPage() {
+const DELETE_DESIGNATIONS = ['Head of Sales', 'Head of MENA', 'Country Manager']
+
+export default function LeadsPage({ openLeadId, onOpenClear }) {
   const { state, dispatch } = useCRM()
+  const { currentUser } = useAuth()
+  const canDelete = DELETE_DESIGNATIONS.includes(currentUser?.designation)
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterPriority, setFilterPriority] = useState('')
@@ -47,6 +52,14 @@ export default function LeadsPage() {
   }, [state.leads, search, filterStatus, filterPriority, filterOwner, filterVertical, sort])
 
   const overdueCount = state.activities.filter(a => a.nextFollowUpDate && isOverdue(a.nextFollowUpDate)).length
+
+  useEffect(() => {
+    if (openLeadId && state.leads.length) {
+      const lead = state.leads.find(l => l.id === openLeadId)
+      if (lead) setSelectedLead(lead)
+      onOpenClear?.()
+    }
+  }, [openLeadId, state.leads])
 
   function doExport() {
     exportToCSV(filtered.map((l, i) => ({
@@ -179,12 +192,14 @@ export default function LeadsPage() {
                             onMouseEnter={e => { e.currentTarget.style.background = 'var(--so-blue-soft)'; e.currentTarget.style.color = 'var(--so-blue)' }}
                             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)' }}
                           >✏</button>
-                          <button
-                            title="Delete lead" onClick={() => deleteLead(lead.id)}
-                            style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '3px 8px', borderRadius: 6, border: 'none', background: 'transparent', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font)', transition: 'all 0.15s' }}
-                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(217,48,37,0.08)'; e.currentTarget.style.color = '#D93025' }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)' }}
-                          >🗑</button>
+                          {canDelete && (
+                            <button
+                              title="Delete lead" onClick={() => deleteLead(lead.id)}
+                              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '3px 8px', borderRadius: 6, border: 'none', background: 'transparent', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: 11, fontFamily: 'var(--font)', transition: 'all 0.15s' }}
+                              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(217,48,37,0.08)'; e.currentTarget.style.color = '#D93025' }}
+                              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)' }}
+                            >🗑</button>
+                          )}
                         </div>
                       </td>
                     </tr>

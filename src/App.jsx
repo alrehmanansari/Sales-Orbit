@@ -75,6 +75,8 @@ function BackendError({ message }) {
 
 function AppContent() {
   const [page, setPage] = useState('actionItems')
+  const [openLeadId, setOpenLeadId] = useState(null)
+  const [openOppId,  setOpenOppId]  = useState(null)
   const { theme, toggleTheme, colorScheme, isDark, setColorScheme } = useTheme()
   const { crmLoading, crmError } = useCRM()
   const isMobile = useIsMobile()
@@ -82,14 +84,20 @@ function AppContent() {
   if (crmLoading) return <LoadingScreen />
   if (crmError)   return <BackendError message={crmError} />
 
+  function navigateTo(targetPage, type, id) {
+    if (type === 'lead') setOpenLeadId(id)
+    if (type === 'opp')  setOpenOppId(id)
+    setPage(targetPage)
+  }
+
   const PAGES = {
     dashboard:     <Dashboard />,
-    leads:         <LeadsPage />,
-    opportunities: <OpportunitiesPage />,
+    leads:         <LeadsPage openLeadId={openLeadId} onOpenClear={() => setOpenLeadId(null)} />,
+    opportunities: <OpportunitiesPage openOppId={openOppId} onOpenClear={() => setOpenOppId(null)} />,
     pipeline:      <PipelinePage />,
     reports:       <ReportsPage />,
     customReports: <CustomReportsPage />,
-    actionItems:   <ActionItemsPage />,
+    actionItems:   <ActionItemsPage navigate={navigateTo} />,
     businessCases: <BusinessCasesPage />,
     salesScript:   <SalesScriptPage />,
     takeNotes:     <TakeNotesPage />,

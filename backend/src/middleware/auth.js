@@ -41,4 +41,13 @@ function requireManager(req, res, next) {
   next();
 }
 
-module.exports = { protect, requireManager };
+const DELETE_ALLOWED_DESIGNATIONS = ['Head of Sales', 'Head of MENA', 'Country Manager'];
+
+function requireDeletePermission(req, res, next) {
+  if (!DELETE_ALLOWED_DESIGNATIONS.includes(req.user.designation)) {
+    return res.status(403).json({ success: false, message: 'Only Head of Sales, Head of MENA, or Country Managers can delete records.' });
+  }
+  next();
+}
+
+module.exports = { protect, requireManager, requireDeletePermission };

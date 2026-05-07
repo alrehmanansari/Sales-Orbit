@@ -166,7 +166,7 @@ exports.get = async (req, res, next) => {
 // PUT /api/v1/opportunities/:id
 exports.update = async (req, res, next) => {
   try {
-    const { error, value } = oppSchema.validate(req.body);
+    const { error, value } = oppSchema.validate(req.body, { allowUnknown: true });
     if (error) return badRequest(res, error.details[0].message);
 
     const [existing] = await pool.query('SELECT id FROM opportunities WHERE opportunity_id = ?', [req.params.id]);

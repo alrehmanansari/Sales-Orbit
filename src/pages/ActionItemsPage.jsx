@@ -3,14 +3,11 @@ import { useCRM } from '../store/CRMContext'
 import { useTheme } from '../hooks/useTheme'
 import { formatCurrency } from '../utils/helpers'
 
-const WA_ICON = (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="#25D366">
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.562 4.14 1.542 5.876L.057 23.428a.5.5 0 0 0 .607.607l5.694-1.476A11.938 11.938 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22a9.938 9.938 0 0 1-5.354-1.562l-.38-.228-3.975 1.03 1.055-3.86-.248-.396A9.938 9.938 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
-  </svg>
-)
-
-function StoryCard({ company, phone, vol, tc, accent = '#4796E3', label, labelColor = '#4796E3', daysLabel, isDark }) {
+function StoryCard({
+  company, phone, vol, tc, email, owner, updateStatus,
+  accent = '#4796E3', label, labelColor = '#4796E3',
+  daysLabel, isDark, onClick,
+}) {
   const cardBorder = isDark
     ? `1px solid rgba(255,255,255,0.07)`
     : `1px solid rgba(0,0,0,0.07)`
@@ -18,10 +15,9 @@ function StoryCard({ company, phone, vol, tc, accent = '#4796E3', label, labelCo
   const volColor      = isDark ? '#6BB5FF' : 'var(--so-blue)'
   const tcColor       = isDark ? '#4ADE80' : 'var(--green)'
   const textPrimary   = isDark ? '#EAEAF0' : 'var(--text-primary)'
-  const textSecondary = isDark ? 'rgba(255,255,255,0.42)' : 'var(--text-tertiary)'
+  const textSecondary = isDark ? 'rgba(255,255,255,0.55)' : 'var(--text-secondary)'
+  const textTertiary  = isDark ? 'rgba(255,255,255,0.38)' : 'var(--text-tertiary)'
   const dividerColor  = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'
-  const waColor       = isDark ? '#4ADE80' : 'var(--green)'
-  const noPhoneColor  = isDark ? 'rgba(255,255,255,0.22)' : 'var(--text-hint)'
 
   const shadowBase  = isDark
     ? `0 4px 20px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.05)`
@@ -31,19 +27,29 @@ function StoryCard({ company, phone, vol, tc, accent = '#4796E3', label, labelCo
     : `0 8px 24px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.95)`
 
   return (
-    <div style={{
-      width: 162, flexShrink: 0,
-      borderRadius: 18,
-      background: 'var(--bg-card)',
-      border: cardBorder,
-      boxShadow: shadowBase,
-      overflow: 'hidden', position: 'relative',
-      transition: 'transform 220ms cubic-bezier(0.34,1.56,0.64,1), box-shadow 240ms ease',
-    }}
-    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = shadowHover }}
-    onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = shadowBase }}
+    <div
+      onClick={onClick}
+      style={{
+        width: 172, flexShrink: 0,
+        borderRadius: 18,
+        background: 'var(--bg-card)',
+        border: cardBorder,
+        boxShadow: shadowBase,
+        overflow: 'hidden', position: 'relative',
+        transition: 'transform 220ms cubic-bezier(0.34,1.56,0.64,1), box-shadow 240ms ease',
+        cursor: onClick ? 'pointer' : 'default',
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.transform = 'translateY(-3px)'
+        e.currentTarget.style.boxShadow = shadowHover
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.transform = ''
+        e.currentTarget.style.boxShadow = shadowBase
+      }}
     >
       <div style={{ padding: '12px 13px 13px' }}>
+
         {/* Section label badge */}
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -72,31 +78,60 @@ function StoryCard({ company, phone, vol, tc, accent = '#4796E3', label, labelCo
         </div>
 
         {/* Divider */}
-        <div style={{ height: '0.5px', background: dividerColor, marginBottom: 9 }} />
+        <div style={{ height: '0.5px', background: dividerColor, marginBottom: 8 }} />
 
-        {/* Stats */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 10 }}>
+        {/* Vol + TC — left label, right value */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 9 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 9.5, fontWeight: 600, color: textSecondary, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Vol</span>
+            <span style={{ fontSize: 9.5, fontWeight: 600, color: textTertiary, textTransform: 'uppercase', letterSpacing: '0.6px' }}>Vol</span>
             <span style={{ fontSize: 11, fontWeight: 700, color: volColor, fontFamily: 'var(--font-mono)' }}>{vol ?? '—'}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 9.5, fontWeight: 600, color: textSecondary, textTransform: 'uppercase', letterSpacing: '0.6px' }}>TC</span>
+            <span style={{ fontSize: 9.5, fontWeight: 600, color: textTertiary, textTransform: 'uppercase', letterSpacing: '0.6px' }}>TC</span>
             <span style={{ fontSize: 11, fontWeight: 700, color: tcColor, fontFamily: 'var(--font-mono)' }}>{tc ?? '—'}</span>
           </div>
         </div>
 
-        {/* WhatsApp number */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
-          {WA_ICON}
-          <span style={{ fontSize: 10.5, fontWeight: 500, color: phone ? waColor : noPhoneColor, fontFamily: 'var(--font-mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {phone || 'No number'}
+        {/* ── Separator below TC ── */}
+        <div style={{ height: '0.5px', background: dividerColor, marginBottom: 8 }} />
+
+        {/* Email */}
+        <div style={{ marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 9.5, color: email ? 'var(--so-blue)' : textTertiary, fontWeight: 500 }}>
+            {email || '—'}
           </span>
         </div>
 
+        {/* Owner */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 9 }}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={textTertiary} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span style={{ fontSize: 10.5, fontWeight: 600, color: textSecondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {owner || '—'}
+          </span>
+        </div>
+
+        {/* ── Separator ── */}
+        <div style={{ height: '0.5px', background: dividerColor, marginBottom: 8 }} />
+
+        {/* Update status */}
+        {updateStatus && (
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', padding: '2px 7px',
+            borderRadius: 10, marginBottom: 5,
+            background: isDark ? `${labelColor}18` : `${labelColor}15`,
+            border: `1px solid ${isDark ? labelColor + '35' : labelColor + '30'}`,
+          }}>
+            <span style={{ fontSize: 9.5, fontWeight: 700, color: labelColor, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              {updateStatus}
+            </span>
+          </div>
+        )}
+
         {/* Days indicator */}
         {daysLabel && (
-          <div style={{ marginTop: 7, fontSize: 9.5, color: textSecondary, textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
+          <div style={{ fontSize: 9.5, color: textTertiary, fontFamily: 'var(--font-mono)', marginTop: updateStatus ? 3 : 0 }}>
             {daysLabel}
           </div>
         )}
@@ -108,7 +143,6 @@ function StoryCard({ company, phone, vol, tc, accent = '#4796E3', label, labelCo
 function Section({ title, icon, count, accent, children, emptyMsg }) {
   return (
     <div>
-      {/* Section header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
         <span style={{ fontSize: 18 }}>{icon}</span>
         <div>
@@ -138,7 +172,7 @@ function Section({ title, icon, count, accent, children, emptyMsg }) {
   )
 }
 
-export default function ActionItemsPage() {
+export default function ActionItemsPage({ navigate }) {
   const { state } = useCRM()
   const { isDark } = useTheme()
   const now = new Date()
@@ -195,6 +229,14 @@ export default function ActionItemsPage() {
     return daysSince(entry?.enteredAt)
   }
 
+  function goToLead(id) {
+    navigate?.('leads', 'lead', id)
+  }
+
+  function goToOpp(id) {
+    navigate?.('opportunities', 'opp', id)
+  }
+
   return (
     <div className="page">
       <div className="page-header">
@@ -211,15 +253,19 @@ export default function ActionItemsPage() {
         {/* ── LEADS ──────────────────────────────────── */}
         <Section title="Leads" icon="👤" count={untouchedLeads.length} accent="#4796E3"
           emptyMsg="All leads have been contacted in the last 7 days.">
-          {untouchedLeads.map((lead, i) => (
+          {untouchedLeads.map(lead => (
             <StoryCard key={lead.id}
               isDark={isDark}
               accent="#4796E3" label="Untouched Lead" labelColor="#60B4FF"
               company={lead.companyName}
               phone={lead.phone}
+              email={lead.email}
+              owner={lead.leadOwner?.split(' ')[0] || lead.leadOwner}
               vol="—"
               tc="—"
+              updateStatus={lead.status}
               daysLabel={lead.lastActivityAt ? daysSince(lead.lastActivityAt) : 'Never contacted'}
+              onClick={() => goToLead(lead.id)}
             />
           ))}
         </Section>
@@ -230,15 +276,19 @@ export default function ActionItemsPage() {
         {/* ── OPPORTUNITIES ──────────────────────────── */}
         <Section title="Opportunities" icon="🎯" count={stuckOpps.length} accent="#9177C7"
           emptyMsg="No opportunities have been stuck in a stage for more than 7 days.">
-          {stuckOpps.map((opp, i) => (
+          {stuckOpps.map(opp => (
             <StoryCard key={opp.id}
               isDark={isDark}
               accent="#9177C7" label={opp.stage} labelColor="#B49EE8"
               company={opp.companyName}
               phone={opp.phone}
+              email={opp.email}
+              owner={opp.leadOwner?.split(' ')[0] || opp.leadOwner}
               vol={formatCurrency(opp.expectedMonthlyVolume)}
               tc={formatCurrency(opp.expectedMonthlyRevenue)}
+              updateStatus={opp.stage}
               daysLabel={stageAge(opp)}
+              onClick={() => goToOpp(opp.id)}
             />
           ))}
         </Section>
@@ -249,15 +299,19 @@ export default function ActionItemsPage() {
         {/* ── FOLLOW-UPS ─────────────────────────────── */}
         <Section title="Follow-ups" icon="🔔" count={followUpOpps.length} accent="#CA6673"
           emptyMsg="No follow-ups scheduled for today.">
-          {followUpOpps.map((opp, i) => (
+          {followUpOpps.map(opp => (
             <StoryCard key={opp.id}
               isDark={isDark}
               accent="#CA6673" label="Follow-up Today" labelColor="#E8909B"
               company={opp.companyName}
               phone={opp.phone}
+              email={opp.email}
+              owner={opp.leadOwner?.split(' ')[0] || opp.leadOwner}
               vol={formatCurrency(opp.expectedMonthlyVolume)}
               tc={formatCurrency(opp.expectedMonthlyRevenue)}
+              updateStatus={opp.stage}
               daysLabel={`Stage: ${opp.stage}`}
+              onClick={() => goToOpp(opp.id)}
             />
           ))}
         </Section>

@@ -162,12 +162,13 @@ export default function KPISection() {
 
   // Build KPI user list: all active users except Head of MENA
   // Always include the current logged-in user so they can edit their own row
+  // Deduplicate by name to prevent duplicates (e.g. Alina from both seed and db.js upsert)
   const baseUsers = (state.users || [])
     .filter(u => u.isActive !== false && u.designation !== 'Head of MENA')
     .map(u => u.name)
-  const allUsers = (currentUser?.name && !baseUsers.includes(currentUser.name))
-    ? [...baseUsers, currentUser.name]
-    : baseUsers
+  const allUsers = [...new Set(
+    currentUser?.name ? [...baseUsers, currentUser.name] : baseUsers
+  )]
   const isYearly = quarter === 'Yearly'
 
   const KPI_ROWS = [
