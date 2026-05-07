@@ -140,25 +140,25 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
       {/* ──────────────────────────────────────────────────
           HEADER WRAPPER
       ────────────────────────────────────────────────── */}
-      <header style={{
-        flexShrink: 0, padding: '14px 24px',
+      <header className="app-header" style={{
+        flexShrink: 0, padding: isMobile ? '8px 12px' : '14px 24px',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: isDark
           ? 'radial-gradient(circle at 15% 50%, rgba(71,150,227,0.18) 0%, transparent 55%), radial-gradient(circle at 85% 50%, rgba(145,119,199,0.15) 0%, transparent 50%), radial-gradient(circle at 50% 140%, rgba(202,102,115,0.12) 0%, transparent 40%), #0C0C0F'
           : 'radial-gradient(circle at 15% 50%, rgba(71,150,227,0.22) 0%, transparent 55%), radial-gradient(circle at 85% 50%, rgba(145,119,199,0.18) 0%, transparent 50%), radial-gradient(circle at 50% 140%, rgba(202,102,115,0.14) 0%, transparent 40%), #F8F9FA',
         borderBottom: isDark ? '0.5px solid rgba(255,255,255,0.06)' : '0.5px solid rgba(0,0,0,0.06)',
         position: 'sticky', top: 0, zIndex: 100,
-        minHeight: 90,
+        minHeight: isMobile ? 58 : 90,
       }}>
 
         {/* ── Glassmorphic nav pill (full width, max 1400px) ── */}
-        <div style={{
+        <div className="nav-pill" style={{
           ...glassStyle,
           backdropFilter: 'blur(20px) saturate(200%)',
           WebkitBackdropFilter: 'blur(20px) saturate(200%)',
           borderRadius: 999,
-          padding: '10px 12px 10px 18px',
-          display: 'flex', alignItems: 'center', gap: 8,
+          padding: isMobile ? '7px 10px 7px 12px' : '10px 12px 10px 18px',
+          display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8,
           width: '100%', maxWidth: 1400,
           transition: 'all 0.3s ease',
         }}>
@@ -169,7 +169,7 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
               <defs><linearGradient id="nav-lg" x1="40" y1="4" x2="40" y2="76" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#4796E3"/><stop offset="45%" stopColor="#9177C7"/><stop offset="100%" stopColor="#CA6673"/></linearGradient></defs>
               <path d="M40 4 C40 4 41.6 22 47 35 C53 49 68 40 76 40 C68 40 53 31 47 45 C41.6 58 40 76 40 76 C40 76 38.4 58 33 45 C27 31 12 40 4 40 C12 40 27 49 33 35 C38.4 22 40 4 40 4Z" fill="url(#nav-lg)"/>
             </svg>
-            <span style={{ fontFamily: 'var(--font)', fontSize: isMobile ? 15 : 17, fontWeight: 600, letterSpacing: '-0.4px', whiteSpace: 'nowrap' }}>
+            <span className="logo-text" style={{ fontFamily: 'var(--font)', fontSize: isMobile ? 14 : 17, fontWeight: 600, letterSpacing: '-0.4px', whiteSpace: 'nowrap' }}>
               <span style={{ background: 'linear-gradient(90deg,#4796E3,#9177C7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Sales </span>
               <span style={{ background: 'linear-gradient(90deg,#9177C7,#CA6673)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Orbit</span>
             </span>
@@ -298,7 +298,7 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
           {/* RIGHT CONTROLS */}
           {/* Date */}
           {!isMobile && (
-            <span style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', flexShrink: 0, letterSpacing: '-0.2px' }}>
+            <span className="nav-date" style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', flexShrink: 0, letterSpacing: '-0.2px' }}>
               {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
             </span>
           )}
