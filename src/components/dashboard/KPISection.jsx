@@ -135,7 +135,12 @@ const TDL_TOT = { ...TDL, fontWeight: 800, fontSize: 12 }
 
 function SectionLabel({ children }) {
   return (
-    <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.2px', color: 'var(--text-hint)', marginBottom: 12 }}>
+    <div style={{
+      fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.2px',
+      background: 'var(--so-gradient)',
+      WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+      marginBottom: 12,
+    }}>
       {children}
     </div>
   )
@@ -324,7 +329,7 @@ export default function KPISection() {
           {/* ════════ SALES ACTIVITY ════════ */}
           <Separator />
           <SectionLabel>Sales Activity</SectionLabel>
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, border: '1px solid var(--border-color)', borderRadius: 10, overflow: 'hidden', minWidth: 700 }}>
               <thead>
                 <tr>
@@ -383,9 +388,9 @@ export default function KPISection() {
           <div className="kpi-grid-2col-bottom">
 
             {/* CONVERSION RATIO */}
-            <div>
+            <div style={{ minWidth: 0 }}>
               <SectionLabel>Conversion Ratio</SectionLabel>
-              <div style={{ overflowX: 'auto' }}>
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                 <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, border: '1px solid var(--border-color)', borderRadius: 10, overflow: 'hidden', minWidth: 340 }}>
                   <thead>
                     <tr>
@@ -434,9 +439,9 @@ export default function KPISection() {
             </div>
 
             {/* OPPORTUNITIES PROGRESS */}
-            <div>
+            <div style={{ minWidth: 0 }}>
               <SectionLabel>Opportunities Progress</SectionLabel>
-              <div style={{ overflowX: 'auto' }}>
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                 <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, border: '1px solid var(--border-color)', borderRadius: 10, overflow: 'hidden', minWidth: 340 }}>
                   <thead>
                     <tr>

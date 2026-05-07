@@ -295,7 +295,9 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
             </div>
           )}
 
-          {/* RIGHT CONTROLS */}
+          {/* RIGHT CONTROLS — marginLeft:auto pushes this group to the far right on all screen sizes */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, marginLeft: 'auto', flexShrink: 0 }}>
+
           {/* Date */}
           {!isMobile && (
             <span className="nav-date" style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', flexShrink: 0, letterSpacing: '-0.2px' }}>
@@ -401,6 +403,7 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
               ☰
             </button>
           )}
+          </div>{/* end right-controls */}
         </div>
       </header>
 
