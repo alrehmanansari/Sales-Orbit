@@ -72,8 +72,10 @@ function makeSQLitePool(dbPath) {
     `).run();
   } catch {}
 
-  // Ensure Alina Shabbir's account is active (pinned activation)
+  // Ensure Alina Shabbir's account always exists and is active
   try {
+    db.prepare(`INSERT OR IGNORE INTO users (user_id, first_name, last_name, email, designation, role, is_active)
+      VALUES ('USR-ALINA001', 'Alina', 'Shabbir', 'alinashabbir53@gmail.com', 'Sales Rep', 'Rep', 1)`).run();
     db.prepare("UPDATE users SET is_active = 1 WHERE email = 'alinashabbir53@gmail.com'").run();
   } catch {}
 
