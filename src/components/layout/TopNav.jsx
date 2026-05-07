@@ -164,7 +164,7 @@ export default function TopNav({ page, onNav, toggleTheme, colorScheme, isDark, 
         }}>
 
           {/* LOGO */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, paddingRight: 4 }}>
+          <div onClick={() => go('dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, paddingRight: 4, cursor: 'pointer' }}>
             <svg width="28" height="28" viewBox="0 0 80 80" fill="none" style={{ animation: 'fanSpin 3.5s linear infinite' }}>
               <defs><linearGradient id="nav-lg" x1="40" y1="4" x2="40" y2="76" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#4796E3"/><stop offset="45%" stopColor="#9177C7"/><stop offset="100%" stopColor="#CA6673"/></linearGradient></defs>
               <path d="M40 4 C40 4 41.6 22 47 35 C53 49 68 40 76 40 C68 40 53 31 47 45 C41.6 58 40 76 40 76 C40 76 38.4 58 33 45 C27 31 12 40 4 40 C12 40 27 49 33 35 C38.4 22 40 4 40 4Z" fill="url(#nav-lg)"/>

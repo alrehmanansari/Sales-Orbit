@@ -74,7 +74,7 @@ function BackendError({ message }) {
 }
 
 function AppContent() {
-  const [page, setPage] = useState('actionItems')
+  const [page, setPage] = useState('dashboard')
   const [openLeadId, setOpenLeadId] = useState(null)
   const [openOppId,  setOpenOppId]  = useState(null)
   const { theme, toggleTheme, colorScheme, isDark, setColorScheme } = useTheme()
