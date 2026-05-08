@@ -512,7 +512,7 @@ export default function Dashboard() {
             ))}
             <div style={{ width: 1, height: 14, background: 'var(--border-strong-color)', opacity: 0.45, flexShrink: 0, margin: '0 3px' }} />
             <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)}
-              style={{ padding: '4px 10px', borderRadius: 18, border: 'none', background: filterOwner ? 'var(--so-blue-soft)' : 'transparent', color: filterOwner ? 'var(--so-blue)' : 'var(--text-secondary)', fontFamily: 'var(--font)', fontSize: 12, cursor: 'pointer', outline: 'none', fontWeight: filterOwner ? 600 : 400, flexShrink: 0 }}>
+              style={{ padding: '4px 10px', borderRadius: 18, border: 'none', background: filterOwner ? 'var(--so-blue-soft)' : 'transparent', color: filterOwner ? 'var(--so-blue)' : 'var(--text-secondary)', fontFamily: 'var(--font)', fontSize: 12, cursor: 'pointer', outline: 'none', fontWeight: filterOwner ? 600 : 400, maxWidth: 120, flexShrink: 0 }}>
               <option value="">All Owners</option>
               {[...new Set((state.users || []).filter(u => u.isActive !== false).map(u => u.name))].sort().map(n => (
                 <option key={n} value={n}>{n}</option>

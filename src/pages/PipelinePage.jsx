@@ -61,13 +61,6 @@ export default function PipelinePage() {
   const stageRevenue = stageOpps.reduce((s, o) => s + (o.expectedMonthlyRevenue || 0), 0)
   const stageVolume  = stageOpps.reduce((s, o) => s + (o.expectedMonthlyVolume  || 0), 0)
 
-  const tabStyle = (v) => ({
-    padding: '5px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
-    fontFamily: 'var(--font)', fontSize: 12, fontWeight: dateFilter === v ? 600 : 400,
-    background: dateFilter === v ? 'var(--so-blue)' : 'transparent',
-    color: dateFilter === v ? '#fff' : 'var(--text-secondary)',
-    transition: 'all 0.15s', whiteSpace: 'nowrap',
-  })
 
   return (
     <div className="page" style={{ overflow: 'hidden' }}>
@@ -86,25 +79,24 @@ export default function PipelinePage() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          {/* Date filter tabs */}
-          <div style={{ display: 'flex', gap: 2, background: 'var(--bg-tertiary)', borderRadius: 22, padding: 3, border: '1px solid var(--border-color)' }}>
+          {/* Sleek pill: date filter tabs */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 24, padding: '3px 4px', overflowX: 'auto', flexShrink: 0 }}>
             {TIME_FILTERS.map(f => (
-              <button key={f.value} style={tabStyle(f.value)} onClick={() => setDateFilter(f.value)}
-                onMouseEnter={e => { if (dateFilter !== f.value) e.currentTarget.style.background = 'var(--bg-card)' }}
-                onMouseLeave={e => { if (dateFilter !== f.value) e.currentTarget.style.background = 'transparent' }}
-              >{f.label}</button>
+              <button key={f.value} className={`tab ${dateFilter === f.value ? 'active' : ''}`}
+                style={{ padding: '4px 11px', fontSize: 12, whiteSpace: 'nowrap' }}
+                onClick={() => setDateFilter(f.value)}>{f.label}</button>
             ))}
           </div>
 
           {/* Custom date range */}
           {dateFilter === 'custom' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
               <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
-                style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 12, fontFamily: 'var(--font)', outline: 'none' }}
+                style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-strong-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontFamily: 'var(--font)', outline: 'none' }}
               />
-              <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>to</span>
+              <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>→</span>
               <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
-                style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 12, fontFamily: 'var(--font)', outline: 'none' }}
+                style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-strong-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontFamily: 'var(--font)', outline: 'none' }}
               />
             </div>
           )}
