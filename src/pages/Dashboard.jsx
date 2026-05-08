@@ -91,6 +91,7 @@ export default function Dashboard() {
   const [timeFilter, setTimeFilter] = useState('this-month')
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
+  const [filterOwner, setFilterOwner] = useState('')
   const [order, setOrder] = useState(loadOrder)
   const [dragging, setDragging] = useState(null)
   const [dragOver, setDragOver] = useState(null)
@@ -501,11 +502,18 @@ export default function Dashboard() {
                 style={{ width: 130, fontSize: 12, padding: '5px 8px', borderRadius: 8 }} />
             </div>
           )}
+          <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)}
+            style={{ fontSize: 12, padding: '5px 10px', borderRadius: 20, border: '1px solid var(--border-strong-color)', background: 'var(--bg-card)', color: 'var(--text-secondary)', fontFamily: 'var(--font)', cursor: 'pointer' }}>
+            <option value="">All Owners</option>
+            {[...new Set((state.users || []).filter(u => u.isActive !== false).map(u => u.name))].sort().map(n => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
         </div>
       </div>
 
       <div className="page-body">
-        <KPISection />
+        <KPISection filterOwner={filterOwner} />
 
         {/* KPI Row 1 */}
         <div className="grid-4 so-stagger" style={{ marginBottom: 14 }}>

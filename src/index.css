@@ -477,7 +477,7 @@ label {
   font-size: 10px; font-weight: 700;
   color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px;
   border-bottom: 1px solid var(--border-color);
-  background: linear-gradient(to bottom, var(--bg-secondary), var(--bg-tertiary));
+  background: linear-gradient(135deg, rgba(71,150,227,0.08) 0%, rgba(145,119,199,0.06) 55%, rgba(202,102,115,0.05) 100%);
   white-space: nowrap; position: sticky; top: 0; z-index: 1;
 }
 .data-table th:first-child { border-radius: 0; }

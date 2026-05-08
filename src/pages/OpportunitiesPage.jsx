@@ -102,7 +102,7 @@ export default function OpportunitiesPage({ openOppId, onOpenClear }) {
         </select>
         <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)}>
           <option value="">All Owners</option>
-          {TEAM_MEMBERS.map(m => <option key={m} value={m}>{m}</option>)}
+          {[...new Set(state.opportunities.map(o => o.leadOwner).filter(Boolean))].sort().map(m => <option key={m} value={m}>{m}</option>)}
         </select>
         <select value={sort} onChange={e => setSort(e.target.value)}>
           <option value="newest">Newest First</option>

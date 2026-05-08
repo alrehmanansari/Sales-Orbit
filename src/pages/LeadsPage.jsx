@@ -114,7 +114,7 @@ export default function LeadsPage({ openLeadId, onOpenClear }) {
         </select>
         <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)}>
           <option value="">All Owners</option>
-          {TEAM_MEMBERS.map(m => <option key={m} value={m}>{m}</option>)}
+          {[...new Set(state.leads.map(l => l.leadOwner).filter(Boolean))].sort().map(m => <option key={m} value={m}>{m}</option>)}
         </select>
         <select value={sort} onChange={e => setSort(e.target.value)}>
           {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
