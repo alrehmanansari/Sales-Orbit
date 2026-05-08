@@ -1,9 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react'
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, LabelList
-} from 'recharts'
-import { useKPI, QUARTERS, KPI_WEIGHTS, calcScore } from '../../store/KPIContext'
+import { useKPI, QUARTERS, KPI_WEIGHTS } from '../../store/KPIContext'
 import { useAuth } from '../../store/AuthContext'
 import { useCRM } from '../../store/CRMContext'
 import { OPPORTUNITY_STAGES } from '../../data/constants'
@@ -12,10 +8,6 @@ import { formatCurrency } from '../../utils/helpers'
 const SO = { blue: '#4796E3', purple: '#9177C7', pink: '#CA6673', green: '#1E8E3E', orange: '#E37400' }
 const ALL_TABS = ['Q2', 'Q3', 'Q4', 'Yearly']
 const VERTICALS_SA = ['IT Services', 'Ecom Seller', 'B2B Seller', 'Freelancer']
-const STAGE_COLORS_CH = {
-  Prospecting: SO.blue, Won: SO.purple, Onboarded: SO.green,
-  Activated: SO.pink, Lost: '#D93025', 'On Hold': '#9AA0A6',
-}
 
 /* ── Helpers ── */
 function scoreColor(s) { return s >= 80 ? SO.green : s >= 50 ? SO.orange : SO.pink }
@@ -104,23 +96,6 @@ function CopyBtn({ targetRef }) {
   )
 }
 
-/* ── Chart tooltip ── */
-function ChartTip({ active, payload, label }) {
-  if (!active || !payload?.length) return null
-  return (
-    <div style={{ background:'var(--bg-card)', border:'1px solid var(--border-color)', borderRadius:10, padding:'9px 13px', fontSize:11, boxShadow:'var(--shadow)' }}>
-      <div style={{ fontWeight:700, marginBottom:5, color:'var(--text-primary)' }}>{label}</div>
-      {payload.map((p, i) => (
-        <div key={i} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:2 }}>
-          <span style={{ width:7, height:7, borderRadius:'50%', background:p.fill||p.color, display:'inline-block', flexShrink:0 }} />
-          <span style={{ color:'var(--text-secondary)' }}>{p.name}:</span>
-          <span style={{ fontWeight:700, color:p.fill||p.color }}>{p.value}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 /* ── Table styles ── */
 const TH     = { padding:'7px 10px', fontSize:9.5, fontWeight:700, color:'var(--text-tertiary)', textTransform:'uppercase', letterSpacing:'0.7px', borderBottom:'1px solid var(--border-color)', background:'linear-gradient(135deg,rgba(71,150,227,0.08) 0%,rgba(145,119,199,0.06) 55%,rgba(202,102,115,0.05) 100%)', whiteSpace:'nowrap', textAlign:'center' }
 const THL    = { ...TH, textAlign:'left' }
@@ -128,9 +103,6 @@ const TD     = { padding:'6px 10px', fontSize:11, fontWeight:400, borderBottom:'
 const TDL    = { ...TD, textAlign:'left', fontFamily:'var(--font)', fontWeight:500, color:'var(--text-primary)', fontSize:12 }
 const TD_TOT = { ...TD, fontWeight:700, fontSize:12, color:'var(--text-primary)' }
 const TDL_TOT= { ...TDL, fontWeight:800, fontSize:12 }
-
-const TICK_STYLE = { fill:'var(--text-tertiary)', fontSize:11 }
-const GRID_CFG   = { stroke:'var(--border-color)', strokeWidth:0.5, strokeDasharray:'2 4' }
 
 /* ── Section heading: bigger, bold gradient ── */
 function SectionLabel({ children }) {
@@ -202,23 +174,6 @@ export default function KPISection({ filterOwner = '' }) {
     name,
     counts: OPPORTUNITY_STAGES.map(s => state.opportunities.filter(o => o.leadOwner===name && o.stage===s).length),
   })).filter(r => r.counts.some(c => c>0)), [displayUsers, state.opportunities])
-
-  /* ── Chart data ── */
-  const saChartData = useMemo(() => displayUsers.map(name => {
-    const r = displaySARows.find(x => x.name===name) || {}
-    return { bd:name.split(' ')[0], 'Calls Logged':r.discoveryCalls||0, 'Connected':r.connected||0, 'Not Responded':r.notResponded||0 }
-  }), [displayUsers, displaySARows])
-
-  const crChartData = useMemo(() => displayUsers.map(name => {
-    const r = displayCRRows.find(x => x.name===name) || {}
-    return { bd:name.split(' ')[0], 'Leads Created':r.created||0, 'Leads Contacted':r.contacted||0, 'Opportunities':r.opps||0 }
-  }), [displayUsers, displayCRRows])
-
-  const opChartData = useMemo(() => displayUsers.map(name => {
-    const obj = { bd:name.split(' ')[0] }
-    OPPORTUNITY_STAGES.forEach(s => { obj[s] = state.opportunities.filter(o => o.leadOwner===name && o.stage===s).length })
-    return obj
-  }), [displayUsers, state.opportunities])
 
   /* ── Inner KPI table for one metric row ── */
   function KpiTable({ row }) {
@@ -312,86 +267,52 @@ export default function KPISection({ filterOwner = '' }) {
           {/* ══════ SALES ACTIVITY ══════ */}
           <Separator />
           <SectionLabel>Sales Activity</SectionLabel>
-          <div className="kpi-grid-2col-bottom">
+          <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
+            <table style={{ width:'100%', borderCollapse:'separate', borderSpacing:0, border:'1px solid var(--border-color)', borderRadius:10, overflow:'hidden', minWidth:560 }}>
+              <thead>
+                <tr>
+                  <th style={THL}>BD Name</th>
+                  <th style={TH}>Calls Logged</th>
+                  <th style={TH}>IT Services</th>
+                  <th style={TH}>Ecomm Seller</th>
+                  <th style={TH}>B2B Seller</th>
+                  <th style={TH}>Freelancer</th>
+                  <th style={{ ...TH, color:SO.green }}>Connected</th>
+                  <th style={{ ...TH, color:SO.pink }}>Not Responded</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displaySARows.map((row,i) => (
+                  <tr key={row.name} style={{ background:i%2===0?'var(--bg-card)':'var(--bg-secondary)', transition:'background 120ms' }}
+                    onMouseEnter={e=>e.currentTarget.style.background='var(--so-blue-soft)'}
+                    onMouseLeave={e=>e.currentTarget.style.background=i%2===0?'var(--bg-card)':'var(--bg-secondary)'}>
+                    <td style={TDL}>{row.name}</td>
+                    <td style={{ ...TD, color:row.discoveryCalls>0?SO.blue:'var(--text-hint)' }}>{row.discoveryCalls||'—'}</td>
+                    {row.vertCalls.map((cnt,vi) => <td key={vi} style={{ ...TD, color:cnt>0?'var(--text-primary)':'var(--text-hint)' }}>{cnt||'—'}</td>)}
+                    <td style={{ ...TD, color:row.connected>0?SO.green:'var(--text-hint)' }}>{row.connected||'—'}</td>
+                    <td style={{ ...TD, color:row.notResponded>0?SO.pink:'var(--text-hint)' }}>{row.notResponded||'—'}</td>
+                  </tr>
+                ))}
+                <tr style={{ background:'var(--bg-tertiary)', borderTop:'1px solid var(--border-strong-color)' }}>
+                  <td style={{ ...TDL_TOT, borderTop:'1px solid var(--border-strong-color)' }}>Total</td>
+                  <td style={{ ...TD_TOT, color:SO.blue, borderTop:'1px solid var(--border-strong-color)' }}>{displaySARows.reduce((s,r)=>s+r.discoveryCalls,0)||'—'}</td>
+                  {VERTICALS_SA.map((_,vi) => <td key={vi} style={{ ...TD_TOT, borderTop:'1px solid var(--border-strong-color)' }}>{displaySARows.reduce((s,r)=>s+r.vertCalls[vi],0)||'—'}</td>)}
+                  <td style={{ ...TD_TOT, color:SO.green, borderTop:'1px solid var(--border-strong-color)' }}>{displaySARows.reduce((s,r)=>s+r.connected,0)||'—'}</td>
+                  <td style={{ ...TD_TOT, color:SO.pink,  borderTop:'1px solid var(--border-strong-color)' }}>{displaySARows.reduce((s,r)=>s+r.notResponded,0)||'—'}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-            {/* Table */}
-            <div style={{ minWidth:0 }}>
-              <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
-                <table style={{ width:'100%', borderCollapse:'separate', borderSpacing:0, border:'1px solid var(--border-color)', borderRadius:10, overflow:'hidden', minWidth:500 }}>
-                  <thead>
-                    <tr>
-                      <th style={THL}>BD Name</th>
-                      <th style={TH}>Calls Logged</th>
-                      <th style={TH}>IT Services</th>
-                      <th style={TH}>Ecomm Seller</th>
-                      <th style={TH}>B2B Seller</th>
-                      <th style={TH}>Freelancer</th>
-                      <th style={{ ...TH, color:SO.green }}>Connected</th>
-                      <th style={{ ...TH, color:SO.pink  }}>Not Responded</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {displaySARows.map((row,i) => (
-                      <tr key={row.name} style={{ background:i%2===0?'var(--bg-card)':'var(--bg-secondary)', transition:'background 120ms' }}
-                        onMouseEnter={e=>e.currentTarget.style.background='var(--so-blue-soft)'}
-                        onMouseLeave={e=>e.currentTarget.style.background=i%2===0?'var(--bg-card)':'var(--bg-secondary)'}>
-                        <td style={TDL}>{row.name}</td>
-                        <td style={{ ...TD, color:row.discoveryCalls>0?SO.blue:'var(--text-hint)' }}>{row.discoveryCalls||'—'}</td>
-                        {row.vertCalls.map((cnt,vi) => <td key={vi} style={{ ...TD, color:cnt>0?'var(--text-primary)':'var(--text-hint)' }}>{cnt||'—'}</td>)}
-                        <td style={{ ...TD, color:row.connected>0?SO.green:'var(--text-hint)' }}>{row.connected||'—'}</td>
-                        <td style={{ ...TD, color:row.notResponded>0?SO.pink:'var(--text-hint)' }}>{row.notResponded||'—'}</td>
-                      </tr>
-                    ))}
-                    <tr style={{ background:'var(--bg-tertiary)', borderTop:'1px solid var(--border-strong-color)' }}>
-                      <td style={{ ...TDL_TOT, borderTop:'1px solid var(--border-strong-color)' }}>Total</td>
-                      <td style={{ ...TD_TOT, color:SO.blue, borderTop:'1px solid var(--border-strong-color)' }}>{displaySARows.reduce((s,r)=>s+r.discoveryCalls,0)||'—'}</td>
-                      {VERTICALS_SA.map((_,vi) => <td key={vi} style={{ ...TD_TOT, borderTop:'1px solid var(--border-strong-color)' }}>{displaySARows.reduce((s,r)=>s+r.vertCalls[vi],0)||'—'}</td>)}
-                      <td style={{ ...TD_TOT, color:SO.green, borderTop:'1px solid var(--border-strong-color)' }}>{displaySARows.reduce((s,r)=>s+r.connected,0)||'—'}</td>
-                      <td style={{ ...TD_TOT, color:SO.pink,  borderTop:'1px solid var(--border-strong-color)' }}>{displaySARows.reduce((s,r)=>s+r.notResponded,0)||'—'}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Bar Chart: Calls Logged vs Connected vs Not Responded */}
-            <div style={{ minWidth:0, display:'flex', flexDirection:'column', justifyContent:'center' }}>
-              <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.8px', color:'var(--text-tertiary)', marginBottom:10 }}>BD Call Comparison</div>
-              {saChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={230}>
-                  <BarChart data={saChartData} margin={{ top:10, right:10, left:-10, bottom:0 }} barCategoryGap="30%">
-                    <CartesianGrid {...GRID_CFG} />
-                    <XAxis dataKey="bd" tick={TICK_STYLE} />
-                    <YAxis tick={TICK_STYLE} allowDecimals={false} />
-                    <Tooltip content={<ChartTip />} />
-                    <Legend formatter={v => <span style={{ fontSize:10, color:'var(--text-secondary)' }}>{v}</span>} iconSize={7} />
-                    <Bar dataKey="Calls Logged"  fill={SO.blue}  radius={[4,4,0,0]}>
-                      <LabelList dataKey="Calls Logged"  position="top" style={{ fill:SO.blue,  fontSize:10, fontWeight:700 }} formatter={v=>v>0?v:''} />
-                    </Bar>
-                    <Bar dataKey="Connected"     fill={SO.green} radius={[4,4,0,0]}>
-                      <LabelList dataKey="Connected"     position="top" style={{ fill:SO.green, fontSize:10, fontWeight:700 }} formatter={v=>v>0?v:''} />
-                    </Bar>
-                    <Bar dataKey="Not Responded" fill={SO.pink}  radius={[4,4,0,0]}>
-                      <LabelList dataKey="Not Responded" position="top" style={{ fill:SO.pink,  fontSize:10, fontWeight:700 }} formatter={v=>v>0?v:''} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ textAlign:'center', color:'var(--text-hint)', fontSize:12, padding:'40px 0' }}>No call data</div>
-              )}
-            </div>
-
-          </div>{/* end kpi-grid-2col-bottom SA */}
-
-          {/* ══════ CONVERSION RATIO ══════ */}
+          {/* ══════ CONVERSION RATIO + OPPORTUNITIES PROGRESS (2-col) ══════ */}
           <Separator />
-          <SectionLabel>Conversion Ratio</SectionLabel>
           <div className="kpi-grid-2col-bottom">
 
-            {/* Table */}
+            {/* CONVERSION RATIO */}
             <div style={{ minWidth:0 }}>
+              <SectionLabel>Conversion Ratio</SectionLabel>
               <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
-                <table style={{ width:'100%', borderCollapse:'separate', borderSpacing:0, border:'1px solid var(--border-color)', borderRadius:10, overflow:'hidden', minWidth:320 }}>
+                <table style={{ width:'100%', borderCollapse:'separate', borderSpacing:0, border:'1px solid var(--border-color)', borderRadius:10, overflow:'hidden', minWidth:300 }}>
                   <thead>
                     <tr>
                       <th style={THL}>BD Name</th>
@@ -423,7 +344,7 @@ export default function KPISection({ filterOwner = '' }) {
                           <td style={{ ...TDL_TOT, borderTop:'1px solid var(--border-strong-color)' }}>Total</td>
                           <td style={{ ...TD_TOT, borderTop:'1px solid var(--border-strong-color)' }}>{totC||'—'}</td>
                           <td style={{ ...TD_TOT, color:SO.purple, borderTop:'1px solid var(--border-strong-color)' }}>{totK||'—'}</td>
-                          <td style={{ ...TD_TOT, color:SO.green,  borderTop:'1px solid var(--border-strong-color)' }}>{totO||'—'}</td>
+                          <td style={{ ...TD_TOT, color:SO.green, borderTop:'1px solid var(--border-strong-color)' }}>{totO||'—'}</td>
                           <td style={{ ...TD_TOT, color:scoreColor(totV), borderTop:'1px solid var(--border-strong-color)' }}>{totK>0?`${totV}%`:'—'}</td>
                         </tr>
                       )
@@ -433,44 +354,11 @@ export default function KPISection({ filterOwner = '' }) {
               </div>
             </div>
 
-            {/* Funnel-style grouped bar chart */}
-            <div style={{ minWidth:0, display:'flex', flexDirection:'column', justifyContent:'center' }}>
-              <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.8px', color:'var(--text-tertiary)', marginBottom:10 }}>BD Conversion Funnel</div>
-              {crChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={230}>
-                  <BarChart data={crChartData} margin={{ top:10, right:10, left:-10, bottom:0 }} barCategoryGap="28%">
-                    <CartesianGrid {...GRID_CFG} />
-                    <XAxis dataKey="bd" tick={TICK_STYLE} />
-                    <YAxis tick={TICK_STYLE} allowDecimals={false} />
-                    <Tooltip content={<ChartTip />} />
-                    <Legend formatter={v => <span style={{ fontSize:10, color:'var(--text-secondary)' }}>{v}</span>} iconSize={7} />
-                    <Bar dataKey="Leads Created"   fill={SO.blue}   radius={[4,4,0,0]}>
-                      <LabelList dataKey="Leads Created"   position="top" style={{ fill:SO.blue,   fontSize:10, fontWeight:700 }} formatter={v=>v>0?v:''} />
-                    </Bar>
-                    <Bar dataKey="Leads Contacted" fill={SO.purple} radius={[4,4,0,0]}>
-                      <LabelList dataKey="Leads Contacted" position="top" style={{ fill:SO.purple, fontSize:10, fontWeight:700 }} formatter={v=>v>0?v:''} />
-                    </Bar>
-                    <Bar dataKey="Opportunities"   fill={SO.green}  radius={[4,4,0,0]}>
-                      <LabelList dataKey="Opportunities"   position="top" style={{ fill:SO.green,  fontSize:10, fontWeight:700 }} formatter={v=>v>0?v:''} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ textAlign:'center', color:'var(--text-hint)', fontSize:12, padding:'40px 0' }}>No lead data</div>
-              )}
-            </div>
-
-          </div>{/* end kpi-grid-2col-bottom CR */}
-
-          {/* ══════ OPPORTUNITIES PROGRESS ══════ */}
-          <Separator />
-          <SectionLabel>Opportunities Progress</SectionLabel>
-          <div className="kpi-grid-2col-bottom">
-
-            {/* Table */}
+            {/* OPPORTUNITIES PROGRESS */}
             <div style={{ minWidth:0 }}>
+              <SectionLabel>Opportunities Progress</SectionLabel>
               <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
-                <table style={{ width:'100%', borderCollapse:'separate', borderSpacing:0, border:'1px solid var(--border-color)', borderRadius:10, overflow:'hidden', minWidth:340 }}>
+                <table style={{ width:'100%', borderCollapse:'separate', borderSpacing:0, border:'1px solid var(--border-color)', borderRadius:10, overflow:'hidden', minWidth:320 }}>
                   <thead>
                     <tr>
                       <th style={THL}>BD</th>
@@ -512,28 +400,7 @@ export default function KPISection({ filterOwner = '' }) {
               </div>
             </div>
 
-            {/* Stacked bar chart per BD per stage */}
-            <div style={{ minWidth:0, display:'flex', flexDirection:'column', justifyContent:'center' }}>
-              <div style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.8px', color:'var(--text-tertiary)', marginBottom:10 }}>Pipeline by BD</div>
-              {opChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={230}>
-                  <BarChart data={opChartData} margin={{ top:10, right:10, left:-10, bottom:0 }} barCategoryGap="30%">
-                    <CartesianGrid {...GRID_CFG} />
-                    <XAxis dataKey="bd" tick={TICK_STYLE} />
-                    <YAxis tick={TICK_STYLE} allowDecimals={false} />
-                    <Tooltip content={<ChartTip />} />
-                    <Legend formatter={v => <span style={{ fontSize:10, color:'var(--text-secondary)' }}>{v}</span>} iconSize={7} />
-                    {OPPORTUNITY_STAGES.map(s => (
-                      <Bar key={s} dataKey={s} stackId="a" fill={STAGE_COLORS_CH[s]} radius={s==='On Hold'?[4,4,0,0]:[0,0,0,0]} />
-                    ))}
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ textAlign:'center', color:'var(--text-hint)', fontSize:12, padding:'40px 0' }}>No opportunity data</div>
-              )}
-            </div>
-
-          </div>{/* end kpi-grid-2col-bottom OP */}
+          </div>{/* end kpi-grid-2col-bottom */}
 
         </div>{/* end sectionRef */}
       </div>

@@ -98,11 +98,23 @@ export default function Dashboard() {
 
   const { leads, opportunities, activities } = state
 
-  // Role-based data filter
+  // Role-based data filter + owner filter
   const isManager = MANAGER_DESIGNATIONS.includes(currentUser?.designation) || currentUser?.role === 'Manager'
-  const myLeads = isManager ? leads : leads.filter(l => l.leadOwner === currentUser?.name)
-  const myOpps  = isManager ? opportunities : opportunities.filter(o => o.leadOwner === currentUser?.name)
-  const myActs  = isManager ? activities : activities.filter(a => a.loggedBy === currentUser?.name)
+
+  const myLeads = useMemo(() => {
+    let items = isManager ? leads : leads.filter(l => l.leadOwner === currentUser?.name)
+    return filterOwner ? items.filter(l => l.leadOwner === filterOwner) : items
+  }, [isManager, leads, currentUser?.name, filterOwner])
+
+  const myOpps = useMemo(() => {
+    let items = isManager ? opportunities : opportunities.filter(o => o.leadOwner === currentUser?.name)
+    return filterOwner ? items.filter(o => o.leadOwner === filterOwner) : items
+  }, [isManager, opportunities, currentUser?.name, filterOwner])
+
+  const myActs = useMemo(() => {
+    let items = isManager ? activities : activities.filter(a => a.loggedBy === currentUser?.name)
+    return filterOwner ? items.filter(a => a.loggedBy === filterOwner) : items
+  }, [isManager, activities, currentUser?.name, filterOwner])
 
   function filterRange(items, field) {
     if (timeFilter === 'custom') {
@@ -185,14 +197,19 @@ export default function Dashboard() {
   fOpps.forEach(o => { if (o.natureOfBusiness) nobMap[o.natureOfBusiness] = (nobMap[o.natureOfBusiness] || 0) + 1 })
   const nobData = Object.entries(nobMap).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }))
 
-  const repData = TEAM_MEMBERS.map(name => ({
-    name: name.split(' ')[0],
-    leads: leads.filter(l => l.leadOwner === name).length,
-    calls: activities.filter(a => a.loggedBy === name && a.type === 'Call').length,
-    opps: opportunities.filter(o => o.leadOwner === name).length,
-    scored: opportunities.filter(o => o.leadOwner === name && ['Won','Onboarded','Activated'].includes(o.stage)).length,
-    transacted: opportunities.filter(o => o.leadOwner === name && o.stage === 'Activated').length,
-  })).filter(r => r.leads + r.calls + r.opps > 0).sort((a, b) => b.calls - a.calls)
+  const repData = useMemo(() => {
+    const userNames = filterOwner
+      ? [filterOwner]
+      : [...new Set((state.users || []).filter(u => u.isActive !== false).map(u => u.name))]
+    return userNames.map(name => ({
+      name: name.split(' ')[0],
+      leads:     myLeads.filter(l => l.leadOwner === name).length,
+      calls:     myActs.filter(a => a.loggedBy === name && a.type === 'Call').length,
+      opps:      myOpps.filter(o => o.leadOwner === name).length,
+      scored:    myOpps.filter(o => o.leadOwner === name && ['Won','Onboarded','Activated'].includes(o.stage)).length,
+      transacted:myOpps.filter(o => o.leadOwner === name && o.stage === 'Activated').length,
+    })).filter(r => r.leads + r.calls + r.opps > 0).sort((a, b) => b.calls - a.calls)
+  }, [state.users, myLeads, myActs, myOpps, filterOwner])
 
   // Drag-and-drop
   function onDragStart(id) { setDragging(id) }
@@ -486,29 +503,32 @@ export default function Dashboard() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <div className="tabs">
+          {/* Single pill: time tabs + divider + owner select */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 24, padding: '3px 4px', overflowX: 'auto', flexShrink: 0 }}>
             {TIME_FILTERS.map(f => (
-              <button key={f.value} className={`tab ${timeFilter === f.value ? 'active' : ''}`} onClick={() => setTimeFilter(f.value)}>
-                {f.label}
-              </button>
+              <button key={f.value} className={`tab ${timeFilter === f.value ? 'active' : ''}`}
+                style={{ padding: '4px 11px', fontSize: 12, whiteSpace: 'nowrap' }}
+                onClick={() => setTimeFilter(f.value)}>{f.label}</button>
             ))}
+            <div style={{ width: 1, height: 14, background: 'var(--border-strong-color)', opacity: 0.45, flexShrink: 0, margin: '0 3px' }} />
+            <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)}
+              style={{ padding: '4px 10px', borderRadius: 18, border: 'none', background: filterOwner ? 'var(--so-blue-soft)' : 'transparent', color: filterOwner ? 'var(--so-blue)' : 'var(--text-secondary)', fontFamily: 'var(--font)', fontSize: 12, cursor: 'pointer', outline: 'none', fontWeight: filterOwner ? 600 : 400, flexShrink: 0 }}>
+              <option value="">All Owners</option>
+              {[...new Set((state.users || []).filter(u => u.isActive !== false).map(u => u.name))].sort().map(n => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
           </div>
+          {/* Custom date range — shown inline below the pill when needed */}
           {timeFilter === 'custom' && (
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexShrink: 0 }}>
               <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
-                style={{ width: 130, fontSize: 12, padding: '5px 8px', borderRadius: 8 }} />
+                style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-strong-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontFamily: 'var(--font)', outline: 'none' }} />
               <span style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>→</span>
               <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
-                style={{ width: 130, fontSize: 12, padding: '5px 8px', borderRadius: 8 }} />
+                style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-strong-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontFamily: 'var(--font)', outline: 'none' }} />
             </div>
           )}
-          <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)}
-            style={{ fontSize: 12, padding: '5px 10px', borderRadius: 20, border: '1px solid var(--border-strong-color)', background: 'var(--bg-card)', color: 'var(--text-secondary)', fontFamily: 'var(--font)', cursor: 'pointer' }}>
-            <option value="">All Owners</option>
-            {[...new Set((state.users || []).filter(u => u.isActive !== false).map(u => u.name))].sort().map(n => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </select>
         </div>
       </div>
 
