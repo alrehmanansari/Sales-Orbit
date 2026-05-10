@@ -312,10 +312,10 @@ export default function TakeNotesPage() {
       </div>
 
       {/* ── Body ── */}
-      <div className="page-body" style={{ padding:0, display:'flex', minHeight:0, height:'100%' }}>
+      <div className="page-body notes-layout" style={{ padding:0, display:'flex', minHeight:0, height:'100%' }}>
 
         {/* ── LEFT SIDEBAR ── */}
-        <div style={{
+        <div className="notes-sidebar" style={{
           width:260, flexShrink:0, display:'flex', flexDirection:'column',
           borderRight:'1px solid var(--border-color)',
           background:'var(--bg-secondary)',
@@ -372,7 +372,7 @@ export default function TakeNotesPage() {
         </div>
 
         {/* ── MAIN: Notebook page ── */}
-        <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--bg-primary)' }}>
+        <div className="notes-editor" style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'var(--bg-primary)' }}>
 
           {/* Date header */}
           <div style={{
@@ -404,9 +404,10 @@ export default function TakeNotesPage() {
 
           {/* Toolbar */}
           <div style={{
-            display:'flex', alignItems:'center', gap:1, flexWrap:'wrap',
-            padding:'8px 16px', borderBottom:'1px solid var(--border-color)',
+            display:'flex', alignItems:'center', gap:1, flexWrap:'nowrap',
+            padding:'6px 12px', borderBottom:'1px solid var(--border-color)',
             background:'var(--bg-secondary)', flexShrink:0,
+            overflowX:'auto', WebkitOverflowScrolling:'touch',
           }}>
             <TB title="Bold" label={<b>B</b>} onCmd={()=>exec('bold')} active={fmt('bold')} />
             <TB title="Italic" label={<i>I</i>} onCmd={()=>exec('italic')} active={fmt('italic')} />
@@ -447,7 +448,7 @@ export default function TakeNotesPage() {
           </div>
 
           {/* Notebook writing area */}
-          <div style={{ flex:1, overflowY:'auto', padding:'24px 40px', position: 'relative' }}>
+          <div className="notes-writing-area" style={{ flex:1, overflowY:'auto', padding:'24px 40px', position: 'relative' }}>
             {/* @ mention dropdown */}
             {mention.open && mention.results.length > 0 && mention.rect && (
               <div style={{

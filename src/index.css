@@ -1317,6 +1317,79 @@ nav button { transition: background 180ms ease, color 180ms ease, border-color 1
 }
 
 /* ════════════════════════════════════════
+   CHART ROWS — Responsive Grid
+   ════════════════════════════════════════ */
+.chart-row { display: grid; gap: 12px; margin-bottom: 14px; }
+.chart-row--3 { grid-template-columns: 1fr 1fr 1fr; }
+.chart-row--2 { grid-template-columns: 1fr 1fr; }
+.chart-row--1 { grid-template-columns: 1fr; }
+
+@media (max-width: 1023px) {
+  .chart-row--3 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 767px) {
+  .chart-row--3,
+  .chart-row--2 { grid-template-columns: 1fr !important; }
+}
+
+/* ════════════════════════════════════════
+   DASHBOARD FILTER — Scrollable on mobile
+   ════════════════════════════════════════ */
+.dash-filters-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  flex-shrink: 0;
+  /* allow it to take up to full width of the header right col */
+  max-width: 100%;
+}
+.dash-filters-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  width: max-content;
+}
+
+/* ════════════════════════════════════════
+   TAKE NOTES — Responsive Layout
+   ════════════════════════════════════════ */
+.notes-layout { height: 100%; }
+
+@media (max-width: 767px) {
+  /* Stack sidebar above editor */
+  .notes-layout {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 0;
+  }
+  .notes-sidebar {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 320px;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    flex-shrink: 0 !important;
+    overflow-y: auto;
+  }
+  .notes-editor {
+    min-height: 60vh;
+    flex: 1;
+  }
+  /* Smaller date header on mobile */
+  .notes-editor [style*="fontSize:20"] { font-size: 16px !important; }
+  /* Tighter writing area padding */
+  .notes-writing-area { padding: 16px 18px !important; }
+  .notes-writing-area [contenteditable] {
+    font-size: 14px !important;
+    min-height: 50vh !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .notes-sidebar { max-height: 260px; }
+}
+
+/* ════════════════════════════════════════
    OCEAN THEME — light
    ════════════════════════════════════════ */
 [data-theme="ocean-light"] {

@@ -490,33 +490,36 @@ export default function Dashboard({ onNav }) {
             {!isManager && <span style={{ marginLeft: 10, color: 'var(--so-blue)', fontWeight: 600 }}>· {currentUser?.name}</span>}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Single pill: time tabs + divider + owner select */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 24, padding: '3px 4px', overflowX: 'auto', flexShrink: 0 }}>
-            {TIME_FILTERS.map(f => (
-              <button key={f.value} className={`tab ${timeFilter === f.value ? 'active' : ''}`}
-                style={{ padding: '4px 11px', fontSize: 12, whiteSpace: 'nowrap' }}
-                onClick={() => setTimeFilter(f.value)}>{f.label}</button>
-            ))}
-            <div style={{ width: 1, height: 14, background: 'var(--border-strong-color)', opacity: 0.45, flexShrink: 0, margin: '0 3px' }} />
-            <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)}
-              style={{ padding: '4px 10px', borderRadius: 18, border: 'none', background: filterOwner ? 'var(--so-blue-soft)' : 'transparent', color: filterOwner ? 'var(--so-blue)' : 'var(--text-secondary)', fontFamily: 'var(--font)', fontSize: 12, cursor: 'pointer', outline: 'none', fontWeight: filterOwner ? 600 : 400, maxWidth: 120, flexShrink: 0 }}>
-              <option value="">All Owners</option>
-              {[...new Set((state.users || []).filter(u => u.isActive !== false).map(u => u.name))].sort().map(n => (
-                <option key={n} value={n}>{n}</option>
+        {/* Scrollable wrapper — keeps all filter controls on one line on mobile */}
+        <div className="dash-filters-wrap">
+          <div className="dash-filters-inner">
+            {/* Pill: time tabs + owner select */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 24, padding: '3px 4px', flexShrink: 0 }}>
+              {TIME_FILTERS.map(f => (
+                <button key={f.value} className={`tab ${timeFilter === f.value ? 'active' : ''}`}
+                  style={{ padding: '4px 11px', fontSize: 12, whiteSpace: 'nowrap' }}
+                  onClick={() => setTimeFilter(f.value)}>{f.label}</button>
               ))}
-            </select>
-          </div>
-          {/* Custom date range — shown inline below the pill when needed */}
-          {timeFilter === 'custom' && (
-            <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexShrink: 0 }}>
-              <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
-                style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-strong-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontFamily: 'var(--font)', outline: 'none' }} />
-              <span style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>→</span>
-              <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
-                style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-strong-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontFamily: 'var(--font)', outline: 'none' }} />
+              <div style={{ width: 1, height: 14, background: 'var(--border-strong-color)', opacity: 0.45, flexShrink: 0, margin: '0 3px' }} />
+              <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)}
+                style={{ padding: '4px 10px', borderRadius: 18, border: 'none', background: filterOwner ? 'var(--so-blue-soft)' : 'transparent', color: filterOwner ? 'var(--so-blue)' : 'var(--text-secondary)', fontFamily: 'var(--font)', fontSize: 12, cursor: 'pointer', outline: 'none', fontWeight: filterOwner ? 600 : 400, maxWidth: 120, flexShrink: 0 }}>
+                <option value="">All Owners</option>
+                {[...new Set((state.users || []).filter(u => u.isActive !== false).map(u => u.name))].sort().map(n => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
             </div>
-          )}
+            {/* Custom date range */}
+            {timeFilter === 'custom' && (
+              <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexShrink: 0 }}>
+                <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
+                  style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-strong-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontFamily: 'var(--font)', outline: 'none' }} />
+                <span style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>→</span>
+                <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
+                  style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-strong-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontFamily: 'var(--font)', outline: 'none' }} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -529,9 +532,9 @@ export default function Dashboard({ onNav }) {
             <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px' }}>{totalLeads}</div>
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{convertedLeads} converted</div>
           </KPI>
-          <KPI label="Total Opportunities Scored" accent={SO.purple}>
-            <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px' }}>{scoredOpps}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>Won: {wonCount} · Onboarded: {onboardedCount} · Activated: {activatedCount}</div>
+          <KPI label="Total Opportunities" accent={SO.purple}>
+            <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px' }}>{totalOpps}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>Prospecting · Won · Onboarded · Activated</div>
           </KPI>
           <KPI label="Active Pipeline" accent={SO.teal}>
             <div style={{ fontSize: 16, fontWeight: 700, color: SO.blue, fontFamily: 'var(--font-mono)' }}>{formatCurrency(onboardedVol + transactedVol)}<span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4 }}>vol</span></div>
@@ -568,9 +571,9 @@ export default function Dashboard({ onNav }) {
             >{actionItemsCount}</div>
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>Needs attention</div>
           </KPI>
-          <KPI label="Total Opportunities" accent={SO.blue}>
-            <div style={{ fontSize: 28, fontWeight: 700 }}>{totalOpps}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>All stages</div>
+          <KPI label="Pending KYC" accent={SO.orange}>
+            <div style={{ fontSize: 28, fontWeight: 700 }}>{wonCount}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>Won — awaiting KYC</div>
           </KPI>
         </div>
 
@@ -581,17 +584,17 @@ export default function Dashboard({ onNav }) {
 
         {rows.map((row, ri) => {
           if (row.type === 'full') return (
-            <div key={ri} style={{ marginBottom: 14 }}>
+            <div key={ri} className="chart-row chart-row--1">
               {CHARTS[row.ids[0]]}
             </div>
           )
           if (row.type === 'tri') return (
-            <div key={ri} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 14 }}>
+            <div key={ri} className="chart-row chart-row--3">
               {row.ids.map(id => CHARTS[id])}
             </div>
           )
           return (
-            <div key={ri} style={{ display: 'grid', gridTemplateColumns: row.ids.length === 2 ? '1fr 1fr' : '1fr', gap: 12, marginBottom: 14 }}>
+            <div key={ri} className={`chart-row ${row.ids.length === 2 ? 'chart-row--2' : 'chart-row--1'}`}>
               {row.ids.map(id => CHARTS[id])}
             </div>
           )
