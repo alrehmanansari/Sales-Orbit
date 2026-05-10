@@ -1,0 +1,38 @@
+{
+  "name": "Sales Orbit",
+  "short_name": "Sales Orbit",
+  "description": "The B2B sales CRM built for high-velocity teams. Sell Faster. Orbit Further.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "theme_color": "#4796E3",
+  "background_color": "#0C0C0F",
+  "categories": ["business", "productivity"],
+  "lang": "en",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "url": "/",
+      "description": "Open the Sales Orbit dashboard"
+    }
+  ]
+}

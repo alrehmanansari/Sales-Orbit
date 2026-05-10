@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="mbg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#0D0D18"/>
+      <stop offset="100%" stop-color="#13102A"/>
+    </linearGradient>
+    <linearGradient id="mstar" x1="256" y1="60" x2="256" y2="452" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#8BB8F8"/>
+      <stop offset="42%"  stop-color="#9B7DC8"/>
+      <stop offset="100%" stop-color="#C97285"/>
+    </linearGradient>
+  </defs>
+  <!-- Full bleed background (maskable — content in centre 80%) -->
+  <rect width="512" height="512" fill="url(#mbg)"/>
+  <!-- Star scaled to 80% safe zone: 60–452 range -->
+  <path d="M256 60
+    C256 60 266 172 302 232
+    C340 296 452 256 452 256
+    C452 256 340 216 302 280
+    C266 340 256 452 256 452
+    C256 452 246 340 210 280
+    C172 216 60 256 60 256
+    C60 256 172 296 210 232
+    C246 172 256 60 256 60Z"
+    fill="url(#mstar)"/>
+</svg>
