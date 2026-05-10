@@ -1265,6 +1265,39 @@ nav button { transition: background 180ms ease, color 180ms ease, border-color 1
 }
 
 /* ════════════════════════════════════════
+   FLOATING ANIMATIONS — Aesthetic feel
+   ════════════════════════════════════════ */
+
+/* Gentle vertical float + rising shadow for stat/KPI cards */
+@keyframes floatSoft {
+  0%, 100% { transform: translateY(0px);  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04); }
+  50%       { transform: translateY(-5px); box-shadow: 0 8px 28px rgba(71,150,227,0.14), 0 2px 8px rgba(0,0,0,0.06); }
+}
+/* Soft glow pulse for content / chart cards */
+@keyframes cardBreath {
+  0%, 100% { box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.03); }
+  50%       { box-shadow: 0 4px 20px rgba(71,150,227,0.10), 0 1px 6px rgba(0,0,0,0.04); }
+}
+
+/* KPI / stat-cards float in a gentle wave */
+.stat-card { animation: floatSoft 5s ease-in-out infinite; }
+.stat-card:hover { animation: none; }   /* hand off to hover transform cleanly */
+
+/* Stagger so each card is at a different phase → wave effect */
+.so-stagger > *:nth-child(2) { animation-delay: -1.25s; }
+.so-stagger > *:nth-child(3) { animation-delay: -2.5s;  }
+.so-stagger > *:nth-child(4) { animation-delay: -3.75s; }
+
+/* Chart / content cards breathe gently */
+.card.so-hover-card { animation: cardBreath 6s ease-in-out infinite; }
+.card.so-hover-card:hover { animation: none; }
+
+/* Respect OS reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .stat-card, .card.so-hover-card { animation: none !important; }
+}
+
+/* ════════════════════════════════════════
    KPI SECTION — RESPONSIVE GRIDS
    ════════════════════════════════════════ */
 .kpi-grid-3col {

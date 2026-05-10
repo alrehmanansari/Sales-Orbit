@@ -60,7 +60,11 @@ export default function LeadsPage({ openLeadId, onOpenClear }) {
   const [search, setSearch]           = useState('')
   const [filterStatus, setFilterStatus]   = useState('')
   const [filterPriority, setFilterPriority] = useState('')
-  const [filterOwner, setFilterOwner]   = useState('')
+  const [filterOwner, setFilterOwner]   = useState(() => {
+    const MGRS = ['Head of Sales', 'Country Manager', 'Head of MENA']
+    const isMgr = MGRS.includes(currentUser?.designation) || currentUser?.role === 'Manager'
+    return isMgr ? '' : (currentUser?.name || '')
+  })
   const [filterVertical, setFilterVertical] = useState('')
   const [sort, setSort]               = useState('newest')
   const [timeFilter, setTimeFilter]   = useState('all')

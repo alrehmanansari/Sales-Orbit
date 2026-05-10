@@ -16,7 +16,11 @@ export default function OpportunitiesPage({ openOppId, onOpenClear }) {
   const [search, setSearch] = useState('')
   const [filterStage, setFilterStage] = useState('')
   const [filterNOB, setFilterNOB] = useState('')
-  const [filterOwner, setFilterOwner] = useState('')
+  const [filterOwner, setFilterOwner] = useState(() => {
+    const MGRS = ['Head of Sales', 'Country Manager', 'Head of MENA']
+    const isMgr = MGRS.includes(currentUser?.designation) || currentUser?.role === 'Manager'
+    return isMgr ? '' : (currentUser?.name || '')
+  })
   const [sort, setSort] = useState('newest')
   const [showForm, setShowForm] = useState(false)
   const [selected, setSelected] = useState(null)

@@ -4,8 +4,7 @@ export const TEAM_MEMBERS = [
 ]
 
 export const LEAD_SOURCES = [
-  'Customer Referral', 'Online Directory', 'Marketing Campaign',
-  'Trade Show/Event', 'Cold Outreach', 'Others'
+  'Customer Referral', 'Online Directory', 'Cold Outreach', 'Others'
 ]
 
 export const VERTICALS = ['IT Services', 'Ecom Seller', 'B2B Seller', 'Freelancer']

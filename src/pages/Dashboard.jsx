@@ -91,7 +91,10 @@ export default function Dashboard({ onNav }) {
   const [timeFilter, setTimeFilter] = useState('this-month')
   const [customFrom, setCustomFrom] = useState('')
   const [customTo, setCustomTo] = useState('')
-  const [filterOwner, setFilterOwner] = useState('')
+  const [filterOwner, setFilterOwner] = useState(() => {
+    const mgr = MANAGER_DESIGNATIONS.includes(currentUser?.designation) || currentUser?.role === 'Manager'
+    return mgr ? '' : (currentUser?.name || '')
+  })
   const [order, setOrder] = useState(loadOrder)
   const [dragging, setDragging] = useState(null)
   const [dragOver, setDragOver] = useState(null)
@@ -257,10 +260,19 @@ export default function Dashboard({ onNav }) {
     'trending-nob': (
       <ChartCard key="trending-nob" id="trending-nob" title="Trending Nature of Businesses">
         {nobData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={nobData} margin={{ top: 20, right: 4, left: 4, bottom: 40 }}>
+          <ResponsiveContainer width="100%" height={210}>
+            <BarChart data={nobData} margin={{ top: 20, right: 4, left: 4, bottom: 50 }}>
               <CartesianGrid strokeDasharray="2 4" {...gridCfg} />
-              <XAxis dataKey="name" tick={{ ...tickStyle, fontSize: 9 }} angle={-35} textAnchor="end" interval={0} />
+              <XAxis dataKey="name" interval={0}
+                tick={({ x, y, payload }) => {
+                  const label = payload.value.length > 13 ? payload.value.slice(0, 12) + '…' : payload.value
+                  return (
+                    <text x={x} y={y + 10} textAnchor="middle" fontSize={8} fill="var(--text-tertiary)" fontFamily="var(--font)">
+                      {label}
+                    </text>
+                  )
+                }}
+              />
               <Tooltip content={<Tip />} />
               <Bar dataKey="value" radius={[6,6,0,0]} name="Opportunities">
                 {nobData.map((_, i) => <Cell key={i} fill={BRAND[(i+2) % BRAND.length]} />)}
