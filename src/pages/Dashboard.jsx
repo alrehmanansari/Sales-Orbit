@@ -5,14 +5,14 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, LabelList
 } from 'recharts'
 import { filterByDateRange, formatCurrency, getDailyVolume, isOverdue, daysDiff } from '../utils/helpers'
-import { TIME_FILTERS, ACTIVE_STAGES, TEAM_MEMBERS, MANAGER_DESIGNATIONS } from '../data/constants'
+import { TIME_FILTERS, ACTIVE_STAGES, MANAGER_DESIGNATIONS } from '../data/constants'
 import { useAuth } from '../store/AuthContext'
 import KPISection from '../components/dashboard/KPISection'
 import { CopyImgBtn } from '../utils/copyImage'
 
-const SO = { blue: '#4796E3', purple: '#9177C7', pink: '#CA6673', green: '#1E8E3E', teal: '#129EAF', orange: '#E37400', indigo: '#5C6BC0' }
-const BRAND = [SO.blue, SO.purple, SO.pink, SO.green, SO.teal, SO.orange, SO.indigo]
-const STAGE_BRAND = { Prospecting: SO.blue, Won: SO.purple, Onboarded: SO.green, Activated: SO.pink, Lost: '#D93025', 'On Hold': '#9AA0A6' }
+const SO = { blue: '#4796E3', purple: '#9177C7', pink: '#CA6673', teal: '#129EAF', orange: '#E37400', indigo: '#5C6BC0' }
+const BRAND = [SO.blue, SO.purple, SO.pink, SO.teal, SO.orange, SO.indigo]
+const STAGE_BRAND = { Prospecting: SO.blue, Won: SO.purple, Onboarded: SO.teal, Activated: SO.pink, Lost: '#D93025', 'On Hold': '#9AA0A6' }
 
 const ORDER_KEY = 'so_dashboard_order_v1'
 const DEFAULT_ORDER = ['activity-type', 'trending-nob', 'call-volume', 'call-outcomes', 'call-types', 'funnel', 'source', 'verticals', 'leaderboard']
@@ -85,7 +85,7 @@ function DragSection({ id, dragId, onDragStart, onDragOver, onDrop, children }) 
 const tickStyle = { fill: 'var(--text-tertiary)', fontSize: 11 }
 const gridCfg = { stroke: 'var(--border-color)', strokeWidth: 0.5 }
 
-export default function Dashboard() {
+export default function Dashboard({ onNav }) {
   const { state } = useCRM()
   const { currentUser } = useAuth()
   const [timeFilter, setTimeFilter] = useState('this-month')
@@ -137,10 +137,6 @@ export default function Dashboard() {
   const totalLeads      = fLeads.length
   const convertedLeads  = fLeads.filter(l => l.status === 'Converted').length
 
-  // KPI 2 — Lead → Onboarded %
-  const onboardedOpps   = myOpps.filter(o => ['Onboarded','Activated'].includes(o.stage))
-  const onboardedRate   = totalLeads ? Math.round((onboardedOpps.length / totalLeads) * 100) : 0
-
   // KPI 3 — Volume + Revenue of Onboarded + Activated
   const onboardedVol = myOpps.filter(o => o.stage === 'Onboarded').reduce((s, o) => s + (o.expectedMonthlyVolume || 0), 0)
   const onboardedRev = myOpps.filter(o => o.stage === 'Onboarded').reduce((s, o) => s + (o.expectedMonthlyRevenue || 0), 0)
@@ -148,54 +144,46 @@ export default function Dashboard() {
   const transactedRev = myOpps.filter(o => o.stage === 'Activated').reduce((s, o) => s + (o.expectedMonthlyRevenue || 0), 0)
 
   // KPI 4 — Sales Velocity (avg days lead → stage)
-  const avgToOnboarded   = calcAvgDaysToStage(myOpps, myLeads, 'Onboarded')
-  const avgToActivated  = calcAvgDaysToStage(myOpps, myLeads, 'Activated')
+  const avgToOnboarded = useMemo(() => calcAvgDaysToStage(fOpps, fLeads, 'Onboarded'), [fOpps, fLeads])
+  const avgToActivated = useMemo(() => calcAvgDaysToStage(fOpps, fLeads, 'Activated'), [fOpps, fLeads])
 
-  // KPI 5+6 already fine
-  const totalCalls      = fActs.filter(a => a.type === 'Call').length
-  const newLeadsCount   = fLeads.filter(l => l.status === 'New').length
-  const overdueFollowUps = myActs.filter(a => a.nextFollowUpDate && isOverdue(a.nextFollowUpDate)).length
+  // KPI 5 — calls
+  const totalCalls = fActs.filter(a => a.type === 'Call').length
 
   // KPI 7 — total opps scored (all opps that reached Won or beyond)
   const scoredOpps = myOpps.filter(o => ['Won','Onboarded','Activated'].includes(o.stage)).length
 
-  // KPI 8 fine
+  // KPI 8
   const totalOpps = myOpps.length
 
-  // Chart data
-  const dailyCalls = getDailyVolume(fActs.filter(a => a.type === 'Call'), 14)
+  // Untouched leads (status New in filtered period)
+  const untouchedLeadsCount = fLeads.filter(l => l.status === 'New').length
 
-  const outcomeMap = {}
-  fActs.filter(a => a.type === 'Call' && a.callOutcome).forEach(a => { outcomeMap[a.callOutcome] = (outcomeMap[a.callOutcome] || 0) + 1 })
-  const outcomeData = Object.entries(outcomeMap).map(([name, value]) => ({ name, value }))
+  // Action Items count (same logic as ActionItemsPage and TopNav)
+  const actionItemsCount = useMemo(() => {
+    const sevenAgo = new Date(Date.now() - 7*24*60*60*1000)
+    const todayStr = new Date().toISOString().slice(0,10)
+    const untouched = leads.filter(l => !['Converted','Lost'].includes(l.status) && (!l.lastActivityAt || new Date(l.lastActivityAt) < sevenAgo)).length
+    const stuck = opportunities.filter(o => { if(['Lost','On Hold'].includes(o.stage)) return false; const cur=o.stageHistory?.[o.stageHistory.length-1]; return cur?.enteredAt && new Date(cur.enteredAt) < sevenAgo }).length
+    const followUp = new Set(activities.filter(a => a.entityType==='opportunity' && a.nextFollowUpDate?.slice(0,10)===todayStr).map(a=>a.entityId)).size
+    return untouched + stuck + followUp
+  }, [leads, opportunities, activities])
 
-  const callTypeMap = {}
-  fActs.filter(a => a.type === 'Call' && a.callType).forEach(a => { callTypeMap[a.callType] = (callTypeMap[a.callType] || 0) + 1 })
-  const callTypeData = Object.entries(callTypeMap).map(([name, value]) => ({ name, value }))
+  // Scored opps with stage breakdown
+  const wonCount = myOpps.filter(o => o.stage === 'Won').length
+  const onboardedCount = myOpps.filter(o => o.stage === 'Onboarded').length
+  const activatedCount = myOpps.filter(o => o.stage === 'Activated').length
 
-  const sourceMap = {}
-  fLeads.forEach(l => { sourceMap[l.leadSource || 'Unknown'] = (sourceMap[l.leadSource || 'Unknown'] || 0) + 1 })
-  const sourceData = Object.entries(sourceMap).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }))
-
-  const vertMap = {}
-  fLeads.forEach(l => { if (l.vertical) vertMap[l.vertical] = (vertMap[l.vertical] || 0) + 1 })
-  const vertData = Object.entries(vertMap).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }))
-
-  const funnelData = ACTIVE_STAGES.map(stage => ({
-    stage,
-    count: myOpps.filter(o => o.stage === stage).length,
-    volume: myOpps.filter(o => o.stage === stage).reduce((s, o) => s + (o.expectedMonthlyVolume || 0), 0),
-    revenue: myOpps.filter(o => o.stage === stage).reduce((s, o) => s + (o.expectedMonthlyRevenue || 0), 0)
-  }))
-  const funnelMax = Math.max(...funnelData.map(f => f.count), 1)
-
-  const actTypeMap = {}
-  fActs.forEach(a => { actTypeMap[a.type] = (actTypeMap[a.type] || 0) + 1 })
-  const actTypeData = Object.entries(actTypeMap).map(([name, value]) => ({ name, value }))
-
-  const nobMap = {}
-  fOpps.forEach(o => { if (o.natureOfBusiness) nobMap[o.natureOfBusiness] = (nobMap[o.natureOfBusiness] || 0) + 1 })
-  const nobData = Object.entries(nobMap).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }))
+  // Chart data — all wrapped in useMemo
+  const dailyCalls = useMemo(() => getDailyVolume(fActs.filter(a => a.type === 'Call'), 14), [fActs])
+  const outcomeData = useMemo(() => { const m = {}; fActs.filter(a => a.type==='Call' && a.callOutcome).forEach(a => { m[a.callOutcome]=(m[a.callOutcome]||0)+1 }); return Object.entries(m).map(([name,value])=>({name,value})) }, [fActs])
+  const callTypeData = useMemo(() => { const m = {}; fActs.filter(a => a.type==='Call' && a.callType).forEach(a => { m[a.callType]=(m[a.callType]||0)+1 }); return Object.entries(m).map(([name,value])=>({name,value})) }, [fActs])
+  const sourceData = useMemo(() => { const m = {}; fLeads.forEach(l => { m[l.leadSource||'Unknown']=(m[l.leadSource||'Unknown']||0)+1 }); return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([name,value])=>({name,value})) }, [fLeads])
+  const vertData = useMemo(() => { const m = {}; fLeads.forEach(l => { if(l.vertical) m[l.vertical]=(m[l.vertical]||0)+1 }); return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([name,value])=>({name,value})) }, [fLeads])
+  const funnelData = useMemo(() => ACTIVE_STAGES.map(stage => ({ stage, count: fOpps.filter(o=>o.stage===stage).length, volume: fOpps.filter(o=>o.stage===stage).reduce((s,o)=>s+(o.expectedMonthlyVolume||0),0), revenue: fOpps.filter(o=>o.stage===stage).reduce((s,o)=>s+(o.expectedMonthlyRevenue||0),0) })), [fOpps])
+  const funnelMax = useMemo(() => Math.max(...funnelData.map(f=>f.count),1), [funnelData])
+  const actTypeData = useMemo(() => { const m = {}; fActs.forEach(a => { m[a.type]=(m[a.type]||0)+1 }); return Object.entries(m).map(([name,value])=>({name,value})) }, [fActs])
+  const nobData = useMemo(() => { const m = {}; fOpps.forEach(o => { if(o.natureOfBusiness) m[o.natureOfBusiness]=(m[o.natureOfBusiness]||0)+1 }); return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([name,value])=>({name,value})) }, [fOpps])
 
   const repData = useMemo(() => {
     const userNames = filterOwner
@@ -342,7 +330,7 @@ export default function Dashboard() {
                   return <text x={x} y={y} fill="#fff" textAnchor="middle" dominantBaseline="central" fontSize={13} fontWeight={800}>{value}</text>
                 }}
                 labelLine={false}>
-                {callTypeData.map((_, i) => <Cell key={i} fill={[SO.blue, SO.purple, SO.pink, SO.green][i % 4]} />)}
+                {callTypeData.map((_, i) => <Cell key={i} fill={BRAND[i % BRAND.length]} />)}
               </Pie>
               <Tooltip content={<Tip />} />
               <Legend formatter={v => <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{v}</span>} iconType="circle" iconSize={7} />
@@ -439,7 +427,7 @@ export default function Dashboard() {
                 {repData.map((rep, i) => {
                   const totalOppForRate = rep.opps || 0
                   const wr = totalOppForRate > 0 ? Math.round((rep.transacted / totalOppForRate) * 100) : 0
-                  const barColor = wr > 60 ? SO.green : wr > 30 ? SO.purple : SO.pink
+                  const barColor = wr > 60 ? SO.blue : wr > 30 ? SO.purple : SO.pink
                   return (
                     <tr key={rep.name}>
                       <td style={{ fontWeight: 700, color: i === 0 ? SO.blue : 'var(--text-tertiary)' }}>
@@ -449,7 +437,7 @@ export default function Dashboard() {
                       <td style={{ fontFamily: 'var(--font-mono)' }}>{rep.leads}</td>
                       <td style={{ fontFamily: 'var(--font-mono)', color: SO.blue, fontWeight: 700 }}>{rep.calls}</td>
                       <td style={{ fontFamily: 'var(--font-mono)', color: SO.purple, fontWeight: 700 }}>{rep.scored}</td>
-                      <td style={{ fontFamily: 'var(--font-mono)', color: SO.green, fontWeight: 700 }}>{rep.transacted}</td>
+                      <td style={{ fontFamily: 'var(--font-mono)', color: SO.teal, fontWeight: 700 }}>{rep.transacted}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <div style={{ flex: 1, height: 5, background: 'var(--border-color)', borderRadius: 3, minWidth: 60, overflow: 'hidden' }}>
@@ -541,23 +529,23 @@ export default function Dashboard() {
             <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px' }}>{totalLeads}</div>
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{convertedLeads} converted</div>
           </KPI>
-          <KPI label="Lead → Onboarded %" accent={SO.purple}>
-            <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px' }}>{onboardedRate}%</div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{onboardedOpps.length} onboarded / transacted</div>
+          <KPI label="Total Opportunities Scored" accent={SO.purple}>
+            <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px' }}>{scoredOpps}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>Won: {wonCount} · Onboarded: {onboardedCount} · Activated: {activatedCount}</div>
           </KPI>
-          <KPI label="Active Pipeline" accent={SO.green}>
+          <KPI label="Active Pipeline" accent={SO.teal}>
             <div style={{ fontSize: 16, fontWeight: 700, color: SO.blue, fontFamily: 'var(--font-mono)' }}>{formatCurrency(onboardedVol + transactedVol)}<span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4 }}>vol</span></div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: SO.green, fontFamily: 'var(--font-mono)' }}>{formatCurrency(onboardedRev + transactedRev)}<span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4 }}>rev</span></div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: SO.teal, fontFamily: 'var(--font-mono)' }}>{formatCurrency(onboardedRev + transactedRev)}<span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 4 }}>rev</span></div>
             <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 2 }}>Onboarded + Activated</div>
           </KPI>
           <KPI label="Sales Velocity" accent={SO.pink}>
             <div style={{ fontSize: 13, fontWeight: 700, marginTop: 2 }}>
               <span style={{ color: SO.blue, fontFamily: 'var(--font-mono)' }}>{avgToOnboarded ?? '—'} days</span>
-              <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 6 }}>→ Onboarded</span>
+              <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 6 }}>Lead Created → Onboarded</span>
             </div>
             <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4 }}>
               <span style={{ color: SO.pink, fontFamily: 'var(--font-mono)' }}>{avgToActivated ?? '—'} days</span>
-              <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 6 }}>→ Activated</span>
+              <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginLeft: 6 }}>Lead Created → Activated</span>
             </div>
           </KPI>
         </div>
@@ -568,16 +556,21 @@ export default function Dashboard() {
             <div style={{ fontSize: 28, fontWeight: 700 }}>{totalCalls}</div>
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>This period</div>
           </KPI>
-          <KPI label="New Leads" accent={SO.teal}>
-            <div style={{ fontSize: 28, fontWeight: 700 }}>{newLeadsCount}</div>
+          <KPI label="Untouched Leads" accent={SO.teal}>
+            <div style={{ fontSize: 28, fontWeight: 700 }}>{untouchedLeadsCount}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>Not contacted yet</div>
           </KPI>
-          <KPI label="Overdue Follow-ups" accent={overdueFollowUps > 0 ? '#D93025' : SO.green}>
-            <div style={{ fontSize: 28, fontWeight: 700 }}>{overdueFollowUps}</div>
+          <KPI label="Action Items" accent={actionItemsCount > 0 ? '#D93025' : SO.blue}>
+            <div
+              style={{ fontSize: 28, fontWeight: 700, cursor: 'pointer', textDecoration: 'underline dotted', textUnderlineOffset: 3 }}
+              onClick={() => onNav?.('actionItems')}
+              title="Go to Action Items"
+            >{actionItemsCount}</div>
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>Needs attention</div>
           </KPI>
-          <KPI label="Total Opportunities Scored" accent={SO.blue}>
-            <div style={{ fontSize: 28, fontWeight: 700 }}>{scoredOpps}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>Won + Onboarded + Activated</div>
+          <KPI label="Total Opportunities" accent={SO.blue}>
+            <div style={{ fontSize: 28, fontWeight: 700 }}>{totalOpps}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>All stages</div>
           </KPI>
         </div>
 

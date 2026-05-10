@@ -1047,6 +1047,9 @@ nav button { transition: background 180ms ease, color 180ms ease, border-color 1
   .form-discovery-panel { display: none !important; }
 }
 
+/* Recharts: always responsive */
+.recharts-wrapper { width: 100% !important; }
+
 /* ── Mobile (≤ 767px) ── */
 @media (max-width: 767px) {
   :root {
@@ -1170,6 +1173,20 @@ nav button { transition: background 180ms ease, color 180ms ease, border-color 1
 
   /* ── Reports sections ── */
   .recharts-cartesian-axis-tick-value { font-size: 9px !important; }
+
+  /* ── Date filter pills on mobile ── */
+  .page-header .tabs, .page-header [style*="border-radius: 24"] {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  /* ── Recharts responsive ── */
+  .recharts-wrapper { overflow: visible !important; }
+  .recharts-surface { overflow: visible !important; }
+
+  /* ── Leads page header: stack on mobile ── */
+  .page-header { flex-direction: column; align-items: flex-start; }
+  .page-header > div:last-child { width: 100%; justify-content: flex-start; }
 }
 
 /* ── Very small phones (< 380px) ── */

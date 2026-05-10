@@ -91,7 +91,7 @@ function AppContent() {
   }
 
   const PAGES = {
-    dashboard:     <Dashboard />,
+    dashboard:     <Dashboard onNav={navigateTo} />,
     leads:         <LeadsPage openLeadId={openLeadId} onOpenClear={() => setOpenLeadId(null)} />,
     opportunities: <OpportunitiesPage openOppId={openOppId} onOpenClear={() => setOpenOppId(null)} />,
     pipeline:      <PipelinePage />,

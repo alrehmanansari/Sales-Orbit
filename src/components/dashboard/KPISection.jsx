@@ -2,15 +2,15 @@ import React, { useState, useRef, useMemo } from 'react'
 import { useKPI, QUARTERS, KPI_WEIGHTS } from '../../store/KPIContext'
 import { useAuth } from '../../store/AuthContext'
 import { useCRM } from '../../store/CRMContext'
-import { OPPORTUNITY_STAGES } from '../../data/constants'
+import { OPPORTUNITY_STAGES, LEAD_SOURCES } from '../../data/constants'
 import { formatCurrency } from '../../utils/helpers'
 
-const SO = { blue: '#4796E3', purple: '#9177C7', pink: '#CA6673', green: '#1E8E3E', orange: '#E37400' }
+const SO = { blue: '#4796E3', purple: '#9177C7', pink: '#CA6673', teal: '#129EAF', orange: '#E37400' }
 const ALL_TABS = ['Q2', 'Q3', 'Q4', 'Yearly']
 const VERTICALS_SA = ['IT Services', 'Ecom Seller', 'B2B Seller', 'Freelancer']
 
 /* ── Helpers ── */
-function scoreColor(s) { return s >= 80 ? SO.green : s >= 50 ? SO.orange : SO.pink }
+function scoreColor(s) { return s >= 80 ? SO.teal : s >= 50 ? SO.orange : SO.pink }
 function pct(ach, target) { if (!target) return 0; return Math.min(Math.round((ach / target) * 100), 999) }
 function fmt(n) {
   if (!n) return '—'
@@ -175,6 +175,15 @@ export default function KPISection({ filterOwner = '' }) {
     counts: OPPORTUNITY_STAGES.map(s => state.opportunities.filter(o => o.leadOwner===name && o.stage===s).length),
   })).filter(r => r.counts.some(c => c>0)), [displayUsers, state.opportunities])
 
+  /* ── Leads Sources Breakdown data ── */
+  const leadsSourcesRows = useMemo(() => displayUsers.map(name => {
+    const userLeads = state.leads.filter(l => l.leadOwner === name)
+    const row = { name }
+    LEAD_SOURCES.forEach(src => { row[src] = userLeads.filter(l => (l.leadSource || 'Others') === src).length })
+    row.total = userLeads.length
+    return row
+  }), [displayUsers, state.leads])
+
   /* ── Inner KPI table for one metric row ── */
   function KpiTable({ row }) {
     const totTarget = displayUsers.reduce((s,n) => { const q=isYearly?yearlyQ(data,n):(data.kpiData[n]?.[quarter]||{}); return s+(q[row.targetKey]||0) },0)
@@ -277,7 +286,7 @@ export default function KPISection({ filterOwner = '' }) {
                   <th style={TH}>Ecomm Seller</th>
                   <th style={TH}>B2B Seller</th>
                   <th style={TH}>Freelancer</th>
-                  <th style={{ ...TH, color:SO.green }}>Connected</th>
+                  <th style={{ ...TH, color:SO.teal }}>Connected</th>
                   <th style={{ ...TH, color:SO.pink }}>Not Responded</th>
                 </tr>
               </thead>
@@ -289,7 +298,7 @@ export default function KPISection({ filterOwner = '' }) {
                     <td style={TDL}>{row.name}</td>
                     <td style={{ ...TD, color:row.discoveryCalls>0?SO.blue:'var(--text-hint)' }}>{row.discoveryCalls||'—'}</td>
                     {row.vertCalls.map((cnt,vi) => <td key={vi} style={{ ...TD, color:cnt>0?'var(--text-primary)':'var(--text-hint)' }}>{cnt||'—'}</td>)}
-                    <td style={{ ...TD, color:row.connected>0?SO.green:'var(--text-hint)' }}>{row.connected||'—'}</td>
+                    <td style={{ ...TD, color:row.connected>0?SO.teal:'var(--text-hint)' }}>{row.connected||'—'}</td>
                     <td style={{ ...TD, color:row.notResponded>0?SO.pink:'var(--text-hint)' }}>{row.notResponded||'—'}</td>
                   </tr>
                 ))}
@@ -297,14 +306,14 @@ export default function KPISection({ filterOwner = '' }) {
                   <td style={{ ...TDL_TOT, borderTop:'1px solid var(--border-strong-color)' }}>Total</td>
                   <td style={{ ...TD_TOT, color:SO.blue, borderTop:'1px solid var(--border-strong-color)' }}>{displaySARows.reduce((s,r)=>s+r.discoveryCalls,0)||'—'}</td>
                   {VERTICALS_SA.map((_,vi) => <td key={vi} style={{ ...TD_TOT, borderTop:'1px solid var(--border-strong-color)' }}>{displaySARows.reduce((s,r)=>s+r.vertCalls[vi],0)||'—'}</td>)}
-                  <td style={{ ...TD_TOT, color:SO.green, borderTop:'1px solid var(--border-strong-color)' }}>{displaySARows.reduce((s,r)=>s+r.connected,0)||'—'}</td>
+                  <td style={{ ...TD_TOT, color:SO.teal, borderTop:'1px solid var(--border-strong-color)' }}>{displaySARows.reduce((s,r)=>s+r.connected,0)||'—'}</td>
                   <td style={{ ...TD_TOT, color:SO.pink,  borderTop:'1px solid var(--border-strong-color)' }}>{displaySARows.reduce((s,r)=>s+r.notResponded,0)||'—'}</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          {/* ══════ CONVERSION RATIO + OPPORTUNITIES PROGRESS (2-col) ══════ */}
+          {/* ══════ CONVERSION RATIO + LEADS SOURCES (2-col) ══════ */}
           <Separator />
           <div className="kpi-grid-2col-bottom">
 
@@ -330,7 +339,7 @@ export default function KPISection({ filterOwner = '' }) {
                         <td style={TDL}>{row.name}</td>
                         <td style={{ ...TD, color:row.created>0?'var(--text-primary)':'var(--text-hint)' }}>{row.created||'—'}</td>
                         <td style={{ ...TD, color:row.contacted>0?SO.purple:'var(--text-hint)' }}>{row.contacted||'—'}</td>
-                        <td style={{ ...TD, color:row.opps>0?SO.green:'var(--text-hint)' }}>{row.opps||'—'}</td>
+                        <td style={{ ...TD, color:row.opps>0?SO.blue:'var(--text-hint)' }}>{row.opps||'—'}</td>
                         <td style={{ ...TD, color:row.contacted>0?scoreColor(row.conversion):'var(--text-hint)' }}>{row.contacted>0?`${row.conversion}%`:'—'}</td>
                       </tr>
                     ))}
@@ -344,7 +353,7 @@ export default function KPISection({ filterOwner = '' }) {
                           <td style={{ ...TDL_TOT, borderTop:'1px solid var(--border-strong-color)' }}>Total</td>
                           <td style={{ ...TD_TOT, borderTop:'1px solid var(--border-strong-color)' }}>{totC||'—'}</td>
                           <td style={{ ...TD_TOT, color:SO.purple, borderTop:'1px solid var(--border-strong-color)' }}>{totK||'—'}</td>
-                          <td style={{ ...TD_TOT, color:SO.green, borderTop:'1px solid var(--border-strong-color)' }}>{totO||'—'}</td>
+                          <td style={{ ...TD_TOT, color:SO.blue, borderTop:'1px solid var(--border-strong-color)' }}>{totO||'—'}</td>
                           <td style={{ ...TD_TOT, color:scoreColor(totV), borderTop:'1px solid var(--border-strong-color)' }}>{totK>0?`${totV}%`:'—'}</td>
                         </tr>
                       )
@@ -354,46 +363,35 @@ export default function KPISection({ filterOwner = '' }) {
               </div>
             </div>
 
-            {/* OPPORTUNITIES PROGRESS */}
+            {/* LEADS SOURCES BREAKDOWN */}
             <div style={{ minWidth:0 }}>
-              <SectionLabel>Opportunities Progress</SectionLabel>
+              <SectionLabel>Leads Sources Breakdown</SectionLabel>
               <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
-                <table style={{ width:'100%', borderCollapse:'separate', borderSpacing:0, border:'1px solid var(--border-color)', borderRadius:10, overflow:'hidden', minWidth:320 }}>
+                <table style={{ width:'100%', borderCollapse:'separate', borderSpacing:0, border:'1px solid var(--border-color)', borderRadius:10, overflow:'hidden', minWidth:300 }}>
                   <thead>
                     <tr>
-                      <th style={THL}>BD</th>
-                      {OPPORTUNITY_STAGES.map(s => <th key={s} style={TH}>{s}</th>)}
+                      <th style={THL}>BD Name</th>
+                      {LEAD_SOURCES.map(src => <th key={src} style={{ ...TH, fontSize:8.5 }}>{src}</th>)}
+                      <th style={{ ...TH, color:SO.blue }}>Total</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {displayOPRows.map((u,i) => (
-                      <tr key={u.name} style={{ background:i%2===0?'var(--bg-card)':'var(--bg-secondary)', transition:'background 120ms' }}
+                    {leadsSourcesRows.map((row,i) => (
+                      <tr key={row.name} style={{ background:i%2===0?'var(--bg-card)':'var(--bg-secondary)', transition:'background 120ms' }}
                         onMouseEnter={e=>e.currentTarget.style.background='var(--so-blue-soft)'}
                         onMouseLeave={e=>e.currentTarget.style.background=i%2===0?'var(--bg-card)':'var(--bg-secondary)'}>
-                        <td style={TDL}>{u.name}</td>
-                        {u.counts.map((cnt,si) => <td key={si} style={{ ...TD, color:cnt>0?'var(--text-primary)':'var(--text-hint)' }}>{cnt||'—'}</td>)}
+                        <td style={TDL}>{row.name}</td>
+                        {LEAD_SOURCES.map(src => <td key={src} style={{ ...TD, color:row[src]>0?'var(--text-primary)':'var(--text-hint)' }}>{row[src]||'—'}</td>)}
+                        <td style={{ ...TD, fontWeight:700, color:row.total>0?SO.blue:'var(--text-hint)' }}>{row.total||'—'}</td>
                       </tr>
                     ))}
                     <tr style={{ background:'var(--bg-tertiary)', borderTop:'1px solid var(--border-strong-color)' }}>
                       <td style={{ ...TDL_TOT, borderTop:'1px solid var(--border-strong-color)' }}>Total</td>
-                      {OPPORTUNITY_STAGES.map((s,si) => {
-                        const cnt=displayOPRows.reduce((a,r)=>a+(r.counts[si]||0),0)
-                        return <td key={s} style={{ ...TD_TOT, color:cnt>0?SO.blue:'var(--text-hint)', borderTop:'1px solid var(--border-strong-color)' }}>{cnt||'—'}</td>
+                      {LEAD_SOURCES.map(src => {
+                        const tot=leadsSourcesRows.reduce((s,r)=>s+(r[src]||0),0)
+                        return <td key={src} style={{ ...TD_TOT, borderTop:'1px solid var(--border-strong-color)' }}>{tot||'—'}</td>
                       })}
-                    </tr>
-                    <tr style={{ background:'var(--bg-tertiary)' }}>
-                      <td style={{ ...TDL_TOT, color:SO.blue, fontWeight:700 }}>Total Vol</td>
-                      {OPPORTUNITY_STAGES.map(s => {
-                        const v=state.opportunities.filter(o=>o.stage===s&&(filterOwner?o.leadOwner===filterOwner:true)).reduce((a,o)=>a+(o.expectedMonthlyVolume||0),0)
-                        return <td key={s} style={{ ...TD_TOT, color:v>0?SO.blue:'var(--text-hint)', fontWeight:700 }}>{v>0?formatCurrency(v):'—'}</td>
-                      })}
-                    </tr>
-                    <tr style={{ background:'var(--bg-tertiary)' }}>
-                      <td style={{ ...TDL_TOT, color:SO.green, fontWeight:700 }}>Total TC</td>
-                      {OPPORTUNITY_STAGES.map(s => {
-                        const v=state.opportunities.filter(o=>o.stage===s&&(filterOwner?o.leadOwner===filterOwner:true)).reduce((a,o)=>a+(o.expectedMonthlyRevenue||0),0)
-                        return <td key={s} style={{ ...TD_TOT, color:v>0?SO.green:'var(--text-hint)', fontWeight:700 }}>{v>0?formatCurrency(v):'—'}</td>
-                      })}
+                      <td style={{ ...TD_TOT, fontWeight:800, color:SO.blue, borderTop:'1px solid var(--border-strong-color)' }}>{leadsSourcesRows.reduce((s,r)=>s+(r.total||0),0)||'—'}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -401,6 +399,51 @@ export default function KPISection({ filterOwner = '' }) {
             </div>
 
           </div>{/* end kpi-grid-2col-bottom */}
+
+          {/* ══════ OPPORTUNITIES PROGRESS (full width) ══════ */}
+          <Separator />
+          <SectionLabel>Opportunities Progress</SectionLabel>
+          <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
+            <table style={{ width:'100%', borderCollapse:'separate', borderSpacing:0, border:'1px solid var(--border-color)', borderRadius:10, overflow:'hidden', minWidth:320 }}>
+              <thead>
+                <tr>
+                  <th style={THL}>BD</th>
+                  {OPPORTUNITY_STAGES.map(s => <th key={s} style={TH}>{s}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {displayOPRows.map((u,i) => (
+                  <tr key={u.name} style={{ background:i%2===0?'var(--bg-card)':'var(--bg-secondary)', transition:'background 120ms' }}
+                    onMouseEnter={e=>e.currentTarget.style.background='var(--so-blue-soft)'}
+                    onMouseLeave={e=>e.currentTarget.style.background=i%2===0?'var(--bg-card)':'var(--bg-secondary)'}>
+                    <td style={TDL}>{u.name}</td>
+                    {u.counts.map((cnt,si) => <td key={si} style={{ ...TD, color:cnt>0?'var(--text-primary)':'var(--text-hint)' }}>{cnt||'—'}</td>)}
+                  </tr>
+                ))}
+                <tr style={{ background:'var(--bg-tertiary)', borderTop:'1px solid var(--border-strong-color)' }}>
+                  <td style={{ ...TDL_TOT, borderTop:'1px solid var(--border-strong-color)' }}>Total</td>
+                  {OPPORTUNITY_STAGES.map((s,si) => {
+                    const cnt=displayOPRows.reduce((a,r)=>a+(r.counts[si]||0),0)
+                    return <td key={s} style={{ ...TD_TOT, color:cnt>0?SO.blue:'var(--text-hint)', borderTop:'1px solid var(--border-strong-color)' }}>{cnt||'—'}</td>
+                  })}
+                </tr>
+                <tr style={{ background:'var(--bg-tertiary)' }}>
+                  <td style={{ ...TDL_TOT, color:SO.blue, fontWeight:700 }}>Total Vol</td>
+                  {OPPORTUNITY_STAGES.map(s => {
+                    const v=state.opportunities.filter(o=>o.stage===s&&(filterOwner?o.leadOwner===filterOwner:true)).reduce((a,o)=>a+(o.expectedMonthlyVolume||0),0)
+                    return <td key={s} style={{ ...TD_TOT, color:v>0?SO.blue:'var(--text-hint)', fontWeight:700 }}>{v>0?formatCurrency(v):'—'}</td>
+                  })}
+                </tr>
+                <tr style={{ background:'var(--bg-tertiary)' }}>
+                  <td style={{ ...TDL_TOT, color:SO.purple, fontWeight:700 }}>Total TC</td>
+                  {OPPORTUNITY_STAGES.map(s => {
+                    const v=state.opportunities.filter(o=>o.stage===s&&(filterOwner?o.leadOwner===filterOwner:true)).reduce((a,o)=>a+(o.expectedMonthlyRevenue||0),0)
+                    return <td key={s} style={{ ...TD_TOT, color:v>0?SO.purple:'var(--text-hint)', fontWeight:700 }}>{v>0?formatCurrency(v):'—'}</td>
+                  })}
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
         </div>{/* end sectionRef */}
       </div>

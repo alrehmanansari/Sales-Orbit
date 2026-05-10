@@ -5,8 +5,8 @@ import { PriorityBadge, StatusBadge } from '../components/common/Badge'
 import LeadForm from '../components/leads/LeadForm'
 import LeadDetail from '../components/leads/LeadDetail'
 import BulkImport from '../components/leads/BulkImport'
-import { formatDate, searchFilter, exportToCSV, isOverdue, daysDiff } from '../utils/helpers'
-import { LEAD_STATUSES, VERTICALS, PRIORITIES, TEAM_MEMBERS } from '../data/constants'
+import { formatDate, searchFilter, exportToCSV, isOverdue, daysDiff, filterByDateRange } from '../utils/helpers'
+import { LEAD_STATUSES, VERTICALS, PRIORITIES, TIME_FILTERS } from '../data/constants'
 
 const SORT_OPTIONS = [
   { label: 'Newest First', value: 'newest' },
@@ -28,13 +28,29 @@ export default function LeadsPage({ openLeadId, onOpenClear }) {
   const [filterOwner, setFilterOwner] = useState('')
   const [filterVertical, setFilterVertical] = useState('')
   const [sort, setSort] = useState('newest')
+  const [timeFilter, setTimeFilter] = useState('all')
+  const [customFrom, setCustomFrom] = useState('')
+  const [customTo, setCustomTo] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [showImport, setShowImport] = useState(false)
   const [selectedLead, setSelectedLead] = useState(null)
   const [editLead, setEditLead] = useState(null)
 
   const filtered = useMemo(() => {
-    let arr = state.leads.filter(l => {
+    let base = state.leads
+    if (timeFilter && timeFilter !== 'all') {
+      if (timeFilter === 'custom') {
+        base = base.filter(l => {
+          const d = new Date(l.createdAt)
+          if (customFrom && d < new Date(customFrom)) return false
+          if (customTo && d > new Date(customTo + 'T23:59:59')) return false
+          return true
+        })
+      } else {
+        base = filterByDateRange(base, 'createdAt', timeFilter)
+      }
+    }
+    let arr = base.filter(l => {
       if (filterStatus && l.status !== filterStatus) return false
       if (filterPriority && l.priority !== filterPriority) return false
       if (filterOwner && l.leadOwner !== filterOwner) return false
@@ -49,7 +65,7 @@ export default function LeadsPage({ openLeadId, onOpenClear }) {
       default: arr.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     }
     return arr
-  }, [state.leads, search, filterStatus, filterPriority, filterOwner, filterVertical, sort])
+  }, [state.leads, search, filterStatus, filterPriority, filterOwner, filterVertical, sort, timeFilter, customFrom, customTo])
 
   const overdueCount = state.activities.filter(a => a.nextFollowUpDate && isOverdue(a.nextFollowUpDate)).length
 
@@ -80,48 +96,64 @@ export default function LeadsPage({ openLeadId, onOpenClear }) {
 
   return (
     <div className="page">
-      <div className="page-header">
+      <div className="page-header" style={{ flexWrap: 'wrap', gap: 10, alignItems: 'flex-start' }}>
         <div>
           <h2 style={{ margin: 0 }}>All Leads</h2>
           <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>
-            {state.leads.length} total · {state.leads.filter(l => l.status === 'New').length} new
+            {filtered.length} showing · {state.leads.length} total
             {overdueCount > 0 && <span style={{ color: 'var(--red)', marginLeft: 8 }}>· {overdueCount} overdue follow-ups</span>}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost btn-sm" onClick={doExport}>⬇ Export CSV</button>
-          <button className="btn btn-ghost btn-sm" onClick={() => setShowImport(true)}>⬆ Bulk Import</button>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
+          {/* Search */}
+          <div className="search-wrap" style={{ minWidth: 160, maxWidth: 220 }}>
+            <span className="search-icon">⌕</span>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search leads…" style={{ borderRadius: 24 }} />
+          </div>
+          {/* Date pill filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 24, padding: '3px 4px', overflowX: 'auto', flexShrink: 0 }}>
+            <button className={`tab ${timeFilter === 'all' ? 'active' : ''}`} style={{ padding: '4px 10px', fontSize: 11, whiteSpace: 'nowrap' }} onClick={() => setTimeFilter('all')}>All</button>
+            {TIME_FILTERS.map(f => (
+              <button key={f.value} className={`tab ${timeFilter === f.value ? 'active' : ''}`} style={{ padding: '4px 10px', fontSize: 11, whiteSpace: 'nowrap' }} onClick={() => setTimeFilter(f.value)}>{f.label}</button>
+            ))}
+          </div>
+          {/* Custom date range */}
+          {timeFilter === 'custom' && (
+            <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexShrink: 0 }}>
+              <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-strong-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontFamily: 'var(--font)', outline: 'none' }} />
+              <span style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>→</span>
+              <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-strong-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontFamily: 'var(--font)', outline: 'none' }} />
+            </div>
+          )}
+          {/* Filter selects - compact */}
+          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: filterStatus ? 'var(--so-blue)' : 'var(--text-secondary)', fontFamily: 'var(--font)', outline: 'none', cursor: 'pointer' }}>
+            <option value="">All Statuses</option>
+            {LEAD_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select value={filterPriority} onChange={e => setFilterPriority(e.target.value)} style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: filterPriority ? 'var(--so-blue)' : 'var(--text-secondary)', fontFamily: 'var(--font)', outline: 'none', cursor: 'pointer' }}>
+            <option value="">All Priorities</option>
+            {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <select value={filterVertical} onChange={e => setFilterVertical(e.target.value)} style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: filterVertical ? 'var(--so-blue)' : 'var(--text-secondary)', fontFamily: 'var(--font)', outline: 'none', cursor: 'pointer' }}>
+            <option value="">All Verticals</option>
+            {VERTICALS.map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+          <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)} style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: filterOwner ? 'var(--so-blue)' : 'var(--text-secondary)', fontFamily: 'var(--font)', outline: 'none', cursor: 'pointer', maxWidth: 110 }}>
+            <option value="">All Owners</option>
+            {[...new Set(state.leads.map(l => l.leadOwner).filter(Boolean))].sort().map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+          <select value={sort} onChange={e => setSort(e.target.value)} style={{ fontSize: 12, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-secondary)', fontFamily: 'var(--font)', outline: 'none', cursor: 'pointer' }}>
+            {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          {/* Clear button */}
+          {(search || filterStatus || filterPriority || filterOwner || filterVertical || (timeFilter && timeFilter !== 'all')) && (
+            <button className="btn btn-ghost btn-sm" onClick={() => { setSearch(''); setFilterStatus(''); setFilterPriority(''); setFilterOwner(''); setFilterVertical(''); setTimeFilter('all'); setCustomFrom(''); setCustomTo('') }}>✕ Clear</button>
+          )}
+          {/* Actions */}
+          <button className="btn btn-ghost btn-sm" onClick={doExport}>⬇ Export</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowImport(true)}>⬆ Import</button>
           <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>+ Add Lead</button>
         </div>
-      </div>
-
-      <div className="filters-bar">
-        <div className="search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 300 }}>
-          <span className="search-icon">⌕</span>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search leads…" style={{ borderRadius: 24 }} />
-        </div>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-          <option value="">All Statuses</option>
-          {LEAD_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <select value={filterPriority} onChange={e => setFilterPriority(e.target.value)}>
-          <option value="">All Priorities</option>
-          {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
-        </select>
-        <select value={filterVertical} onChange={e => setFilterVertical(e.target.value)}>
-          <option value="">All Verticals</option>
-          {VERTICALS.map(v => <option key={v} value={v}>{v}</option>)}
-        </select>
-        <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)}>
-          <option value="">All Owners</option>
-          {[...new Set(state.leads.map(l => l.leadOwner).filter(Boolean))].sort().map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
-        <select value={sort} onChange={e => setSort(e.target.value)}>
-          {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-        {(search || filterStatus || filterPriority || filterOwner || filterVertical) && (
-          <button className="btn btn-ghost btn-sm" onClick={() => { setSearch(''); setFilterStatus(''); setFilterPriority(''); setFilterOwner(''); setFilterVertical('') }}>✕ Clear</button>
-        )}
       </div>
 
       <div className="page-body" style={{ padding: 0 }}>
@@ -143,6 +175,8 @@ export default function LeadsPage({ openLeadId, onOpenClear }) {
                   <th>Email</th>
                   <th>Phone</th>
                   <th>Source</th>
+                  <th>Vertical</th>
+                  <th>Nature of Business</th>
                   <th>Status</th>
                   <th>Owner</th>
                   <th>Age</th>
@@ -179,6 +213,8 @@ export default function LeadsPage({ openLeadId, onOpenClear }) {
                         ) : <span style={{ color: 'var(--text-hint)' }}>—</span>}
                       </td>
                       <td style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 400 }}>{lead.leadSource}</td>
+                      <td style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 400 }}>{lead.vertical || '—'}</td>
+                      <td style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 400 }}>{lead.natureOfBusiness || '—'}</td>
                       <td><StatusBadge status={lead.status} /></td>
                       <td style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-secondary)' }}>{lead.leadOwner?.split(' ')[0]}</td>
                       <td style={{ fontSize: 11, fontWeight: 600, color: agingColor(age), fontFamily: 'var(--font-mono)' }}>{age}d</td>
