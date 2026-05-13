@@ -3,7 +3,7 @@ import { useCRM } from '../store/CRMContext'
 import OpportunityDetail from '../components/opportunities/OpportunityDetail'
 import OpportunityForm from '../components/opportunities/OpportunityForm'
 import StageModal from '../components/opportunities/StageModal'
-import { formatDate, formatCurrency, daysDiff, getDateRange, filterByDateRange } from '../utils/helpers'
+import { formatDate, formatCurrency, daysDiff, getDateRange, filterByDateRange, parseISODate } from '../utils/helpers'
 import { OPPORTUNITY_STAGES, STAGE_COLORS, TIME_FILTERS } from '../data/constants'
 import { PriorityBadge } from '../components/common/Badge'
 
@@ -39,7 +39,8 @@ export default function PipelinePage() {
   const allOpps = useMemo(() => {
     if (dateFilter === 'custom') {
       return state.opportunities.filter(o => {
-        const d = new Date(o.createdAt)
+        const d = parseISODate(o.createdAt)
+        if (!d) return false
         if (customFrom && d < new Date(customFrom)) return false
         if (customTo   && d > new Date(customTo + 'T23:59:59')) return false
         return true

@@ -5,7 +5,7 @@ import { PriorityBadge, StatusBadge } from '../components/common/Badge'
 import LeadForm from '../components/leads/LeadForm'
 import LeadDetail from '../components/leads/LeadDetail'
 import BulkImport from '../components/leads/BulkImport'
-import { formatDate, searchFilter, exportToCSV, isOverdue, daysDiff, filterByDateRange } from '../utils/helpers'
+import { formatDate, searchFilter, exportToCSV, isOverdue, daysDiff, filterByDateRange, parseISODate } from '../utils/helpers'
 import { LEAD_STATUSES, VERTICALS, PRIORITIES, TIME_FILTERS } from '../data/constants'
 
 const SORT_OPTIONS = [
@@ -80,7 +80,8 @@ export default function LeadsPage({ openLeadId, onOpenClear }) {
     if (timeFilter && timeFilter !== 'all') {
       if (timeFilter === 'custom') {
         base = base.filter(l => {
-          const d = new Date(l.createdAt)
+          const d = parseISODate(l.createdAt)
+          if (!d) return false
           if (customFrom && d < new Date(customFrom)) return false
           if (customTo   && d > new Date(customTo + 'T23:59:59')) return false
           return true

@@ -93,12 +93,26 @@ export function getDateRange(filter) {
   }
 }
 
+/**
+ * Robustly parse a date string from any source.
+ * SQLite returns "YYYY-MM-DD HH:MM:SS" (space). Safari rejects the space —
+ * it only accepts ISO 8601 "YYYY-MM-DDTHH:MM:SS". Normalise before parsing.
+ */
+export function parseISODate(raw) {
+  if (!raw) return null
+  // Replace the first space between date and time with T to get ISO 8601
+  const iso = String(raw).replace(/^(\d{4}-\d{2}-\d{2})\s/, '$1T')
+  const d = new Date(iso)
+  return isNaN(d.getTime()) ? null : d
+}
+
 export function filterByDateRange(items, field, filter) {
-  if (filter === 'all') return items
+  if (!filter || filter === 'all') return items
   const range = getDateRange(filter)
   if (!range) return items
   return items.filter(item => {
-    const d = new Date(item[field])
+    const d = parseISODate(item[field])
+    if (!d) return false
     return d >= range.start && d <= range.end
   })
 }

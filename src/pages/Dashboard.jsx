@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, LabelList
 } from 'recharts'
-import { filterByDateRange, formatCurrency, getDailyVolume, isOverdue, daysDiff } from '../utils/helpers'
+import { filterByDateRange, parseISODate, formatCurrency, getDailyVolume, isOverdue, daysDiff } from '../utils/helpers'
 import { TIME_FILTERS, ACTIVE_STAGES, MANAGER_DESIGNATIONS } from '../data/constants'
 import { useAuth } from '../store/AuthContext'
 import KPISection from '../components/dashboard/KPISection'
@@ -123,7 +123,8 @@ export default function Dashboard({ onNav }) {
     if (timeFilter === 'custom') {
       if (!customFrom && !customTo) return items
       return items.filter(item => {
-        const d = new Date(item[field])
+        const d = parseISODate(item[field])
+        if (!d) return false
         if (customFrom && d < new Date(customFrom)) return false
         if (customTo && d > new Date(customTo + 'T23:59:59')) return false
         return true

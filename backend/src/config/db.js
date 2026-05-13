@@ -88,6 +88,36 @@ function makeSQLitePool(dbPath) {
     db.prepare("ALTER TABLE opportunities ADD COLUMN kyc_agent TEXT NOT NULL DEFAULT ''").run();
   }
 
+  // ── Backfill historical created_at for seeded records ───────────────────────
+  // The original seed did not specify created_at so SQLite used datetime('now').
+  // That means every lead/opp had today's date, making all date filters show the
+  // same data. On each server start we correct only the seeded IDs AND only when
+  // their created_at is still set to the current calendar date (idempotent fix).
+  try {
+    const todayPrefix = new Date().toISOString().slice(0, 10); // "2026-05-13"
+    const leadFixes = [
+      ['LD-20260218-1001', '2026-02-18 09:00:00'],
+      ['LD-20260301-1002', '2026-03-01 10:00:00'],
+      ['LD-20260310-1003', '2026-03-10 11:00:00'],
+      ['LD-20260416-1004', '2026-04-16 09:00:00'],
+      ['LD-20260418-1005', '2026-04-18 14:00:00'],
+    ];
+    for (const [id, hist] of leadFixes) {
+      db.prepare(
+        `UPDATE leads SET created_at = ? WHERE lead_id = ? AND created_at LIKE ?`
+      ).run(hist, id, `${todayPrefix}%`);
+    }
+    const oppFixes = [
+      ['OPP-20260220-1001', '2026-02-20 09:00:00'],
+      ['OPP-20260310-1002', '2026-03-10 11:00:00'],
+    ];
+    for (const [id, hist] of oppFixes) {
+      db.prepare(
+        `UPDATE opportunities SET created_at = ? WHERE opportunity_id = ? AND created_at LIKE ?`
+      ).run(hist, id, `${todayPrefix}%`);
+    }
+  } catch (_) {}
+
   console.log(`SQLite  →  ${dbPath}`);
   return {
     isSQLite: true,
