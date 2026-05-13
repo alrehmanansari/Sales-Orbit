@@ -141,11 +141,11 @@ export default function Dashboard({ onNav }) {
   const totalLeads      = fLeads.length
   const convertedLeads  = fLeads.filter(l => l.status === 'Converted').length
 
-  // KPI 3 — Volume + Revenue of Onboarded + Activated
-  const onboardedVol = myOpps.filter(o => o.stage === 'Onboarded').reduce((s, o) => s + (o.expectedMonthlyVolume || 0), 0)
-  const onboardedRev = myOpps.filter(o => o.stage === 'Onboarded').reduce((s, o) => s + (o.expectedMonthlyRevenue || 0), 0)
-  const transactedVol = myOpps.filter(o => o.stage === 'Activated').reduce((s, o) => s + (o.expectedMonthlyVolume || 0), 0)
-  const transactedRev = myOpps.filter(o => o.stage === 'Activated').reduce((s, o) => s + (o.expectedMonthlyRevenue || 0), 0)
+  // KPI 3 — Volume + Revenue of Onboarded + Activated (time-filtered)
+  const onboardedVol  = fOpps.filter(o => o.stage === 'Onboarded').reduce((s, o) => s + (o.expectedMonthlyVolume  || 0), 0)
+  const onboardedRev  = fOpps.filter(o => o.stage === 'Onboarded').reduce((s, o) => s + (o.expectedMonthlyRevenue || 0), 0)
+  const transactedVol = fOpps.filter(o => o.stage === 'Activated').reduce((s, o) => s + (o.expectedMonthlyVolume  || 0), 0)
+  const transactedRev = fOpps.filter(o => o.stage === 'Activated').reduce((s, o) => s + (o.expectedMonthlyRevenue || 0), 0)
 
   // KPI 4 — Sales Velocity (avg days lead → stage)
   const avgToOnboarded = useMemo(() => calcAvgDaysToStage(fOpps, fLeads, 'Onboarded'), [fOpps, fLeads])
@@ -154,11 +154,11 @@ export default function Dashboard({ onNav }) {
   // KPI 5 — calls
   const totalCalls = fActs.filter(a => a.type === 'Call').length
 
-  // KPI 7 — total opps scored (all opps that reached Won or beyond)
-  const scoredOpps = myOpps.filter(o => ['Won','Onboarded','Activated'].includes(o.stage)).length
+  // KPI 7 — total opps scored (time-filtered)
+  const scoredOpps = fOpps.filter(o => ['Won','Onboarded','Activated'].includes(o.stage)).length
 
-  // KPI 8
-  const totalOpps = myOpps.length
+  // KPI 8 — total opportunities in period
+  const totalOpps = fOpps.length
 
   // Untouched leads (status New in filtered period)
   const untouchedLeadsCount = fLeads.filter(l => l.status === 'New').length
@@ -173,10 +173,10 @@ export default function Dashboard({ onNav }) {
     return untouched + stuck + followUp
   }, [leads, opportunities, activities])
 
-  // Scored opps with stage breakdown
-  const wonCount = myOpps.filter(o => o.stage === 'Won').length
-  const onboardedCount = myOpps.filter(o => o.stage === 'Onboarded').length
-  const activatedCount = myOpps.filter(o => o.stage === 'Activated').length
+  // Stage breakdown (time-filtered)
+  const wonCount       = fOpps.filter(o => o.stage === 'Won').length
+  const onboardedCount = fOpps.filter(o => o.stage === 'Onboarded').length
+  const activatedCount = fOpps.filter(o => o.stage === 'Activated').length
 
   // Chart data — all wrapped in useMemo
   const dailyCalls = useMemo(() => getDailyVolume(fActs.filter(a => a.type === 'Call'), 14), [fActs])
@@ -195,13 +195,13 @@ export default function Dashboard({ onNav }) {
       : [...new Set((state.users || []).filter(u => u.isActive !== false).map(u => u.name))]
     return userNames.map(name => ({
       name: name.split(' ')[0],
-      leads:     myLeads.filter(l => l.leadOwner === name).length,
-      calls:     myActs.filter(a => a.loggedBy === name && a.type === 'Call').length,
-      opps:      myOpps.filter(o => o.leadOwner === name).length,
-      scored:    myOpps.filter(o => o.leadOwner === name && ['Won','Onboarded','Activated'].includes(o.stage)).length,
-      transacted:myOpps.filter(o => o.leadOwner === name && o.stage === 'Activated').length,
+      leads:     fLeads.filter(l => l.leadOwner === name).length,
+      calls:     fActs.filter(a => a.loggedBy === name && a.type === 'Call').length,
+      opps:      fOpps.filter(o => o.leadOwner === name).length,
+      scored:    fOpps.filter(o => o.leadOwner === name && ['Won','Onboarded','Activated'].includes(o.stage)).length,
+      transacted:fOpps.filter(o => o.leadOwner === name && o.stage === 'Activated').length,
     })).filter(r => r.leads + r.calls + r.opps > 0).sort((a, b) => b.calls - a.calls)
-  }, [state.users, myLeads, myActs, myOpps, filterOwner])
+  }, [state.users, fLeads, fActs, fOpps, filterOwner])
 
   // Drag-and-drop
   function onDragStart(id) { setDragging(id) }
