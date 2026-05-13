@@ -537,7 +537,7 @@ export default function Dashboard({ onNav }) {
       </div>
 
       <div className="page-body">
-        <KPISection filterOwner={filterOwner} />
+        <KPISection filterOwner={filterOwner} timeFilter={timeFilter} customFrom={customFrom} customTo={customTo} />
 
         {/* KPI Row 1 */}
         <div className="grid-4 so-stagger" style={{ marginBottom: 14 }}>

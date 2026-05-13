@@ -3,7 +3,7 @@ import { useKPI, QUARTERS, KPI_WEIGHTS } from '../../store/KPIContext'
 import { useAuth } from '../../store/AuthContext'
 import { useCRM } from '../../store/CRMContext'
 import { OPPORTUNITY_STAGES, LEAD_SOURCES } from '../../data/constants'
-import { formatCurrency } from '../../utils/helpers'
+import { formatCurrency, filterByDateRange, parseISODate } from '../../utils/helpers'
 
 const SO = { blue: '#4796E3', purple: '#9177C7', pink: '#CA6673', teal: '#129EAF', orange: '#E37400' }
 const ALL_TABS = ['Q2', 'Q3', 'Q4', 'Yearly']
@@ -118,7 +118,7 @@ function Separator() {
 
 /* ══════════════════════════════════════════════════════════════════ */
 
-export default function KPISection({ filterOwner = '' }) {
+export default function KPISection({ filterOwner = '', timeFilter = 'all', customFrom = '', customTo = '' }) {
   const { data, updateKPI } = useKPI()
   const { currentUser }     = useAuth()
   const { state }           = useCRM()
@@ -128,7 +128,6 @@ export default function KPISection({ filterOwner = '' }) {
   /* ── User list (deduplicated, no Head of MENA) ── */
   const baseUsers = (state.users||[]).filter(u => u.isActive!==false && u.designation!=='Head of MENA').map(u => u.name)
   const allUsers  = [...new Set(currentUser?.name ? [...baseUsers, currentUser.name] : baseUsers)]
-  /* Apply owner filter for display */
   const displayUsers = filterOwner ? allUsers.filter(n => n === filterOwner) : allUsers
   const isYearly = quarter === 'Yearly'
 
@@ -137,7 +136,28 @@ export default function KPISection({ filterOwner = '' }) {
     { key:'ac', label:'Activated Clients', targetKey:'acTarget', achKey:'acAch', weight:KPI_WEIGHTS.ac, isMoney:false, color:SO.purple },
   ]
 
-  /* ── Sales Activity data ── */
+  /* ── Apply date filter to a collection ── */
+  function applyTimeFilter(items, field) {
+    if (!timeFilter || timeFilter === 'all') return items
+    if (timeFilter === 'custom') {
+      if (!customFrom && !customTo) return items
+      return items.filter(item => {
+        const d = parseISODate(item[field])
+        if (!d) return false
+        if (customFrom && d < new Date(customFrom)) return false
+        if (customTo   && d > new Date(customTo + 'T23:59:59')) return false
+        return true
+      })
+    }
+    return filterByDateRange(items, field, timeFilter)
+  }
+
+  /* ── Time-filtered base datasets ── */
+  const filteredActs  = useMemo(() => applyTimeFilter(state.activities,    'dateTime'),  [state.activities,    timeFilter, customFrom, customTo])
+  const filteredLeads = useMemo(() => applyTimeFilter(state.leads,         'createdAt'), [state.leads,         timeFilter, customFrom, customTo])
+  const filteredOpps  = useMemo(() => applyTimeFilter(state.opportunities, 'createdAt'), [state.opportunities, timeFilter, customFrom, customTo])
+
+  /* ── Sales Activity data (uses time-filtered activities) ── */
   const entityVerticalMap = useMemo(() => {
     const map = {}
     state.leads.forEach(l => { if(l.id) map[l.id]=l.vertical })
@@ -146,7 +166,7 @@ export default function KPISection({ filterOwner = '' }) {
   }, [state.leads, state.opportunities])
 
   const salesActivityRows = useMemo(() => allUsers.map(name => {
-    const calls = state.activities.filter(a => a.type==='Call' && a.loggedBy===name)
+    const calls = filteredActs.filter(a => a.type==='Call' && a.loggedBy===name)
     return {
       name,
       discoveryCalls: calls.filter(a => a.callType==='Discovery Call').length,
@@ -154,35 +174,35 @@ export default function KPISection({ filterOwner = '' }) {
       connected:    calls.filter(a => a.callOutcome?.startsWith('Connected')).length,
       notResponded: calls.filter(a => a.callOutcome==='Not Responded').length,
     }
-  }), [allUsers, state.activities, entityVerticalMap])
+  }), [allUsers, filteredActs, entityVerticalMap])
 
   const displaySARows = salesActivityRows.filter(r => displayUsers.includes(r.name))
 
-  /* ── Conversion Ratio data ── */
+  /* ── Conversion Ratio data (uses time-filtered leads + opps) ── */
   const conversionRows = useMemo(() => allUsers.map(name => {
-    const ul = state.leads.filter(l => l.leadOwner===name)
+    const ul = filteredLeads.filter(l => l.leadOwner===name)
     const created   = ul.length
     const contacted = ul.filter(l => ['Contacted','Qualified','Converted'].includes(l.status)).length
-    const opps      = state.opportunities.filter(o => o.leadOwner===name).length
+    const opps      = filteredOpps.filter(o => o.leadOwner===name).length
     return { name, created, contacted, opps, conversion: contacted>0 ? Math.round((opps/contacted)*100) : 0 }
-  }), [allUsers, state.leads, state.opportunities])
+  }), [allUsers, filteredLeads, filteredOpps])
 
   const displayCRRows = conversionRows.filter(r => displayUsers.includes(r.name))
 
-  /* ── Opportunities Progress data ── */
+  /* ── Opportunities Progress (uses time-filtered opps) ── */
   const displayOPRows = useMemo(() => displayUsers.map(name => ({
     name,
-    counts: OPPORTUNITY_STAGES.map(s => state.opportunities.filter(o => o.leadOwner===name && o.stage===s).length),
-  })).filter(r => r.counts.some(c => c>0)), [displayUsers, state.opportunities])
+    counts: OPPORTUNITY_STAGES.map(s => filteredOpps.filter(o => o.leadOwner===name && o.stage===s).length),
+  })).filter(r => r.counts.some(c => c>0)), [displayUsers, filteredOpps])
 
-  /* ── Leads Sources Breakdown data ── */
+  /* ── Leads Sources Breakdown (uses time-filtered leads) ── */
   const leadsSourcesRows = useMemo(() => displayUsers.map(name => {
-    const userLeads = state.leads.filter(l => l.leadOwner === name)
+    const userLeads = filteredLeads.filter(l => l.leadOwner === name)
     const row = { name }
     LEAD_SOURCES.forEach(src => { row[src] = userLeads.filter(l => (l.leadSource || 'Others') === src).length })
     row.total = userLeads.length
     return row
-  }), [displayUsers, state.leads])
+  }), [displayUsers, filteredLeads])
 
   /* ── Inner KPI table for one metric row ── */
   function KpiTable({ row }) {
@@ -430,14 +450,14 @@ export default function KPISection({ filterOwner = '' }) {
                 <tr style={{ background:'var(--bg-tertiary)' }}>
                   <td style={{ ...TDL_TOT, color:SO.blue, fontWeight:700 }}>Total Vol</td>
                   {OPPORTUNITY_STAGES.map(s => {
-                    const v=state.opportunities.filter(o=>o.stage===s&&(filterOwner?o.leadOwner===filterOwner:true)).reduce((a,o)=>a+(o.expectedMonthlyVolume||0),0)
+                    const v=filteredOpps.filter(o=>o.stage===s&&(filterOwner?o.leadOwner===filterOwner:true)).reduce((a,o)=>a+(o.expectedMonthlyVolume||0),0)
                     return <td key={s} style={{ ...TD_TOT, color:v>0?SO.blue:'var(--text-hint)', fontWeight:700 }}>{v>0?formatCurrency(v):'—'}</td>
                   })}
                 </tr>
                 <tr style={{ background:'var(--bg-tertiary)' }}>
                   <td style={{ ...TDL_TOT, color:SO.purple, fontWeight:700 }}>Total TC</td>
                   {OPPORTUNITY_STAGES.map(s => {
-                    const v=state.opportunities.filter(o=>o.stage===s&&(filterOwner?o.leadOwner===filterOwner:true)).reduce((a,o)=>a+(o.expectedMonthlyRevenue||0),0)
+                    const v=filteredOpps.filter(o=>o.stage===s&&(filterOwner?o.leadOwner===filterOwner:true)).reduce((a,o)=>a+(o.expectedMonthlyRevenue||0),0)
                     return <td key={s} style={{ ...TD_TOT, color:v>0?SO.purple:'var(--text-hint)', fontWeight:700 }}>{v>0?formatCurrency(v):'—'}</td>
                   })}
                 </tr>
